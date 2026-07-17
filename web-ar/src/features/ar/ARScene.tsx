@@ -40,11 +40,21 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   }
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-black">
+    <div className="fixed inset-0 overflow-hidden bg-black">
       {/* MindAR chèn <video> (z-index:-2) + <canvas> vào container này.
-          `isolate` tạo stacking context riêng để video z-index:-2 KHÔNG bị nền
-          bg-black của div cha che mất -> nếu thiếu, camera hiện đen. */}
-      <div ref={containerRef} className="absolute inset-0 isolate" />
+          - `isolate`: stacking context riêng để video z-index:-2 KHÔNG bị nền
+            bg-black của div cha che mất -> nếu thiếu, camera hiện đen.
+          - `[&>video]:...`: ÉP thẻ <video> luôn phủ kín container bằng object-cover,
+            GHI ĐÈ (!) kích thước inline mà MindAR.resize() tự set. MindAR tính
+            width/height/top/left của video theo container.clientHeight tại thời điểm
+            gọi; trên iOS Safari container nở ra sau khi thanh địa chỉ thu lại ->
+            video giữ chiều cao cũ (ngắn) -> chừa dải đen dưới. Ép object-cover thì
+            video luôn full màn, không phụ thuộc thời điểm resize (kết quả crop
+            trùng đúng với "cover" của MindAR nên model vẫn neo khớp). */}
+      <div
+        ref={containerRef}
+        className="absolute inset-0 isolate [&>video]:!absolute [&>video]:!inset-0 [&>video]:!m-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!max-w-none [&>video]:!object-cover"
+      />
 
       {/* DEBUG tạm: hiển thị trạng thái để chẩn đoán camera đen. Xoá sau khi xong. */}
       {started && (

@@ -26,6 +26,7 @@ type MindARRuntime = MindARThree & {
   video?: HTMLVideoElement & { srcObject?: MediaStream | null };
   controller?: { stopProcessVideo?: () => void };
   renderer: MindARThree['renderer'] & { forceContextLoss?: () => void };
+  resize?: () => void; // tính lại kích thước video + fov theo container
 };
 
 // Giải phóng TRIỆT ĐỂ: camera track + <video> + WebGL context (three + TF.js).
@@ -68,6 +69,7 @@ export function useMindAR({ target, active }: Options) {
     if (!container) return;
 
     let cancelled = false;
+    let orientCleanup: (() => void) | null = null;
 
     // CHỈ giải phóng khi rời trang THẬT (reload / back / đóng tab): pagehide fire tin cậy
     // trên cả iOS & Android và KHÔNG fire khi hộp thoại xin quyền camera bật lên.
@@ -118,6 +120,37 @@ export function useMindAR({ target, active }: Options) {
 
         setStatus('scanning');
         renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+        // Giữ fov/model khớp mỗi khi container ĐỔI KÍCH THƯỚC. Video coverage đã do
+        // CSS object-cover lo (xem ARScene), còn resize() ở đây chỉ để camera fov +
+        // canvas 3D bám theo viewport thật -> model neo đúng khi màn nở/thu.
+        // Dùng ResizeObserver + visualViewport thay vì setTimeout cứng: trên iOS
+        // Safari container nở ra MUỘN (thanh địa chỉ thu lại) -> phải resize đúng
+        // lúc đó, không đoán mốc thời gian được.
+        const forceResize = () => {
+          if (cancelled) return;
+          try { mindar.resize?.(); } catch { /* noop */ }
+        };
+        requestAnimationFrame(forceResize);
+        setTimeout(forceResize, 300);
+
+        const ro = new ResizeObserver(() => forceResize());
+        ro.observe(container);
+
+        const vv = window.visualViewport;
+        const onVV = () => forceResize();
+        vv?.addEventListener('resize', onVV);
+        vv?.addEventListener('scroll', onVV);
+
+        const onOrient = () => setTimeout(forceResize, 300);
+        window.addEventListener('orientationchange', onOrient);
+
+        orientCleanup = () => {
+          ro.disconnect();
+          vv?.removeEventListener('resize', onVV);
+          vv?.removeEventListener('scroll', onVV);
+          window.removeEventListener('orientationchange', onOrient);
+        };
       } catch (err) {
         if (cancelled) return;
         console.error('[useMindAR] lỗi khởi tạo AR:', err);
@@ -133,6 +166,7 @@ export function useMindAR({ target, active }: Options) {
 
     return () => {
       cancelled = true;
+      orientCleanup?.();
       window.removeEventListener('pagehide', releaseOnHide);
       teardownMindAR(mindarRef.current);
       mindarRef.current = null;
