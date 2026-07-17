@@ -79,12 +79,12 @@ export function useMindAR({ target, active }: Options) {
 
     let cancelled = false;
 
-    // Trang bị ẩn/unload (reload, chuyển tab, bấm back) -> giải phóng camera NGAY,
-    // vì React cleanup không chắc chạy trong các trường hợp này trên iOS.
+    // CHỈ giải phóng khi rời trang THẬT (reload / back / đóng tab): pagehide fire tin cậy
+    // trên cả iOS & Android và KHÔNG fire khi hộp thoại xin quyền camera bật lên.
+    // (Trước đây dùng visibilitychange -> nó fire lúc xin quyền -> teardown giữa chừng ->
+    //  gỡ mất thẻ <video> -> camera đen. Bỏ hẳn.)
     const releaseOnHide = () => teardownMindAR(mindarRef.current);
-    const onVisibility = () => { if (document.hidden) releaseOnHide(); };
     window.addEventListener('pagehide', releaseOnHide);
-    document.addEventListener('visibilitychange', onVisibility);
 
     (async () => {
       try {
@@ -144,7 +144,6 @@ export function useMindAR({ target, active }: Options) {
     return () => {
       cancelled = true;
       window.removeEventListener('pagehide', releaseOnHide);
-      document.removeEventListener('visibilitychange', onVisibility);
       teardownMindAR(mindarRef.current);
       mindarRef.current = null;
     };
