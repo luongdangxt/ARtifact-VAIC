@@ -49,8 +49,11 @@ function teardownMindAR(m: MindARRuntime | null) {
     }
   } catch { /* noop */ }
   // forceContextLoss giải phóng GPU context ngay (dispose() thôi không đủ trên iOS)
+  const canvas = m.renderer?.domElement;
   try { m.renderer?.forceContextLoss?.(); } catch { /* noop */ }
   try { m.renderer?.dispose(); } catch { /* noop */ }
+  // gỡ <canvas> khỏi container, nếu không mỗi lần restart (thoát WebXR) để lại canvas mồ côi
+  try { canvas?.remove(); } catch { /* noop */ }
 }
 
 // Khởi tạo MindAR + three, load model, gắn anchor, chạy render loop.
@@ -91,7 +94,10 @@ export function useMindAR({ target, active }: Options) {
         ]);
         if (cancelled) return;
 
-        const model = normalizeModel(raw, target.scale, target.offset);
+        const model = normalizeModel(raw, target.scale, target.offset, {
+          rotationDeg: target.rotationDeg,
+          groundAlign: target.groundAlign,
+        });
 
         const mindar = new MindARThree({
           container,

@@ -12,6 +12,26 @@ export interface ARTarget {
   offset: [number, number, number];
   /** Ảnh mốc để in/hiện ra mà quét (png/pdf), vd '/markers/nghe-nhan-01.png' */
   markerUrl?: string;
+  /**
+   * GLB cho chế độ "xem cỡ thật" (Android Scene Viewer). File PHẢI được dựng theo
+   * mét thật (vd người cao ~1.7m) để đặt xuống sàn đúng kích cỡ. Bỏ trống -> dùng modelUrl.
+   */
+  modelRealUrl?: string;
+  /**
+   * USDZ cho iOS AR Quick Look — BẮT BUỘC để xem cỡ thật trên iPhone
+   * (convert từ GLB, cùng cỡ mét thật). Thiếu file này thì iPhone sẽ báo chưa hỗ trợ.
+   */
+  modelUsdzUrl?: string;
+  /**
+   * Xoay model (độ) trong hệ ảnh-mốc. Để DỰNG ĐỨNG người khỏi tấm thẻ đặt nằm ngang
+   * trên bàn/sàn: thường [90, 0, 0]. Nếu người quay lưng/nghiêng thì chỉnh trục Y, vd [90, 180, 0].
+   */
+  rotationDeg?: [number, number, number];
+  /**
+   * true = hạ ĐÁY model chạm mặt phẳng thẻ (chân chạm "đất") thay vì căn tâm
+   * (mặc định căn tâm -> nửa model chìm dưới thẻ). Dùng chung với rotationDeg để đứng thật.
+   */
+  groundAlign?: boolean;
 }
 
 export interface Artisan {

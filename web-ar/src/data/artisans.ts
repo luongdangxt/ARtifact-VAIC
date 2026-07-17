@@ -16,12 +16,21 @@ export const artisans: Artisan[] = [
       + 'Quét card mẫu để thấy model 3D neo lên ảnh.',
     ar: {
       targetUrl: '/targets/sample-card.mind',
-      modelUrl: '/models/sample.glb',
+      // GLB: dùng cho MindAR (model nhỏ trên thẻ) + Android Scene Viewer (cỡ thật).
+      modelUrl: '/models/glb/sample.glb',
       markerUrl: '/markers/sample-card.png',
       scale: 0.3,
       // offset trong hệ ảnh-mốc: X phải, Y lên (TRONG mặt phẳng card), Z nhô khỏi card.
       // Để model nằm ĐÚNG giữa mốc -> [0,0,0]. Muốn nhấc khỏi mặt card thì tăng Z (vd 0.1).
       offset: [0, 0, 0],
+      // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
+      // Model 2 định dạng để riêng: public/models/glb + public/models/usdz.
+      modelUsdzUrl: '/models/usdz/sample.usdz',
+      // Chân/đáy model chạm mặt phẳng thẻ thay vì căn tâm (nửa chìm dưới thẻ).
+      groundAlign: true,
+      // Khi thay model NGƯỜI thật: bật dòng dưới để dựng đứng khỏi thẻ nằm ngang.
+      // Test trên máy: nếu người nằm/nghiêng -> đổi số; quay lưng -> thêm 180 ở trục Y.
+      // rotationDeg: [90, 0, 0],
     },
     aiEnabled: false,
   },
