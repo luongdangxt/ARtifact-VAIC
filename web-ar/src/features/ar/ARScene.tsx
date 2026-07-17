@@ -7,9 +7,7 @@ import { useMindAR } from './useMindAR';
 import Loading from '@/components/Loading';
 import CameraPermission from '@/components/CameraPermission';
 import UnsupportedBrowser from '@/components/UnsupportedBrowser';
-import InAppBrowserNotice from '@/components/InAppBrowserNotice';
 import ARHud from '@/components/ARHud';
-import { detectInAppBrowser } from '@/lib/browser';
 import { launchRealScaleAR } from '@/lib/realScaleAR';
 import { isWebXRARSupported } from '@/lib/webxr';
 import { startWebXRSession, type WebXRController } from './webxrController';
@@ -31,10 +29,9 @@ function detectSupport(): boolean {
 // -> chạy MindAR với file .mind gộp -> chĩa ảnh nào thì tự hiện nghệ nhân đó.
 export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const [supported] = useState<boolean>(detectSupport);
-  const [inApp] = useState<boolean>(detectInAppBrowser);
-  // cho phép người dùng bỏ qua cảnh báo in-app và vẫn thử (một số WebView Android chạy được)
-  const [forceProceed, setForceProceed] = useState(false);
-  const [started, setStarted] = useState(false);
+  // Tự bắt đầu quét ngay khi vào — user-gesture đã lấy ở nút "Quét AR ngay" của màn
+  // chào (cùng trang), nên không cần nút bấm thứ 2 ở đây.
+  const [started, setStarted] = useState(true);
   const [retryKey, setRetryKey] = useState(0);
   // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
   const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
@@ -159,43 +156,8 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
         className="absolute inset-0 isolate [&>video]:!absolute [&>video]:!inset-0 [&>video]:!m-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!max-w-none [&>video]:!object-cover"
       />
 
-      {/* Trình duyệt in-app (Zalo/Facebook…) không mở được camera AR -> chặn sớm,
-          hướng dẫn mở bằng Safari/Chrome. Cho phép "vẫn thử" để không khoá cứng. */}
-      {!started && supported && inApp && !forceProceed && (
-        <InAppBrowserNotice onProceed={() => setForceProceed(true)} />
-      )}
-
       {/* Đang chờ camera nhả sau khi thoát WebXR rồi bật lại MindAR */}
       {restarting && <Loading label="Đang mở lại camera…" />}
-
-      {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
-      {!started && !restarting && supported && (!inApp || forceProceed) && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
-          <h1 className="text-2xl font-semibold">Quét AR di sản</h1>
-          <p className="max-w-xs text-sm text-white/70">
-            Chĩa camera vào ảnh mốc của di sản bất kỳ — nghệ nhân sẽ tự hiện lên.
-          </p>
-          <button
-            onClick={() => setStarted(true)}
-            className="rounded-full bg-white px-8 py-3 font-medium text-black"
-          >
-            Bắt đầu quét AR
-          </button>
-          <p className="max-w-xs text-xs text-white/50">
-            Cho phép quyền camera khi được hỏi, rồi chĩa vào ảnh mốc.
-          </p>
-          {artisans[0]?.ar.markerUrl && (
-            <a
-              href={artisans[0].ar.markerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-blue-300 underline"
-            >
-              Chưa có ảnh mốc? Mở ảnh mốc mẫu để in/hiện lên màn khác ↗
-            </a>
-          )}
-        </div>
-      )}
 
       {/* Loading trong lúc khởi tạo */}
       {started &&
