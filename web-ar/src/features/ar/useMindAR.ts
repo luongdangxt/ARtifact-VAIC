@@ -59,18 +59,8 @@ export function useMindAR({ target, active }: Options) {
   const [status, setStatus] = useState<ARStatus>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // giữ instance để listener pagehide/visibilitychange có thể teardown ngay
+  // giữ instance để listener pagehide có thể teardown ngay
   const mindarRef = useRef<MindARRuntime | null>(null);
-
-  // Safari iOS: back-button đưa trang vào bfcache (đóng băng, vẫn giữ camera).
-  // Nếu trang được KHÔI PHỤC từ bfcache -> reload để mọi thứ khởi tạo sạch lại.
-  useEffect(() => {
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) window.location.reload();
-    };
-    window.addEventListener('pageshow', onPageShow);
-    return () => window.removeEventListener('pageshow', onPageShow);
-  }, []);
 
   useEffect(() => {
     if (!active) return;

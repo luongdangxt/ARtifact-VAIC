@@ -44,6 +44,14 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
       {/* MindAR chèn <video> + <canvas> vào container này */}
       <div ref={containerRef} className="absolute inset-0" />
 
+      {/* DEBUG tạm: hiển thị trạng thái để chẩn đoán camera đen. Xoá sau khi xong. */}
+      {started && (
+        <div className="absolute left-2 top-2 z-50 rounded bg-black/70 px-2 py-1 font-mono text-[11px] text-lime-300">
+          status: {status}
+          {errorMsg ? ` | ${errorMsg}` : ''}
+        </div>
+      )}
+
       {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
       {!started && supported && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
