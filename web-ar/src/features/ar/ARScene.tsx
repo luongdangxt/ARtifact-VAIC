@@ -6,7 +6,9 @@ import { useMindAR } from './useMindAR';
 import Loading from '@/components/Loading';
 import CameraPermission from '@/components/CameraPermission';
 import UnsupportedBrowser from '@/components/UnsupportedBrowser';
+import InAppBrowserNotice from '@/components/InAppBrowserNotice';
 import ARHud from '@/components/ARHud';
+import { detectInAppBrowser } from '@/lib/browser';
 
 // Kiểm tra getUserMedia + ngữ cảnh bảo mật (HTTPS/localhost).
 // ARScene chỉ chạy client (ssr:false) nên initializer này chỉ chạy trên browser -> không lo hydration mismatch.
@@ -22,6 +24,9 @@ function detectSupport(): boolean {
 // Core AR: kiểm tra hỗ trợ -> chờ user gesture (iOS) -> chạy MindAR + render loop.
 export default function ARScene({ artisan }: { artisan: Artisan }) {
   const [supported] = useState<boolean>(detectSupport);
+  const [inApp] = useState<boolean>(detectInAppBrowser);
+  // cho phép người dùng bỏ qua cảnh báo in-app và vẫn thử (một số WebView Android chạy được)
+  const [forceProceed, setForceProceed] = useState(false);
   const [started, setStarted] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
@@ -56,16 +61,14 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         className="absolute inset-0 isolate [&>video]:!absolute [&>video]:!inset-0 [&>video]:!m-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!max-w-none [&>video]:!object-cover"
       />
 
-      {/* DEBUG tạm: hiển thị trạng thái để chẩn đoán camera đen. Xoá sau khi xong. */}
-      {started && (
-        <div className="absolute left-2 top-2 z-50 rounded bg-black/70 px-2 py-1 font-mono text-[11px] text-lime-300">
-          status: {status}
-          {errorMsg ? ` | ${errorMsg}` : ''}
-        </div>
+      {/* Trình duyệt in-app (Zalo/Facebook…) không mở được camera AR -> chặn sớm,
+          hướng dẫn mở bằng Safari/Chrome. Cho phép "vẫn thử" để không khoá cứng. */}
+      {!started && supported && inApp && !forceProceed && (
+        <InAppBrowserNotice onProceed={() => setForceProceed(true)} />
       )}
 
       {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
-      {!started && supported && (
+      {!started && supported && (!inApp || forceProceed) && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
           <h1 className="text-2xl font-semibold">{artisan.name}</h1>
           <p className="max-w-xs text-sm text-white/70">{artisan.craft}</p>
