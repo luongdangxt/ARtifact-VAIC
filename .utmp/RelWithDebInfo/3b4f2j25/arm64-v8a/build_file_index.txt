@@ -1,0 +1,2 @@
+/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/CMakeLists.txt
+/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/src/main/cpp/GameActivity/CMakeLists.txt
