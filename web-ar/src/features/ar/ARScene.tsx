@@ -40,8 +40,17 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   // WebXR (Android): ghim model vào sàn thật trong web (giữ AI). iOS không hỗ trợ -> dùng native.
   const [xrSupported, setXrSupported] = useState(false);
   const [xrPhase, setXrPhase] = useState<XRPhase>('off');
+  // khoảng chờ sau khi thoát WebXR để camera (ARCore) nhả xong trước khi MindAR xin lại
+  const [restarting, setRestarting] = useState(false);
   const xrOverlayRef = useRef<HTMLDivElement>(null);
   const xrCtrlRef = useRef<WebXRController | null>(null);
+  const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (restartTimer.current) clearTimeout(restartTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -82,7 +91,14 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         onEnd: () => {
           xrCtrlRef.current = null;
           setXrPhase('off');
-          setStarted(true); // bật lại MindAR
+          // Android nhả camera ARCore không tức thì -> chờ rồi mới bật lại MindAR,
+          // nếu không getUserMedia sẽ ném NotReadableError (camera bận) -> AR chết.
+          setRestarting(true);
+          if (restartTimer.current) clearTimeout(restartTimer.current);
+          restartTimer.current = setTimeout(() => {
+            setStarted(true); // bật lại MindAR khi camera đã rảnh
+            setRestarting(false);
+          }, 700);
         },
         onError: (m) => {
           setXrPhase('off');
@@ -144,8 +160,11 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         <InAppBrowserNotice onProceed={() => setForceProceed(true)} />
       )}
 
+      {/* Đang chờ camera nhả sau khi thoát WebXR rồi bật lại MindAR */}
+      {restarting && <Loading label="Đang mở lại camera…" />}
+
       {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
-      {!started && supported && (!inApp || forceProceed) && (
+      {!started && !restarting && supported && (!inApp || forceProceed) && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
           <h1 className="text-2xl font-semibold">{artisan.name}</h1>
           <p className="max-w-xs text-sm text-white/70">{artisan.craft}</p>
