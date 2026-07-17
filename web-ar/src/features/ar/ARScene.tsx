@@ -9,6 +9,7 @@ import UnsupportedBrowser from '@/components/UnsupportedBrowser';
 import InAppBrowserNotice from '@/components/InAppBrowserNotice';
 import ARHud from '@/components/ARHud';
 import { detectInAppBrowser } from '@/lib/browser';
+import { launchRealScaleAR } from '@/lib/realScaleAR';
 
 // Kiểm tra getUserMedia + ngữ cảnh bảo mật (HTTPS/localhost).
 // ARScene chỉ chạy client (ssr:false) nên initializer này chỉ chạy trên browser -> không lo hydration mismatch.
@@ -29,6 +30,25 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   const [forceProceed, setForceProceed] = useState(false);
   const [started, setStarted] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
+  const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
+
+  // Mở model cỡ thật bằng AR gốc (Quick Look iOS / Scene Viewer Android).
+  // Model đứng yên trên sàn, user tự đi gần/xa soi chi tiết — bổ sung cho model nhỏ trên thẻ.
+  const handleViewRealScale = () => {
+    const r = launchRealScaleAR({
+      glbUrl: artisan.ar.modelRealUrl ?? artisan.ar.modelUrl,
+      usdzUrl: artisan.ar.modelUsdzUrl,
+    });
+    if (r === 'no-usdz') {
+      setRealScaleMsg(
+        'Chưa có bản model cỡ thật cho iPhone (.usdz). Hãy thử trên Android, hoặc bổ sung file USDZ.',
+      );
+    } else if (r === 'unsupported') {
+      setRealScaleMsg('Xem cỡ thật cần mở trên điện thoại iPhone hoặc Android.');
+    }
+    if (r !== 'launching') setTimeout(() => setRealScaleMsg(null), 4000);
+  };
 
   const { containerRef, status, errorMsg } = useMindAR({
     target: artisan.ar,
@@ -140,11 +160,20 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
           status={status}
           artisanName={artisan.name}
           aiEnabled={artisan.aiEnabled}
+          canRealScale
+          onViewRealScale={handleViewRealScale}
           onAskAI={() => {
             // Giai đoạn 2: mở khung chat -> askAI(). Hiện để trống chỗ.
             alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.');
           }}
         />
+      )}
+
+      {/* Thông báo ngắn khi mở "cỡ thật" không được */}
+      {realScaleMsg && (
+        <div className="absolute bottom-28 left-1/2 z-20 max-w-xs -translate-x-1/2 rounded-xl bg-black/85 px-4 py-3 text-center text-xs leading-relaxed text-white">
+          {realScaleMsg}
+        </div>
       )}
     </div>
   );

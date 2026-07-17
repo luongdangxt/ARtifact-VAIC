@@ -8,10 +8,20 @@ interface Props {
   artisanName: string;
   aiEnabled: boolean;
   onAskAI?: () => void;
+  /** Cho phép nút "Xem cỡ thật" (mở AR gốc đặt model xuống sàn theo mét thật) */
+  canRealScale?: boolean;
+  onViewRealScale?: () => void;
 }
 
 // Overlay: nút back, hint "chĩa vào ảnh", nút hỏi AI (Giai đoạn 2).
-export default function ARHud({ status, artisanName, aiEnabled, onAskAI }: Props) {
+export default function ARHud({
+  status,
+  artisanName,
+  aiEnabled,
+  onAskAI,
+  canRealScale,
+  onViewRealScale,
+}: Props) {
   const scanning = status === 'scanning';
   const tracking = status === 'tracking';
 
@@ -40,8 +50,16 @@ export default function ARHud({ status, artisanName, aiEnabled, onAskAI }: Props
         </div>
       )}
 
-      {/* Bottom: nút hỏi AI (GĐ2) */}
-      <div className="flex justify-center">
+      {/* Bottom: nút "Xem cỡ thật" + nút hỏi AI (GĐ2) */}
+      <div className="flex flex-col items-center gap-3">
+        {canRealScale && (scanning || tracking) && (
+          <button
+            onClick={onViewRealScale}
+            className="pointer-events-auto rounded-full bg-white px-6 py-3 text-sm font-semibold text-black shadow-lg"
+          >
+            🧍 Xem cỡ thật
+          </button>
+        )}
         {aiEnabled && tracking && (
           <button
             onClick={onAskAI}
