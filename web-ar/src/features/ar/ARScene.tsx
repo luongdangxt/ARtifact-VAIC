@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Artisan } from '@/lib/types';
 import { useMindAR } from './useMindAR';
 import Loading from '@/components/Loading';
@@ -10,6 +10,10 @@ import InAppBrowserNotice from '@/components/InAppBrowserNotice';
 import ARHud from '@/components/ARHud';
 import { detectInAppBrowser } from '@/lib/browser';
 import { launchRealScaleAR } from '@/lib/realScaleAR';
+import { isWebXRARSupported } from '@/lib/webxr';
+import { startWebXRSession, type WebXRController } from './webxrController';
+
+type XRPhase = 'off' | 'searching' | 'placed';
 
 // Kiểm tra getUserMedia + ngữ cảnh bảo mật (HTTPS/localhost).
 // ARScene chỉ chạy client (ssr:false) nên initializer này chỉ chạy trên browser -> không lo hydration mismatch.
@@ -33,13 +37,66 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
   const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
 
-  // Mở model cỡ thật bằng AR gốc (Quick Look iOS / Scene Viewer Android).
-  // Model đứng yên trên sàn, user tự đi gần/xa soi chi tiết — bổ sung cho model nhỏ trên thẻ.
+  // WebXR (Android): ghim model vào sàn thật trong web (giữ AI). iOS không hỗ trợ -> dùng native.
+  const [xrSupported, setXrSupported] = useState(false);
+  const [xrPhase, setXrPhase] = useState<XRPhase>('off');
+  const xrOverlayRef = useRef<HTMLDivElement>(null);
+  const xrCtrlRef = useRef<WebXRController | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    isWebXRARSupported().then((ok) => alive && setXrSupported(ok));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Kết thúc phiên WebXR nếu component bị gỡ (rời trang) khi đang trong AR.
+  useEffect(() => {
+    return () => xrCtrlRef.current?.end();
+  }, []);
+
+  // Chặn tap vào NÚT overlay bị tính là "select" đặt model của WebXR.
+  useEffect(() => {
+    const el = xrOverlayRef.current;
+    if (!el || xrPhase === 'off') return;
+    const block = (e: Event) => {
+      if ((e.target as HTMLElement)?.closest('[data-xr-ui]')) e.preventDefault();
+    };
+    el.addEventListener('beforexrselect', block);
+    return () => el.removeEventListener('beforexrselect', block);
+  }, [xrPhase]);
+
+  // Mở model cỡ thật. Android hỗ trợ WebXR -> ghim vào sàn NGAY TRONG web (giữ AI).
+  // Còn lại (iOS...) -> AR gốc: Quick Look (iOS) / Scene Viewer (Android cũ).
   const handleViewRealScale = () => {
-    const r = launchRealScaleAR({
-      glbUrl: artisan.ar.modelRealUrl ?? artisan.ar.modelUrl,
-      usdzUrl: artisan.ar.modelUsdzUrl,
-    });
+    const glbUrl = artisan.ar.modelRealUrl ?? artisan.ar.modelUrl;
+
+    if (xrSupported && xrOverlayRef.current) {
+      setXrPhase('searching');
+      // requestSession phải nằm trong user-gesture -> gọi ngay, không await trước.
+      startWebXRSession(glbUrl, xrOverlayRef.current, {
+        onSessionStart: () => setStarted(false), // nhường camera từ MindAR
+        onSearching: () => setXrPhase('searching'),
+        onPlaced: () => setXrPhase('placed'),
+        onEnd: () => {
+          xrCtrlRef.current = null;
+          setXrPhase('off');
+          setStarted(true); // bật lại MindAR
+        },
+        onError: (m) => {
+          setXrPhase('off');
+          setRealScaleMsg(m);
+          setTimeout(() => setRealScaleMsg(null), 4000);
+        },
+      }).then((ctrl) => {
+        if (ctrl) xrCtrlRef.current = ctrl;
+      });
+      return;
+    }
+
+    // Fallback: AR gốc của thiết bị.
+    const r = launchRealScaleAR({ glbUrl, usdzUrl: artisan.ar.modelUsdzUrl });
     if (r === 'no-usdz') {
       setRealScaleMsg(
         'Chưa có bản model cỡ thật cho iPhone (.usdz). Hãy thử trên Android, hoặc bổ sung file USDZ.',
@@ -175,6 +232,55 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
           {realScaleMsg}
         </div>
       )}
+
+      {/* Overlay của WebXR (dom-overlay). LUÔN render để làm root + giữ ref; khi 'off'
+          là div rỗng, pointer-events-none nên không chắn UI MindAR phía dưới. */}
+      <div ref={xrOverlayRef} className="pointer-events-none absolute inset-0 z-40">
+        {xrPhase !== 'off' && (
+          <div className="flex h-full flex-col justify-between p-4">
+            <div className="flex justify-end">
+              <button
+                data-xr-ui
+                onClick={() => xrCtrlRef.current?.end()}
+                className="pointer-events-auto rounded-full bg-black/60 px-4 py-2 text-sm text-white backdrop-blur"
+              >
+                ✕ Thoát AR
+              </button>
+            </div>
+
+            {xrPhase === 'searching' && (
+              <div className="mx-auto mb-6 max-w-xs rounded-xl bg-black/60 px-4 py-3 text-center text-sm text-white backdrop-blur">
+                Di chuyển điện thoại quét mặt sàn. Thấy vòng tròn xanh thì
+                <span className="font-semibold"> chạm để đặt</span> nhân vật.
+              </div>
+            )}
+
+            {xrPhase === 'placed' && (
+              <div className="flex flex-col items-center gap-3">
+                {artisan.aiEnabled && (
+                  <button
+                    data-xr-ui
+                    onClick={() => alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.')}
+                    className="pointer-events-auto rounded-full bg-white px-6 py-3 text-sm font-medium text-black shadow-lg"
+                  >
+                    💬 Hỏi nghệ nhân
+                  </button>
+                )}
+                <button
+                  data-xr-ui
+                  onClick={() => {
+                    xrCtrlRef.current?.replace();
+                    setXrPhase('searching');
+                  }}
+                  className="pointer-events-auto rounded-full bg-black/60 px-6 py-2.5 text-sm font-medium text-white backdrop-blur"
+                >
+                  ↺ Đặt lại vị trí
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
