@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 // Load + cache model .glb. Nếu load lỗi (thiếu file, sai format) -> trả placeholder
 // để Phase 0 vẫn chạy được mà không cần asset thật.
@@ -45,6 +46,16 @@ export function loadModel(url: string): Promise<THREE.Group> {
 
   cache.set(url, promise);
   return promise;
+}
+
+// Bản SAO mới của model từ cache. BẮT BUỘC clone trước khi normalizeModel vì
+// loadModel trả về CÙNG một instance (đã cache) mỗi lần, còn normalizeModel thì
+// MUTATE (dịch tâm + reparent). Nếu dùng thẳng instance cache, lần khởi tạo lại
+// (vd thoát Quick Look rồi bật lại MindAR) sẽ normalize lần 2 lên object đã bị
+// biến đổi -> model lệch/biến mất dù anchor vẫn track. clone của SkeletonUtils
+// giữ đúng cả model có xương (nhân vật người), dùng chung geometry/material nên nhẹ.
+export function cloneModel(model: THREE.Group): THREE.Group {
+  return cloneSkinned(model) as THREE.Group;
 }
 
 // Chuẩn hoá kích thước model về ~`scale` đơn vị và căn TÂM về gốc anchor.

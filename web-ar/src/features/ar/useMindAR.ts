@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
 import type { Artisan } from '@/lib/types';
-import { loadModel, normalizeModel } from './modelLoader';
+import { loadModel, cloneModel, normalizeModel } from './modelLoader';
 
 export type ARStatus =
   | 'idle'
@@ -72,6 +72,9 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
 
   // giữ instance để listener pagehide có thể teardown ngay
   const mindarRef = useRef<MindARRuntime | null>(null);
+  // true khi đang tạm dừng để nhường camera cho AR gốc (Quick Look / Scene Viewer):
+  // KHÔNG teardown instance (giữ renderer/scene/model) để resume() bật lại camera là hiện ngay.
+  const pausedRef = useRef(false);
 
   // Nghệ nhân đang hiển thị — suy từ activeIndex để HUD / "xem cỡ thật" dùng đúng dữ liệu.
   const activeArtisan = useMemo(
@@ -91,7 +94,12 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
     // trên cả iOS & Android và KHÔNG fire khi hộp thoại xin quyền camera bật lên.
     // (Trước đây dùng visibilitychange -> nó fire lúc xin quyền -> teardown giữa chừng ->
     //  gỡ mất thẻ <video> -> camera đen. Bỏ hẳn.)
-    const releaseOnHide = () => teardownMindAR(mindarRef.current);
+    const releaseOnHide = () => {
+      // Đang mở AR gốc (paused): camera đã stop rồi, GIỮ instance để resume() dùng lại
+      // renderer/scene/model đã có. Nếu teardown ở đây thì lúc quay về model sẽ mất.
+      if (pausedRef.current) return;
+      teardownMindAR(mindarRef.current);
+    };
     window.addEventListener('pagehide', releaseOnHide);
 
     (async () => {
@@ -126,7 +134,10 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
 
         // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
         artisans.forEach((artisan, i) => {
-          const model = normalizeModel(rawModels[i], artisan.ar.scale, artisan.ar.offset, {
+          // clone: rawModels[i] là instance cache dùng chung; normalizeModel MUTATE nó,
+          // nên phải normalize trên BẢN SAO, nếu không lần khởi tạo lại (thoát Quick Look)
+          // sẽ normalize lần 2 lên object đã biến đổi -> model biến mất dù vẫn track.
+          const model = normalizeModel(cloneModel(rawModels[i]), artisan.ar.scale, artisan.ar.offset, {
             rotationDeg: artisan.ar.rotationDeg,
             groundAlign: artisan.ar.groundAlign,
           });
@@ -206,5 +217,41 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
     };
   }, [active, targetSrc, artisans]);
 
-  return { containerRef, status, errorMsg, activeArtisan };
+  // Tạm dừng để nhường camera cho AR gốc (Quick Look iOS / Scene Viewer Android).
+  // Dùng mindar.stop(): chỉ tắt camera + controller, GIỮ NGUYÊN renderer/WebGL context/
+  // scene/model (giống switchCamera của MindAR). Nhờ vậy không tạo context WebGL thứ 2
+  // trên iOS -> quay lại vẫn render được model (teardown+dựng-mới thì model biến mất).
+  const pause = useCallback(() => {
+    const m = mindarRef.current;
+    if (!m) return;
+    pausedRef.current = true;
+    try { (m as unknown as { stop: () => void }).stop(); } catch { /* noop */ }
+    setActiveIndex(null);
+    setStatus('idle');
+  }, []);
+
+  // Bật lại camera trên CHÍNH instance cũ (mindar.start()). Phải gọi trong user-gesture
+  // (cú chạm nút "Quét tiếp") vì iOS cần gesture cho getUserMedia. Model vẫn nằm trong
+  // scene từ trước nên hiện lại ngay khi track được.
+  const resume = useCallback(async () => {
+    const m = mindarRef.current;
+    if (!m) return;
+    pausedRef.current = false;
+    setStatus('starting');
+    setErrorMsg(null);
+    try {
+      await (m as unknown as { start: () => Promise<void> }).start();
+      setStatus('scanning');
+    } catch (err) {
+      const name = (err as { name?: string })?.name;
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setStatus('denied');
+      } else {
+        setStatus('error');
+        setErrorMsg((err as Error)?.message ?? 'Lỗi mở lại camera');
+      }
+    }
+  }, []);
+
+  return { containerRef, status, errorMsg, activeArtisan, pause, resume };
 }

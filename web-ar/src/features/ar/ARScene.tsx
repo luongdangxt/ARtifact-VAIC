@@ -124,13 +124,14 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
     // Fallback: AR gốc của thiết bị (iOS Quick Look / Android Scene Viewer cũ).
     const r = launchRealScaleAR({ glbUrl, usdzUrl: activeArtisan.ar.modelUsdzUrl });
     if (r === 'launching') {
-      // AR gốc sắp chiếm camera. TẮT MindAR để nhả camera cho nó. KHÔNG tự bật lại theo
-      // sự kiện: iOS Quick Look là modal TRONG Safari, không fire visibilitychange/focus
-      // đáng tin khi đóng, và getUserMedia gọi lại mà không có cú chạm của user sẽ bị iOS
-      // chặn -> đứng hình. Thay vào đó bật overlay "chạm để quét tiếp" (đã nằm sẵn dưới
-      // Quick Look); user thoát ra thấy nó, chạm = user-gesture để mở lại camera chắc chắn.
+      // AR gốc sắp chiếm camera. pause() = mindar.stop(): nhả camera nhưng GIỮ instance
+      // (renderer/scene/model). KHÔNG tự bật lại theo sự kiện: iOS Quick Look là modal
+      // TRONG Safari, không fire visibilitychange/focus đáng tin khi đóng, và getUserMedia
+      // gọi lại mà không có cú chạm của user sẽ bị iOS chặn -> đứng hình. Thay vào đó bật
+      // overlay "chạm để quét tiếp" (nằm sẵn dưới Quick Look); user thoát ra chạm =
+      // user-gesture để resume() mở lại camera chắc chắn, model hiện lại ngay.
+      pause();
       setNativeAR(true);
-      setStarted(false);
       return;
     }
     if (r === 'no-usdz') {
@@ -143,7 +144,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
     setTimeout(() => setRealScaleMsg(null), 4000);
   };
 
-  const { containerRef, status, errorMsg, activeArtisan } = useMindAR({
+  const { containerRef, status, errorMsg, activeArtisan, pause, resume } = useMindAR({
     artisans,
     targetSrc: TARGETS_MIND,
     // active phụ thuộc started (user gesture) + retryKey để thử lại sau khi bị từ chối
@@ -190,7 +191,9 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
           <button
             onClick={() => {
               setNativeAR(false);
-              setStarted(true); // gesture của cú chạm này mở lại camera MindAR
+              // gesture của cú chạm này mở lại camera trên CHÍNH instance MindAR cũ
+              // (model vẫn còn trong scene -> hiện lại ngay khi track được).
+              void resume();
             }}
             className="rounded-full bg-white px-8 py-3 text-base font-semibold text-black shadow-lg active:scale-95"
           >
