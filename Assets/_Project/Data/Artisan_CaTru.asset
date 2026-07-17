@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10327027e991f02ed80635b6ea1ef9fd, type: 3}
+  m_Name: Artisan_CaTru
+  m_EditorClassIdentifier: ARtifact.Heritage::ARtifact.Heritage.HeritageArtisan
+  _id: ca-tru
+  _displayName: "Ngh\u1EC7 nh\xE2n Ca tr\xF9"
+  _referenceImageName: ca-tru-marker
+  _prefab: {fileID: 6814018889407220215, guid: 1d80a113c521dd91591e4d6bd02a3f8a, type: 3}
+  _description: "Ca tr\xF9 l\xE0 lo\u1EA1i h\xECnh ngh\u1EC7 thu\u1EADt ca h\xE1t
+    c\u1ED5 truy\u1EC1n c\u1EE7a Vi\u1EC7t Nam, k\u1EBFt h\u1EE3p th\u01A1 ca, \xE2m
+    nh\u1EA1c v\xE0 gi\u1ECDng h\xE1t \u0111\xE0o n\u01B0\u01A1ng c\xF9ng ti\u1EBFng
+    ph\xE1ch, \u0111\xE0n \u0111\xE1y v\xE0 tr\u1ED1ng ch\u1EA7u. \u0110\u01B0\u1EE3c
+    UNESCO ghi danh l\xE0 Di s\u1EA3n v\u0103n h\xF3a phi v\u1EADt th\u1EC3 c\u1EA7n
+    b\u1EA3o v\u1EC7 kh\u1EA9n c\u1EA5p n\u0103m 2009."

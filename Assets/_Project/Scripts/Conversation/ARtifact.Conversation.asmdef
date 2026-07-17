@@ -1,0 +1,16 @@
+{
+    "name": "ARtifact.Conversation",
+    "rootNamespace": "ARtifact.Conversation",
+    "references": [
+        "ARtifact.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

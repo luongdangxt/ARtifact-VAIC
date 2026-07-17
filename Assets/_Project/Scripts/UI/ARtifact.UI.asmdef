@@ -1,0 +1,18 @@
+{
+    "name": "ARtifact.UI",
+    "rootNamespace": "ARtifact.UI",
+    "references": [
+        "ARtifact.Core",
+        "ARtifact.Heritage",
+        "ARtifact.Conversation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

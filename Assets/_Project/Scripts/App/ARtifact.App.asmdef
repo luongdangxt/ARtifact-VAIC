@@ -1,0 +1,23 @@
+{
+    "name": "ARtifact.App",
+    "rootNamespace": "ARtifact.App",
+    "references": [
+        "ARtifact.Core",
+        "ARtifact.Heritage",
+        "ARtifact.AR",
+        "ARtifact.Avatar",
+        "ARtifact.Conversation",
+        "ARtifact.UI",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.CoreUtils"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

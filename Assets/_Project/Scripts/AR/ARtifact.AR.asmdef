@@ -1,0 +1,21 @@
+{
+    "name": "ARtifact.AR",
+    "rootNamespace": "ARtifact.AR",
+    "references": [
+        "ARtifact.Core",
+        "ARtifact.Heritage",
+        "ARtifact.Avatar",
+        "Unity.XR.ARFoundation",
+        "Unity.XR.ARSubsystems",
+        "Unity.XR.CoreUtils"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
