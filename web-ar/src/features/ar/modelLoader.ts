@@ -47,8 +47,12 @@ export function loadModel(url: string): Promise<THREE.Group> {
   return promise;
 }
 
-// Chuẩn hoá kích thước model về ~1 đơn vị rồi áp scale mong muốn,
-// và căn tâm theo đáy để offset y đẩy model nổi lên khỏi mặt card.
+// Chuẩn hoá kích thước model về ~`scale` đơn vị và căn TÂM về gốc anchor.
+// Cấu trúc lồng nhau QUAN TRỌNG: model được dịch -center ở scale gốc (căn tâm),
+// rồi group `scaler` mới scale toàn bộ. Nếu scale thẳng lên `model` sau khi
+// .position.sub(center) thì phần dịch tâm KHÔNG được scale theo (three.js áp
+// scale trước, position sau) -> model lệch khỏi tâm. Lồng group để scale bọc
+// luôn cả phép dịch tâm.
 export function normalizeModel(
   model: THREE.Group,
   scale: number,
@@ -63,10 +67,14 @@ export function normalizeModel(
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const unit = scale / maxDim;
 
+  model.position.sub(center); // căn tâm hình học về gốc (ở scale gốc)
+
+  const scaler = new THREE.Group();
+  scaler.add(model);
+  scaler.scale.setScalar(unit); // scale bọc cả phép dịch tâm -> tâm vẫn ở gốc
+
   const wrapper = new THREE.Group();
-  model.position.sub(center); // đưa tâm về gốc
-  model.scale.setScalar(unit);
-  wrapper.add(model);
+  wrapper.add(scaler);
   wrapper.position.set(offset[0], offset[1], offset[2]);
   return wrapper;
 }

@@ -19,7 +19,9 @@ export const artisans: Artisan[] = [
       modelUrl: '/models/sample.glb',
       markerUrl: '/markers/sample-card.png',
       scale: 0.3,
-      offset: [0, 0.35, 0],
+      // offset trong hệ ảnh-mốc: X phải, Y lên (TRONG mặt phẳng card), Z nhô khỏi card.
+      // Để model nằm ĐÚNG giữa mốc -> [0,0,0]. Muốn nhấc khỏi mặt card thì tăng Z (vd 0.1).
+      offset: [0, 0, 0],
     },
     aiEnabled: false,
   },
