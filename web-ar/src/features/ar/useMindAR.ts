@@ -91,7 +91,10 @@ export function useMindAR({ target, active }: Options) {
         ]);
         if (cancelled) return;
 
-        const model = normalizeModel(raw, target.scale, target.offset);
+        const model = normalizeModel(raw, target.scale, target.offset, {
+          rotationDeg: target.rotationDeg,
+          groundAlign: target.groundAlign,
+        });
 
         const mindar = new MindARThree({
           container,

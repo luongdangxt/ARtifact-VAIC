@@ -53,10 +53,18 @@ export function loadModel(url: string): Promise<THREE.Group> {
 // .position.sub(center) thì phần dịch tâm KHÔNG được scale theo (three.js áp
 // scale trước, position sau) -> model lệch khỏi tâm. Lồng group để scale bọc
 // luôn cả phép dịch tâm.
+export interface NormalizeOptions {
+  /** Xoay model (độ) — vd [90,0,0] để dựng đứng người khỏi thẻ nằm ngang. */
+  rotationDeg?: [number, number, number];
+  /** Hạ đáy model chạm mặt phẳng thẻ (chân chạm đất) thay vì căn tâm. */
+  groundAlign?: boolean;
+}
+
 export function normalizeModel(
   model: THREE.Group,
   scale: number,
   offset: [number, number, number],
+  opts?: NormalizeOptions,
 ): THREE.Group {
   const box = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
@@ -73,8 +81,27 @@ export function normalizeModel(
   scaler.add(model);
   scaler.scale.setScalar(unit); // scale bọc cả phép dịch tâm -> tâm vẫn ở gốc
 
+  // Xoay dựng đứng (nếu có) — áp trên scaler nên quay quanh tâm đã căn.
+  if (opts?.rotationDeg) {
+    const d = Math.PI / 180;
+    scaler.rotation.set(
+      opts.rotationDeg[0] * d,
+      opts.rotationDeg[1] * d,
+      opts.rotationDeg[2] * d,
+    );
+  }
+
   const wrapper = new THREE.Group();
   wrapper.add(scaler);
+
+  // Hạ đáy chạm mặt phẳng thẻ: tính lại bounding box SAU khi xoay+scale, dịch
+  // scaler dọc trục pháp tuyến thẻ (Z) sao cho đáy (min.z) = 0 -> chân đứng trên thẻ.
+  if (opts?.groundAlign) {
+    wrapper.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(scaler);
+    scaler.position.z -= b.min.z;
+  }
+
   wrapper.position.set(offset[0], offset[1], offset[2]);
   return wrapper;
 }
