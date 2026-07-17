@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Artisan } from '@/lib/types';
+import { TARGETS_MIND } from '@/data/artisans';
 import { useMindAR } from './useMindAR';
 import Loading from '@/components/Loading';
 import CameraPermission from '@/components/CameraPermission';
@@ -26,8 +27,9 @@ function detectSupport(): boolean {
   return hasMedia && secure;
 }
 
-// Core AR: kiểm tra hỗ trợ -> chờ user gesture (iOS) -> chạy MindAR + render loop.
-export default function ARScene({ artisan }: { artisan: Artisan }) {
+// Core AR (máy quét chung, đa target): kiểm tra hỗ trợ -> chờ user gesture (iOS)
+// -> chạy MindAR với file .mind gộp -> chĩa ảnh nào thì tự hiện nghệ nhân đó.
+export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const [supported] = useState<boolean>(detectSupport);
   const [inApp] = useState<boolean>(detectInAppBrowser);
   // cho phép người dùng bỏ qua cảnh báo in-app và vẫn thử (một số WebView Android chạy được)
@@ -79,7 +81,9 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   // Mở model cỡ thật. Android hỗ trợ WebXR -> ghim vào sàn NGAY TRONG web (giữ AI).
   // Còn lại (iOS...) -> AR gốc: Quick Look (iOS) / Scene Viewer (Android cũ).
   const handleViewRealScale = () => {
-    const glbUrl = artisan.ar.modelRealUrl ?? artisan.ar.modelUrl;
+    // Chỉ mở "cỡ thật" khi đang thấy 1 nghệ nhân (nút chỉ hiện lúc tracking).
+    if (!activeArtisan) return;
+    const glbUrl = activeArtisan.ar.modelRealUrl ?? activeArtisan.ar.modelUrl;
 
     if (xrSupported && xrOverlayRef.current) {
       setXrPhase('searching');
@@ -112,7 +116,7 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
     }
 
     // Fallback: AR gốc của thiết bị.
-    const r = launchRealScaleAR({ glbUrl, usdzUrl: artisan.ar.modelUsdzUrl });
+    const r = launchRealScaleAR({ glbUrl, usdzUrl: activeArtisan.ar.modelUsdzUrl });
     if (r === 'no-usdz') {
       setRealScaleMsg(
         'Chưa có bản model cỡ thật cho iPhone (.usdz). Hãy thử trên Android, hoặc bổ sung file USDZ.',
@@ -123,8 +127,9 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
     if (r !== 'launching') setTimeout(() => setRealScaleMsg(null), 4000);
   };
 
-  const { containerRef, status, errorMsg } = useMindAR({
-    target: artisan.ar,
+  const { containerRef, status, errorMsg, activeArtisan } = useMindAR({
+    artisans,
+    targetSrc: TARGETS_MIND,
     // active phụ thuộc started (user gesture) + retryKey để thử lại sau khi bị từ chối
     active: started,
   });
@@ -166,8 +171,10 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
       {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
       {!started && !restarting && supported && (!inApp || forceProceed) && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
-          <h1 className="text-2xl font-semibold">{artisan.name}</h1>
-          <p className="max-w-xs text-sm text-white/70">{artisan.craft}</p>
+          <h1 className="text-2xl font-semibold">Quét AR di sản</h1>
+          <p className="max-w-xs text-sm text-white/70">
+            Chĩa camera vào ảnh mốc của di sản bất kỳ — nghệ nhân sẽ tự hiện lên.
+          </p>
           <button
             onClick={() => setStarted(true)}
             className="rounded-full bg-white px-8 py-3 font-medium text-black"
@@ -177,14 +184,14 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
           <p className="max-w-xs text-xs text-white/50">
             Cho phép quyền camera khi được hỏi, rồi chĩa vào ảnh mốc.
           </p>
-          {artisan.ar.markerUrl && (
+          {artisans[0]?.ar.markerUrl && (
             <a
-              href={artisan.ar.markerUrl}
+              href={artisans[0].ar.markerUrl}
               target="_blank"
               rel="noreferrer"
               className="text-xs text-blue-300 underline"
             >
-              Chưa có ảnh mốc? Mở ảnh mốc để in/hiện lên màn khác ↗
+              Chưa có ảnh mốc? Mở ảnh mốc mẫu để in/hiện lên màn khác ↗
             </a>
           )}
         </div>
@@ -234,9 +241,9 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         <ARHud
           key={retryKey}
           status={status}
-          artisanName={artisan.name}
-          aiEnabled={artisan.aiEnabled}
-          canRealScale
+          artisanName={activeArtisan?.name}
+          aiEnabled={activeArtisan?.aiEnabled ?? false}
+          canRealScale={!!activeArtisan}
           onViewRealScale={handleViewRealScale}
           onAskAI={() => {
             // Giai đoạn 2: mở khung chat -> askAI(). Hiện để trống chỗ.
@@ -276,7 +283,7 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
 
             {xrPhase === 'placed' && (
               <div className="flex flex-col items-center gap-3">
-                {artisan.aiEnabled && (
+                {activeArtisan?.aiEnabled && (
                   <button
                     data-xr-ui
                     onClick={() => alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.')}

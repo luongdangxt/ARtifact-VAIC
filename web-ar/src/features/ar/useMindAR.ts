@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
-import type { ARTarget } from '@/lib/types';
+import type { Artisan } from '@/lib/types';
 import { loadModel, normalizeModel } from './modelLoader';
 
 export type ARStatus =
@@ -15,7 +15,10 @@ export type ARStatus =
   | 'error';
 
 interface Options {
-  target: ARTarget;
+  /** Danh sách nghệ nhân — mỗi người 1 targetIndex trong file .mind gộp */
+  artisans: Artisan[];
+  /** Đường dẫn file .mind GỘP dùng chung cho mọi target */
+  targetSrc: string;
   /** bật/tắt AR (vd chỉ start sau khi user bấm nút — cần user gesture cho iOS) */
   active: boolean;
 }
@@ -57,14 +60,24 @@ function teardownMindAR(m: MindARRuntime | null) {
 }
 
 // Khởi tạo MindAR + three, load model, gắn anchor, chạy render loop.
+// ĐA TARGET: 1 file .mind gộp, mỗi nghệ nhân 1 anchor theo targetIndex. Chĩa vào
+// ảnh nào thì anchor đó onTargetFound -> đặt activeIndex = nghệ nhân tương ứng.
 // Dọn dẹp (stop camera + dispose) khi rời trang / active=false để tránh treo camera & memory leak.
-export function useMindAR({ target, active }: Options) {
+export function useMindAR({ artisans, targetSrc, active }: Options) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<ARStatus>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // targetIndex của nghệ nhân đang được camera thấy (null = chưa thấy ai)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // giữ instance để listener pagehide có thể teardown ngay
   const mindarRef = useRef<MindARRuntime | null>(null);
+
+  // Nghệ nhân đang hiển thị — suy từ activeIndex để HUD / "xem cỡ thật" dùng đúng dữ liệu.
+  const activeArtisan = useMemo(
+    () => (activeIndex == null ? null : artisans.find((a) => a.targetIndex === activeIndex) ?? null),
+    [activeIndex, artisans],
+  );
 
   useEffect(() => {
     if (!active) return;
@@ -86,22 +99,18 @@ export function useMindAR({ target, active }: Options) {
         setStatus('loading');
         setErrorMsg(null);
 
-        // import động: mind-ar chỉ chạy client, tránh SSR đụng window/document
-        const [{ MindARThree }, THREE, raw] = await Promise.all([
+        // import động: mind-ar chỉ chạy client, tránh SSR đụng window/document.
+        // Preload model của TẤT CẢ nghệ nhân song song (theo thứ tự artisans[]).
+        const [{ MindARThree }, THREE, ...rawModels] = await Promise.all([
           import('mind-ar/dist/mindar-image-three.prod.js'),
           import('three'),
-          loadModel(target.modelUrl),
+          ...artisans.map((a) => loadModel(a.ar.modelUrl)),
         ]);
         if (cancelled) return;
 
-        const model = normalizeModel(raw, target.scale, target.offset, {
-          rotationDeg: target.rotationDeg,
-          groundAlign: target.groundAlign,
-        });
-
         const mindar = new MindARThree({
           container,
-          imageTargetSrc: target.targetUrl,
+          imageTargetSrc: targetSrc, // file .mind GỘP chứa mọi ảnh mốc
           uiScanning: false, // tự làm HUD hint
           uiLoading: false,
         }) as MindARRuntime;
@@ -115,10 +124,27 @@ export function useMindAR({ target, active }: Options) {
         dir.position.set(0.5, 1, 1);
         scene.add(hemi, dir);
 
-        const anchor = mindar.addAnchor(0);
-        anchor.group.add(model);
-        anchor.onTargetFound = () => !cancelled && setStatus('tracking');
-        anchor.onTargetLost = () => !cancelled && setStatus('scanning');
+        // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
+        artisans.forEach((artisan, i) => {
+          const model = normalizeModel(rawModels[i], artisan.ar.scale, artisan.ar.offset, {
+            rotationDeg: artisan.ar.rotationDeg,
+            groundAlign: artisan.ar.groundAlign,
+          });
+          const anchor = mindar.addAnchor(artisan.targetIndex);
+          anchor.group.add(model);
+          anchor.onTargetFound = () => {
+            if (cancelled) return;
+            setActiveIndex(artisan.targetIndex);
+            setStatus('tracking');
+          };
+          anchor.onTargetLost = () => {
+            if (cancelled) return;
+            // chỉ về 'scanning' nếu đúng người đang hiển thị bị mất (maxTrack=1 nên
+            // thường chỉ 1 anchor active, nhưng vẫn kiểm tra cho chắc)
+            setActiveIndex((cur) => (cur === artisan.targetIndex ? null : cur));
+            setStatus((s) => (s === 'tracking' ? 'scanning' : s));
+          };
+        });
 
         setStatus('starting');
         await mindar.start(); // mở camera (cần HTTPS / user gesture trên iOS)
@@ -176,8 +202,9 @@ export function useMindAR({ target, active }: Options) {
       window.removeEventListener('pagehide', releaseOnHide);
       teardownMindAR(mindarRef.current);
       mindarRef.current = null;
+      setActiveIndex(null);
     };
-  }, [active, target]);
+  }, [active, targetSrc, artisans]);
 
-  return { containerRef, status, errorMsg };
+  return { containerRef, status, errorMsg, activeArtisan };
 }
