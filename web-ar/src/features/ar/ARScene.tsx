@@ -41,8 +41,10 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-black">
-      {/* MindAR chèn <video> + <canvas> vào container này */}
-      <div ref={containerRef} className="absolute inset-0" />
+      {/* MindAR chèn <video> (z-index:-2) + <canvas> vào container này.
+          `isolate` tạo stacking context riêng để video z-index:-2 KHÔNG bị nền
+          bg-black của div cha che mất -> nếu thiếu, camera hiện đen. */}
+      <div ref={containerRef} className="absolute inset-0 isolate" />
 
       {/* DEBUG tạm: hiển thị trạng thái để chẩn đoán camera đen. Xoá sau khi xong. */}
       {started && (
