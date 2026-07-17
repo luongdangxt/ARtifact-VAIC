@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artisan } from '@/lib/types';
 import { TARGETS_MIND } from '@/data/artisans';
 import { useMindAR } from './useMindAR';
@@ -44,11 +44,25 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const xrOverlayRef = useRef<HTMLDivElement>(null);
   const xrCtrlRef = useRef<WebXRController | null>(null);
   const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Đã mở AR gốc (Quick Look iOS / Scene Viewer Android) và đang chờ user thoát ra.
+  // Khi bật, MindAR đã tắt (nhả camera cho AR gốc) và hiện overlay "chạm để quét tiếp".
+  const [nativeAR, setNativeAR] = useState(false);
 
   useEffect(() => {
     return () => {
       if (restartTimer.current) clearTimeout(restartTimer.current);
     };
+  }, []);
+
+  // Bật lại MindAR sau một khoảng chờ để camera (ARCore / Quick Look) nhả xong hẳn;
+  // nếu xin lại getUserMedia ngay khi camera còn bận -> NotReadableError -> AR chết.
+  const scheduleRestart = useCallback((delayMs: number) => {
+    setRestarting(true);
+    if (restartTimer.current) clearTimeout(restartTimer.current);
+    restartTimer.current = setTimeout(() => {
+      setStarted(true);
+      setRestarting(false);
+    }, delayMs);
   }, []);
 
   useEffect(() => {
@@ -94,12 +108,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
           setXrPhase('off');
           // Android nhả camera ARCore không tức thì -> chờ rồi mới bật lại MindAR,
           // nếu không getUserMedia sẽ ném NotReadableError (camera bận) -> AR chết.
-          setRestarting(true);
-          if (restartTimer.current) clearTimeout(restartTimer.current);
-          restartTimer.current = setTimeout(() => {
-            setStarted(true); // bật lại MindAR khi camera đã rảnh
-            setRestarting(false);
-          }, 700);
+          scheduleRestart(700);
         },
         onError: (m) => {
           setXrPhase('off');
@@ -112,8 +121,18 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
       return;
     }
 
-    // Fallback: AR gốc của thiết bị.
+    // Fallback: AR gốc của thiết bị (iOS Quick Look / Android Scene Viewer cũ).
     const r = launchRealScaleAR({ glbUrl, usdzUrl: activeArtisan.ar.modelUsdzUrl });
+    if (r === 'launching') {
+      // AR gốc sắp chiếm camera. TẮT MindAR để nhả camera cho nó. KHÔNG tự bật lại theo
+      // sự kiện: iOS Quick Look là modal TRONG Safari, không fire visibilitychange/focus
+      // đáng tin khi đóng, và getUserMedia gọi lại mà không có cú chạm của user sẽ bị iOS
+      // chặn -> đứng hình. Thay vào đó bật overlay "chạm để quét tiếp" (đã nằm sẵn dưới
+      // Quick Look); user thoát ra thấy nó, chạm = user-gesture để mở lại camera chắc chắn.
+      setNativeAR(true);
+      setStarted(false);
+      return;
+    }
     if (r === 'no-usdz') {
       setRealScaleMsg(
         'Chưa có bản model cỡ thật cho iPhone (.usdz). Hãy thử trên Android, hoặc bổ sung file USDZ.',
@@ -121,7 +140,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
     } else if (r === 'unsupported') {
       setRealScaleMsg('Xem cỡ thật cần mở trên điện thoại iPhone hoặc Android.');
     }
-    if (r !== 'launching') setTimeout(() => setRealScaleMsg(null), 4000);
+    setTimeout(() => setRealScaleMsg(null), 4000);
   };
 
   const { containerRef, status, errorMsg, activeArtisan } = useMindAR({
@@ -158,6 +177,27 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
 
       {/* Đang chờ camera nhả sau khi thoát WebXR rồi bật lại MindAR */}
       {restarting && <Loading label="Đang mở lại camera…" />}
+
+      {/* Đã mở AR gốc (Quick Look/Scene Viewer). Overlay này nằm SẴN dưới AR gốc; khi
+          user thoát ra sẽ thấy nó. Cú CHẠM nút = user-gesture để iOS cho mở lại camera
+          (tự bật lại theo sự kiện sẽ bị iOS chặn getUserMedia -> đứng hình). */}
+      {nativeAR && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5 bg-black/90 p-6 text-center text-white">
+          <div className="text-4xl">📷</div>
+          <p className="max-w-xs text-sm text-white/70">
+            Đã xem xong cỡ thật? Chạm để quét tiếp ảnh mốc.
+          </p>
+          <button
+            onClick={() => {
+              setNativeAR(false);
+              setStarted(true); // gesture của cú chạm này mở lại camera MindAR
+            }}
+            className="rounded-full bg-white px-8 py-3 text-base font-semibold text-black shadow-lg active:scale-95"
+          >
+            ▶ Quét tiếp
+          </button>
+        </div>
+      )}
 
       {/* Loading trong lúc khởi tạo */}
       {started &&
