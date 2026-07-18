@@ -7,7 +7,11 @@ function baseUrl(): string {
   // Trên server (SSR/route handler) fetch tương đối không hoạt động -> cần URL tuyệt đối.
   // Trên client dùng đường dẫn tương đối.
   if (typeof window !== 'undefined') return '';
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  // Ưu tiên URL cấu hình thủ công; trên Vercel tự lấy domain deployment hiện tại
+  // (VERCEL_URL có sẵn phía server, gồm cả preview) -> không cần set env vẫn chạy.
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
 }
 
 export async function fetchArtisans(): Promise<Artisan[]> {
@@ -41,15 +45,16 @@ export async function askAI(
 
 // Hỏi bằng GIỌNG NÓI: gửi audio thu từ mic -> backend STT + trả lời + TTS.
 // Trả về câu trả lời (audioUrl) và transcript (câu du khách vừa nói).
+// `filename` PHẢI có đuôi khớp định dạng thật (do component tính từ mimeType của
+// MediaRecorder, vì blob.type trên iOS đôi khi rỗng) — FPT/Whisper chọn demuxer theo đuôi.
 export async function askAIVoice(
   slug: string,
   audio: Blob,
+  filename = 'question.webm',
 ): Promise<VoiceReply> {
   const form = new FormData();
   form.append('slug', slug);
-  // Tên file có đuôi để backend/FPT nhận đúng định dạng.
-  const ext = audio.type.includes('mp4') || audio.type.includes('mpeg') ? 'm4a' : 'webm';
-  form.append('file', audio, `question.${ext}`);
+  form.append('file', audio, filename);
   const res = await fetch(`${baseUrl()}/api/ai/voice`, {
     method: 'POST',
     body: form,
