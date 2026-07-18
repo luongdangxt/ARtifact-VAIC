@@ -19,6 +19,7 @@ class SourceSnippet:
     source: str
     title: str
     page: int | None = None
+    content_type: str = "document"
 
     def to_public(self) -> dict[str, Any]:
         data = asdict(self)

@@ -19,7 +19,10 @@ def _load_dotenv(path: Path) -> None:
         key, value = line.split("=", 1)
         key = key.strip()
         value = value.strip().strip('"').strip("'")
-        os.environ[key] = value
+        # Values explicitly provided by the process (for example when running a
+        # local server against a copied vector store) must take precedence over
+        # the repository's .env defaults.
+        os.environ.setdefault(key, value)
 
 
 def _bool_env(name: str, default: bool) -> bool:

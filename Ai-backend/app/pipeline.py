@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import time
 
 from .config import Settings
+from .embeddings import strip_vietnamese_accents
 from .fpt_speech import FPTSpeechToText, FPTTextToSpeech
 from .guardrails import HeritageGuardrails
 from .ingest import ingest_documents, iter_source_files
@@ -24,6 +26,84 @@ def _build_persona(
         if value and value.strip()
     }
     return fields or None
+
+
+def _contextualize_question(
+    question: str,
+    history: list[dict[str, str]] | None,
+    persona: dict[str, str] | None = None,
+) -> str:
+    """Resolve a vague follow-up from conversation and the currently scanned artisan."""
+    words = re.findall(r"[\wÀ-ỹ]+", question.lower())
+    follow_up_markers = {
+        "nó", "no", "đó", "do", "này", "nay", "vậy", "vay", "thế", "the",
+        "còn", "con", "kia", "cái", "cai", "bức", "buc", "thêm", "them",
+    }
+    if len(words) > 8 and not follow_up_markers.intersection(words):
+        return question
+
+    previous_user = next(
+        (
+            item.get("content", "").strip()
+            for item in reversed(history or [])
+            if item.get("role") == "user" and item.get("content", "").strip()
+        ),
+        "",
+    )
+    context: list[str] = []
+    if previous_user:
+        context.append(f"câu hỏi trước: {previous_user[:1000]}")
+    if persona:
+        craft = persona.get("craft", "").strip()
+        name = persona.get("name", "").strip()
+        if craft:
+            context.append(f"di sản đang được quét: {craft}")
+        elif name:
+            context.append(f"nhân vật đang được quét: {name}")
+    if not context:
+        return question
+    inferred_intent = _infer_retrieval_intent(question)
+    intent_line = f"\nÝ định được suy ra: {inferred_intent}" if inferred_intent else ""
+    return f"{question}{intent_line}\nNgữ cảnh để hiểu câu hỏi: {'; '.join(context)}"
+
+
+def _infer_retrieval_intent(question: str) -> str:
+    plain = " ".join(re.findall(r"[\w]+", strip_vietnamese_accents(question.lower()), re.UNICODE))
+    intent_patterns = (
+        (("o dau", "dia ban", "cho nao", "vung nao"), "Hỏi địa bàn gắn với di sản."),
+        (
+            ("co tu bao gio", "ra doi", "xuat hien khi nao", "hinh thanh khi nao", "co lau chua"),
+            "Hỏi niên đại ra đời hoặc hình thành chính xác của di sản.",
+        ),
+        (
+            ("ai hat", "ai lam", "ai thuc hanh", "nguoi nao", "cong dong nao"),
+            "Hỏi cộng đồng chủ thể hoặc người thực hành di sản.",
+        ),
+        (("unesco", "ghi danh", "vinh danh"), "Hỏi trạng thái UNESCO ghi danh của di sản."),
+        (
+            ("lam kieu gi", "lam sao", "cach lam", "thuc hanh the nao", "lam nhu nao"),
+            "Hỏi cách thực hành hoặc kỹ thuật của di sản.",
+        ),
+        (
+            (
+                "la gi", "la sao", "cai nay", "ke nghe", "gioi thieu", "co gi hay",
+                "noi them", "noi ngan gon", "tom tat",
+            ),
+            "Yêu cầu giới thiệu chung về di sản.",
+        ),
+    )
+    for patterns, intent in intent_patterns:
+        if any(pattern in plain for pattern in patterns):
+            return intent
+    return ""
+
+
+def _speech_text(answer: str) -> str:
+    """Remove visual citations so TTS does not read file names or '[S1]' aloud."""
+    clean = re.sub(r"\s*\[S\d+\]", "", answer, flags=re.IGNORECASE)
+    clean = re.sub(r"\s*\[[^\]]+\.pdf[^\]]*\]", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\n+Nguồn tham khảo:.*$", "", clean, flags=re.IGNORECASE | re.DOTALL)
+    return clean.strip()
 
 
 class SmartHeritageLibrary:
@@ -96,14 +176,16 @@ class SmartHeritageLibrary:
         persona_name: str | None = None,
         persona_craft: str | None = None,
         persona_bio: str | None = None,
+        history: list[dict[str, str]] | None = None,
     ) -> PipelineResponse:
         timings: dict[str, int] = {}
         started = time.perf_counter()
 
         persona = _build_persona(persona_name, persona_craft, persona_bio)
+        retrieval_question = _contextualize_question(question, history, persona)
 
         router_started = time.perf_counter()
-        decision = self.router.route(question)
+        decision = self.router.route(retrieval_question)
         timings["semantic_router"] = self._elapsed_ms(router_started)
         if not decision.allowed:
             # Nghệ nhân vẫn phải LÊN TIẾNG kể cả khi từ chối/chào hỏi (câu ngoài phạm vi),
@@ -116,16 +198,22 @@ class SmartHeritageLibrary:
             )
 
         retrieval_started = time.perf_counter()
-        sources = self.retriever.retrieve(question)
+        sources = self.retriever.retrieve(retrieval_question)
         timings["retriever"] = self._elapsed_ms(retrieval_started)
         llm_started = time.perf_counter()
-        answer = self.narrator.generate(question, sources, persona=persona)
+        answer = self.narrator.generate(
+            question,
+            sources,
+            persona=persona,
+            history=history,
+            inferred_intent=_infer_retrieval_intent(question),
+        )
         timings["llm"] = self._elapsed_ms(llm_started)
 
         audio_url = None
         if synthesize:
             tts_started = time.perf_counter()
-            audio = self.tts.synthesize(answer)
+            audio = self.tts.synthesize(_speech_text(answer))
             audio_url = audio.audio_url
             timings["tts"] = self._elapsed_ms(tts_started)
 
@@ -147,6 +235,7 @@ class SmartHeritageLibrary:
         persona_name: str | None = None,
         persona_craft: str | None = None,
         persona_bio: str | None = None,
+        history: list[dict[str, str]] | None = None,
     ) -> PipelineResponse:
         started = time.perf_counter()
         transcript_started = time.perf_counter()
@@ -158,6 +247,7 @@ class SmartHeritageLibrary:
             persona_name=persona_name,
             persona_craft=persona_craft,
             persona_bio=persona_bio,
+            history=history,
         )
         timings = dict(response.timings_ms)
         timings["stt"] = self._elapsed_ms(transcript_started)

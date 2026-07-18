@@ -310,7 +310,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     try {
       // FPT STT chỉ nhận WAV -> chuyển đổi ngay trên máy trước khi gửi.
       const wav = await blobToWav(raw);
-      const reply = await askAIVoice(artisan.slug, wav, 'question.wav');
+      const reply = await askAIVoice(artisan.slug, wav, 'question.wav', messages);
       const spoken = reply.transcript?.trim();
       setMessages((m) => [
         ...m,
