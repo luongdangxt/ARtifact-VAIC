@@ -15,7 +15,10 @@ export const TARGETS_MIND = '/targets/artisans.mind';
 
 // Dữ liệu seed tạm trước khi có DB/CMS.
 // Khi có backend thật: thay nguồn này trong /api/artisans + api-client, không sửa component AR.
-// Model NGƯỜI đặt trên thẻ nằm ngang -> rotationDeg [90,0,0] dựng đứng + groundAlign cho chân chạm thẻ.
+// ẢNH MỐC DỰNG ĐỨNG (trên tường/kệ), soi NGANG: Y của ảnh = hướng lên thật, pháp tuyến
+// Z chĩa ra camera -> model KHÔNG cần xoay ([0,0,0]) là đã đứng thẳng + quay mặt vào camera.
+// Nếu thấy model quay LƯNG lại thì đổi trục Y: rotationDeg [0,180,0]. groundAlign TẮT
+// (nó đẩy theo Z, giờ Z nằm ngang) -> để model căn giữa ảnh mốc.
 export const artisans: Artisan[] = [
   {
     slug: 'quan-ho-nu',
@@ -33,8 +36,8 @@ export const artisans: Artisan[] = [
       offset: [0, 0, 0],
       // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
       modelUsdzUrl: '/models/usdz/quan-ho-nu.usdz',
-      groundAlign: true,
-      rotationDeg: [90, 0, 0], // dựng đứng người khỏi thẻ nằm ngang
+      groundAlign: false,
+      rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
     aiEnabled: false,
   },
@@ -51,8 +54,8 @@ export const artisans: Artisan[] = [
       scale: 0.3,
       offset: [0, 0, 0],
       modelUsdzUrl: '/models/usdz/dong-ho-nam.usdz',
-      groundAlign: true,
-      rotationDeg: [90, 0, 0],
+      groundAlign: false,
+      rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
     aiEnabled: false,
   },
