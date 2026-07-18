@@ -71,3 +71,22 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 Assets/folder chia theo bối cảnh/nghe-lam-gom/USDZ/binh-gom.usdz
+
+
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+logs/
+*.log
+*.wav
+*.mp3
+*.m4a
+*.ogg
+
+data/questions/*
+!data/questions/.gitkeep
+data/vector_store/*.jsonl
+data/vector_store/chroma/
+!data/vector_store/.gitkeep
