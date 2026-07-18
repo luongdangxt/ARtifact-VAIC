@@ -132,15 +132,38 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         dir.position.set(0.5, 1, 1);
         scene.add(hemi, dir);
 
+        // AnimationMixer cho model có rig (vd Mixamo). Cập nhật mỗi frame trong render
+        // loop bằng delta của clock. Model tĩnh (không clip) không tạo mixer.
+        const mixers: THREE.AnimationMixer[] = [];
+        const clock = new THREE.Clock();
+
         // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
         artisans.forEach((artisan, i) => {
           // clone: rawModels[i] là instance cache dùng chung; normalizeModel MUTATE nó,
           // nên phải normalize trên BẢN SAO, nếu không lần khởi tạo lại (thoát Quick Look)
           // sẽ normalize lần 2 lên object đã biến đổi -> model biến mất dù vẫn track.
-          const model = normalizeModel(cloneModel(rawModels[i]), artisan.ar.scale, artisan.ar.offset, {
+          const clone = cloneModel(rawModels[i]);
+
+          // Phát animation nếu model có clip. Mixer bind vào bản CLONE (chứa skeleton).
+          // PHẢI tạo mixer + pose frame 0 TRƯỚC normalizeModel: animation Mixamo có thể
+          // dời tâm nhân vật ra xa gốc (offset baked trong clip), nên normalize phải đo
+          // theo POSE THẬT của frame đầu — nếu đo bind-pose thì tâm lệch, sau khi phóng
+          // to nhân vật văng khỏi khung -> không thấy gì.
+          const clips = rawModels[i].userData.clips as THREE.AnimationClip[] | undefined;
+          if (clips && clips.length) {
+            const idx = artisan.ar.animationIndex ?? 0;
+            const clip = clips[idx] ?? clips[0];
+            const mixer = new THREE.AnimationMixer(clone);
+            mixer.clipAction(clip).play(); // loop mặc định = vô hạn
+            mixer.update(0); // đặt skeleton về frame 0 để normalizeModel đo đúng pose
+            mixers.push(mixer);
+          }
+
+          const model = normalizeModel(clone, artisan.ar.scale, artisan.ar.offset, {
             rotationDeg: artisan.ar.rotationDeg,
             groundAlign: artisan.ar.groundAlign,
           });
+
           const anchor = mindar.addAnchor(artisan.targetIndex);
           anchor.group.add(model);
           anchor.onTargetFound = () => {
@@ -162,7 +185,11 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         if (cancelled) return;
 
         setStatus('scanning');
-        renderer.setAnimationLoop(() => renderer.render(scene, camera));
+        renderer.setAnimationLoop(() => {
+          const delta = clock.getDelta();
+          for (const mx of mixers) mx.update(delta);
+          renderer.render(scene, camera);
+        });
 
         // Giữ fov/model khớp mỗi khi container ĐỔI KÍCH THƯỚC. Video coverage đã do
         // CSS object-cover lo (xem ARScene), còn resize() ở đây chỉ để camera fov +

@@ -35,6 +35,11 @@ export interface ARTarget {
    * (mặc định căn tâm -> nửa model chìm dưới thẻ). Dùng chung với rotationDeg để đứng thật.
    */
   groundAlign?: boolean;
+  /**
+   * Model có sẵn animation (vd rig Mixamo, nhiều clip) thì phát clip theo index này,
+   * lặp vô hạn. Bỏ trống = 0 (clip đầu). Model tĩnh (không clip) thì bỏ qua.
+   */
+  animationIndex?: number;
 }
 
 export interface Artisan {

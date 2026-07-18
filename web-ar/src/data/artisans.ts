@@ -7,7 +7,8 @@ import type { Artisan } from '@/lib/types';
 // KHÔNG có bước chọn thủ công.
 //
 // File .mind GỘP 2 target, compile từ ảnh mốc TẠM bằng scripts/compile-targets.mjs.
-// Thứ tự compile: [0] quan-ho-nu, [1] dong-ho-nam — KHỚP targetIndex bên dưới.
+// Thứ tự compile: [0] quan-ho-nam, [1] dong-ho-nam — KHỚP targetIndex bên dưới.
+// (ảnh mốc #1 GIỮ NGUYÊN quan-ho-nu.png — chỉ đổi MODEL neo lên thẻ, không compile lại .mind)
 // Khi có ảnh mốc THẬT: thay PNG trong public/markers rồi chạy lại
 //   node scripts/gen-temp-markers.mjs   (chỉ khi cần sinh lại ảnh tạm)
 //   node scripts/compile-targets.mjs    (compile lại .mind)
@@ -21,20 +22,26 @@ export const TARGETS_MIND = '/targets/artisans.mind';
 // (nó đẩy theo Z, giờ Z nằm ngang) -> để model căn giữa ảnh mốc.
 export const artisans: Artisan[] = [
   {
-    slug: 'quan-ho-nu',
+    slug: 'quan-ho-nam',
     targetIndex: 0, // ảnh mốc #1 trong file .mind gộp
-    name: 'Liền chị Quan họ',
+    name: 'Liền anh Quan họ',
     craft: 'Dân ca Quan họ Bắc Ninh',
-    bio: 'Nhân vật nữ trong canh hát Quan họ. Quét ảnh mốc để thấy model 3D neo lên thẻ; '
+    bio: 'Nhân vật nam (liền anh) trong canh hát Quan họ, có animation (rig Mixamo). '
+      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động; '
       + 'bấm “Xem cỡ thật” để đặt nhân vật xuống sàn theo kích thước thật.',
     ar: {
-      // GLB: dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
-      modelUrl: '/models/glb/quan-ho-nu.glb',
+      // GLB có animation (6 clip Mixamo) — đã nén texture WebP 2K (~2.7MB).
+      // Dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
+      modelUrl: '/models/glb/quan-ho-nam.glb',
       markerUrl: '/markers/quan-ho-nu.png', // ẢNH TẠM — thay ảnh thật sau
       scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
       // offset trong hệ ảnh-mốc: X phải, Y lên (TRONG mặt phẳng card), Z nhô khỏi card.
       offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
+      // Clip 5 = cử động TẠI CHỖ (clip 0-2 có bước đi -> ra khỏi thẻ; 3-4 đứng hình).
+      animationIndex: 5,
       // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
+      // TODO: USDZ vẫn là bản NỮ cũ — cần convert bản nam mới (Quick Look không phát
+      // animation Mixamo nên chỉ cần bản tĩnh cỡ mét). Android Scene Viewer dùng GLB nên ổn.
       modelUsdzUrl: '/models/usdz/quan-ho-nu.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
