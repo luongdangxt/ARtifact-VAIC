@@ -65,4 +65,13 @@ export type ChatRole = 'user' | 'assistant';
 export interface ChatMessage {
   role: ChatRole;
   content: string;
+  /** URL WAV (qua proxy Next /api/ai/audio) để phát giọng nói của nghệ nhân. */
+  audioUrl?: string;
+}
+
+/** Kết quả khi du khách hỏi bằng GIỌNG NÓI: kèm transcript (STT) để hiển thị câu đã nói. */
+export interface VoiceReply extends ChatMessage {
+  role: 'assistant';
+  /** Nội dung STT nhận ra từ giọng du khách; dùng làm message 'user' trên khung chat. */
+  transcript?: string;
 }

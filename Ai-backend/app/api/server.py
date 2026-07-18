@@ -61,6 +61,9 @@ def ask(payload: AskRequest, _: Auth) -> dict:
         payload.question,
         synthesize=payload.synthesize,
         transcript=payload.transcript,
+        persona_name=payload.persona_name,
+        persona_craft=payload.persona_craft,
+        persona_bio=payload.persona_bio,
     )
     return public_pipeline_response(response, _public_audio_url(response.audio_url))
 
@@ -128,6 +131,9 @@ async def audio_ask(
     _: Auth,
     file: UploadFile = File(...),
     synthesize: bool = Form(False),
+    persona_name: str | None = Form(None),
+    persona_craft: str | None = Form(None),
+    persona_bio: str | None = Form(None),
 ):
     audio_bytes = await file.read()
     _check_audio_size(audio_bytes)
@@ -135,6 +141,9 @@ async def audio_ask(
         audio_bytes,
         content_type=file.content_type or "application/octet-stream",
         synthesize=synthesize,
+        persona_name=persona_name,
+        persona_craft=persona_craft,
+        persona_bio=persona_bio,
     )
     return public_pipeline_response(response, _public_audio_url(response.audio_url))
 

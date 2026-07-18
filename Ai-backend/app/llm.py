@@ -11,11 +11,40 @@ from .models import SourceSnippet
 from .qa_pairs import best_qa_match, is_question_like
 
 
+_DEFAULT_IDENTITY = "Bạn là Nghệ Nhân AI giới thiệu di sản cho du khách bằng tiếng Việt tự nhiên."
+
+
+def _persona_identity(persona: dict[str, str] | None) -> str:
+    """Câu xưng danh cho system prompt. Không có persona -> giữ 'Nghệ Nhân AI' chung."""
+    if not persona:
+        return _DEFAULT_IDENTITY
+    name = persona.get("name")
+    craft = persona.get("craft")
+    bio = persona.get("bio")
+    if not name:
+        return _DEFAULT_IDENTITY
+    role = f"Bạn đang nhập vai {name}"
+    if craft:
+        role += f", một nghệ nhân/nhân vật gắn với {craft}"
+    role += (
+        ". Hãy xưng ở ngôi thứ nhất, thân thiện và tự hào như chính người đó đang trò chuyện "
+        "với du khách, nhưng chỉ dùng dữ kiện có trong tư liệu được cung cấp; không bịa thêm về bản thân."
+    )
+    if bio:
+        role += f" Bối cảnh nhân vật: {bio}"
+    return role
+
+
 class NarratorLLM:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def generate(self, question: str, snippets: list[SourceSnippet]) -> str:
+    def generate(
+        self,
+        question: str,
+        snippets: list[SourceSnippet],
+        persona: dict[str, str] | None = None,
+    ) -> str:
         unsupported_claim = _unsupported_claim_answer(question, snippets)
         if unsupported_claim is not None:
             return _moderate_output(unsupported_claim)
@@ -25,7 +54,7 @@ class NarratorLLM:
 
         if self.settings.llm_provider in {"fpt_cloud", "openai_compatible"} and self.settings.llm_api_key:
             try:
-                return _moderate_output(self._generate_chat_completion(question, snippets))
+                return _moderate_output(self._generate_chat_completion(question, snippets, persona))
             except Exception as exc:
                 local = self._generate_local(question, snippets)
                 return _moderate_output(
@@ -48,8 +77,14 @@ class NarratorLLM:
             + source
         )
 
-    def _generate_chat_completion(self, question: str, snippets: list[SourceSnippet]) -> str:
+    def _generate_chat_completion(
+        self,
+        question: str,
+        snippets: list[SourceSnippet],
+        persona: dict[str, str] | None = None,
+    ) -> str:
         url = self.settings.llm_api_base.rstrip("/") + "/chat/completions"
+        identity = _persona_identity(persona)
         payload = {
             "model": self.settings.llm_model,
             "temperature": self.settings.llm_temperature,
@@ -74,7 +109,7 @@ class NarratorLLM:
                         "nếu các đoạn tư liệu được cung cấp có căn cứ. Tránh câu trả lời cụt như 'Tư liệu không đề cập'. "
                         "Luôn giữ thái độ lịch sự, điềm tĩnh và không công kích, xúc phạm, khiêu khích, phân biệt "
                         "hay quy chụp người dùng hoặc bất kỳ cộng đồng nào. "
-                        "Bạn là Nghệ Nhân AI giới thiệu di sản cho du khách bằng tiếng Việt tự nhiên. "
+                        f"{identity} "
                         "Chỉ sử dụng sự kiện có trong tư liệu được cung cấp; không tự bổ sung dữ kiện. "
                         "Trả lời ngắn gọn, mạch lạc, có chất kể chuyện nhưng vẫn đúng nguồn."
                     ),
