@@ -59,7 +59,7 @@ export function loadModel(url: string): Promise<THREE.Group> {
 // Bản SAO mới của model từ cache. BẮT BUỘC clone trước khi normalizeModel vì
 // loadModel trả về CÙNG một instance (đã cache) mỗi lần, còn normalizeModel thì
 // MUTATE (dịch tâm + reparent). Nếu dùng thẳng instance cache, lần khởi tạo lại
-// (vd thoát Quick Look rồi bật lại MindAR) sẽ normalize lần 2 lên object đã bị
+// (vd retry sau lỗi rồi bật lại MindAR) sẽ normalize lần 2 lên object đã bị
 // biến đổi -> model lệch/biến mất dù anchor vẫn track. clone của SkeletonUtils
 // giữ đúng cả model có xương (nhân vật người), dùng chung geometry/material nên nhẹ.
 export function cloneModel(model: THREE.Group): THREE.Group {
