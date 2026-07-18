@@ -40,9 +40,9 @@ export const artisans: Artisan[] = [
       // Clip 5 = cử động TẠI CHỖ (clip 0-2 có bước đi -> ra khỏi thẻ; 3-4 đứng hình).
       animationIndex: 5,
       // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
-      // USDZ bản nam TĨNH, đã scale ×100 về cao ~1.77m thật (bản export gốc bị 0.01 ->
-      // 1.8cm; sửa bằng scale trên /root, mpu=1.0 up=Z khớp các model khác). Quick Look
-      // không phát animation Mixamo nên bản tĩnh là đủ cho "cỡ thật".
+      // USDZ bản nam CÓ animation (UsdSkelAnimation clip mixamo_com_005 = clip 5 tại chỗ,
+      // 616 frame @60fps), đã scale ×100 về cao ~1.77m thật (bản export gốc bị 0.01 ->
+      // 1.8cm; sửa bằng scale ×100 trên /root, mpu=1.0 up=Z khớp các model khác).
       modelUsdzUrl: '/models/usdz/quan-ho-nam.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
