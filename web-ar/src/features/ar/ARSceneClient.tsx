@@ -14,6 +14,6 @@ const ARScene = dynamic(() => import('./ARScene'), {
   ),
 });
 
-export default function ARSceneClient({ artisan }: { artisan: Artisan }) {
-  return <ARScene artisan={artisan} />;
+export default function ARSceneClient({ artisans }: { artisans: Artisan[] }) {
+  return <ARScene artisans={artisans} />;
 }

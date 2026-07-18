@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artisan } from '@/lib/types';
+import { TARGETS_MIND } from '@/data/artisans';
 import { useMindAR } from './useMindAR';
 import Loading from '@/components/Loading';
 import CameraPermission from '@/components/CameraPermission';
 import UnsupportedBrowser from '@/components/UnsupportedBrowser';
-import InAppBrowserNotice from '@/components/InAppBrowserNotice';
 import ARHud from '@/components/ARHud';
-import { detectInAppBrowser } from '@/lib/browser';
 import { launchRealScaleAR } from '@/lib/realScaleAR';
 import { isWebXRARSupported } from '@/lib/webxr';
 import { startWebXRSession, type WebXRController } from './webxrController';
@@ -26,13 +25,13 @@ function detectSupport(): boolean {
   return hasMedia && secure;
 }
 
-// Core AR: kiểm tra hỗ trợ -> chờ user gesture (iOS) -> chạy MindAR + render loop.
-export default function ARScene({ artisan }: { artisan: Artisan }) {
+// Core AR (máy quét chung, đa target): kiểm tra hỗ trợ -> chờ user gesture (iOS)
+// -> chạy MindAR với file .mind gộp -> chĩa ảnh nào thì tự hiện nghệ nhân đó.
+export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const [supported] = useState<boolean>(detectSupport);
-  const [inApp] = useState<boolean>(detectInAppBrowser);
-  // cho phép người dùng bỏ qua cảnh báo in-app và vẫn thử (một số WebView Android chạy được)
-  const [forceProceed, setForceProceed] = useState(false);
-  const [started, setStarted] = useState(false);
+  // Tự bắt đầu quét ngay khi vào — user-gesture đã lấy ở nút "Quét AR ngay" của màn
+  // chào (cùng trang), nên không cần nút bấm thứ 2 ở đây.
+  const [started, setStarted] = useState(true);
   const [retryKey, setRetryKey] = useState(0);
   // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
   const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
@@ -45,11 +44,25 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   const xrOverlayRef = useRef<HTMLDivElement>(null);
   const xrCtrlRef = useRef<WebXRController | null>(null);
   const restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Đã mở AR gốc (Quick Look iOS / Scene Viewer Android) và đang chờ user thoát ra.
+  // Khi bật, MindAR đã tắt (nhả camera cho AR gốc) và hiện overlay "chạm để quét tiếp".
+  const [nativeAR, setNativeAR] = useState(false);
 
   useEffect(() => {
     return () => {
       if (restartTimer.current) clearTimeout(restartTimer.current);
     };
+  }, []);
+
+  // Bật lại MindAR sau một khoảng chờ để camera (ARCore / Quick Look) nhả xong hẳn;
+  // nếu xin lại getUserMedia ngay khi camera còn bận -> NotReadableError -> AR chết.
+  const scheduleRestart = useCallback((delayMs: number) => {
+    setRestarting(true);
+    if (restartTimer.current) clearTimeout(restartTimer.current);
+    restartTimer.current = setTimeout(() => {
+      setStarted(true);
+      setRestarting(false);
+    }, delayMs);
   }, []);
 
   useEffect(() => {
@@ -79,7 +92,9 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
   // Mở model cỡ thật. Android hỗ trợ WebXR -> ghim vào sàn NGAY TRONG web (giữ AI).
   // Còn lại (iOS...) -> AR gốc: Quick Look (iOS) / Scene Viewer (Android cũ).
   const handleViewRealScale = () => {
-    const glbUrl = artisan.ar.modelRealUrl ?? artisan.ar.modelUrl;
+    // Chỉ mở "cỡ thật" khi đang thấy 1 nghệ nhân (nút chỉ hiện lúc tracking).
+    if (!activeArtisan) return;
+    const glbUrl = activeArtisan.ar.modelRealUrl ?? activeArtisan.ar.modelUrl;
 
     if (xrSupported && xrOverlayRef.current) {
       setXrPhase('searching');
@@ -93,12 +108,7 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
           setXrPhase('off');
           // Android nhả camera ARCore không tức thì -> chờ rồi mới bật lại MindAR,
           // nếu không getUserMedia sẽ ném NotReadableError (camera bận) -> AR chết.
-          setRestarting(true);
-          if (restartTimer.current) clearTimeout(restartTimer.current);
-          restartTimer.current = setTimeout(() => {
-            setStarted(true); // bật lại MindAR khi camera đã rảnh
-            setRestarting(false);
-          }, 700);
+          scheduleRestart(700);
         },
         onError: (m) => {
           setXrPhase('off');
@@ -111,8 +121,19 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
       return;
     }
 
-    // Fallback: AR gốc của thiết bị.
-    const r = launchRealScaleAR({ glbUrl, usdzUrl: artisan.ar.modelUsdzUrl });
+    // Fallback: AR gốc của thiết bị (iOS Quick Look / Android Scene Viewer cũ).
+    const r = launchRealScaleAR({ glbUrl, usdzUrl: activeArtisan.ar.modelUsdzUrl });
+    if (r === 'launching') {
+      // AR gốc sắp chiếm camera. pause() = mindar.stop(): nhả camera nhưng GIỮ instance
+      // (renderer/scene/model). KHÔNG tự bật lại theo sự kiện: iOS Quick Look là modal
+      // TRONG Safari, không fire visibilitychange/focus đáng tin khi đóng, và getUserMedia
+      // gọi lại mà không có cú chạm của user sẽ bị iOS chặn -> đứng hình. Thay vào đó bật
+      // overlay "chạm để quét tiếp" (nằm sẵn dưới Quick Look); user thoát ra chạm =
+      // user-gesture để resume() mở lại camera chắc chắn, model hiện lại ngay.
+      pause();
+      setNativeAR(true);
+      return;
+    }
     if (r === 'no-usdz') {
       setRealScaleMsg(
         'Chưa có bản model cỡ thật cho iPhone (.usdz). Hãy thử trên Android, hoặc bổ sung file USDZ.',
@@ -120,11 +141,12 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
     } else if (r === 'unsupported') {
       setRealScaleMsg('Xem cỡ thật cần mở trên điện thoại iPhone hoặc Android.');
     }
-    if (r !== 'launching') setTimeout(() => setRealScaleMsg(null), 4000);
+    setTimeout(() => setRealScaleMsg(null), 4000);
   };
 
-  const { containerRef, status, errorMsg } = useMindAR({
-    target: artisan.ar,
+  const { containerRef, status, errorMsg, activeArtisan, pause, resume } = useMindAR({
+    artisans,
+    targetSrc: TARGETS_MIND,
     // active phụ thuộc started (user gesture) + retryKey để thử lại sau khi bị từ chối
     active: started,
   });
@@ -154,39 +176,29 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         className="absolute inset-0 isolate [&>video]:!absolute [&>video]:!inset-0 [&>video]:!m-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!max-w-none [&>video]:!object-cover"
       />
 
-      {/* Trình duyệt in-app (Zalo/Facebook…) không mở được camera AR -> chặn sớm,
-          hướng dẫn mở bằng Safari/Chrome. Cho phép "vẫn thử" để không khoá cứng. */}
-      {!started && supported && inApp && !forceProceed && (
-        <InAppBrowserNotice onProceed={() => setForceProceed(true)} />
-      )}
-
       {/* Đang chờ camera nhả sau khi thoát WebXR rồi bật lại MindAR */}
       {restarting && <Loading label="Đang mở lại camera…" />}
 
-      {/* Màn hình bắt đầu — cần user gesture để mở camera trên iOS Safari */}
-      {!started && !restarting && supported && (!inApp || forceProceed) && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black p-6 text-center text-white">
-          <h1 className="text-2xl font-semibold">{artisan.name}</h1>
-          <p className="max-w-xs text-sm text-white/70">{artisan.craft}</p>
-          <button
-            onClick={() => setStarted(true)}
-            className="rounded-full bg-white px-8 py-3 font-medium text-black"
-          >
-            Bắt đầu quét AR
-          </button>
-          <p className="max-w-xs text-xs text-white/50">
-            Cho phép quyền camera khi được hỏi, rồi chĩa vào ảnh mốc.
+      {/* Đã mở AR gốc (Quick Look/Scene Viewer). Overlay này nằm SẴN dưới AR gốc; khi
+          user thoát ra sẽ thấy nó. Cú CHẠM nút = user-gesture để iOS cho mở lại camera
+          (tự bật lại theo sự kiện sẽ bị iOS chặn getUserMedia -> đứng hình). */}
+      {nativeAR && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-5 bg-black/90 p-6 text-center text-white">
+          <div className="text-4xl">📷</div>
+          <p className="max-w-xs text-sm text-white/70">
+            Đã xem xong cỡ thật? Chạm để quét tiếp ảnh mốc.
           </p>
-          {artisan.ar.markerUrl && (
-            <a
-              href={artisan.ar.markerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-blue-300 underline"
-            >
-              Chưa có ảnh mốc? Mở ảnh mốc để in/hiện lên màn khác ↗
-            </a>
-          )}
+          <button
+            onClick={() => {
+              setNativeAR(false);
+              // gesture của cú chạm này mở lại camera trên CHÍNH instance MindAR cũ
+              // (model vẫn còn trong scene -> hiện lại ngay khi track được).
+              void resume();
+            }}
+            className="rounded-full bg-white px-8 py-3 text-base font-semibold text-black shadow-lg active:scale-95"
+          >
+            ▶ Quét tiếp
+          </button>
         </div>
       )}
 
@@ -234,9 +246,9 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
         <ARHud
           key={retryKey}
           status={status}
-          artisanName={artisan.name}
-          aiEnabled={artisan.aiEnabled}
-          canRealScale
+          artisanName={activeArtisan?.name}
+          aiEnabled={activeArtisan?.aiEnabled ?? false}
+          canRealScale={!!activeArtisan}
           onViewRealScale={handleViewRealScale}
           onAskAI={() => {
             // Giai đoạn 2: mở khung chat -> askAI(). Hiện để trống chỗ.
@@ -276,7 +288,7 @@ export default function ARScene({ artisan }: { artisan: Artisan }) {
 
             {xrPhase === 'placed' && (
               <div className="flex flex-col items-center gap-3">
-                {artisan.aiEnabled && (
+                {activeArtisan?.aiEnabled && (
                   <button
                     data-xr-ui
                     onClick={() => alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.')}

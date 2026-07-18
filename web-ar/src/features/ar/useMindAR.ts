@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MindARThree } from 'mind-ar/dist/mindar-image-three.prod.js';
-import type { ARTarget } from '@/lib/types';
-import { loadModel, normalizeModel } from './modelLoader';
+import type { Artisan } from '@/lib/types';
+import { loadModel, cloneModel, normalizeModel } from './modelLoader';
 
 export type ARStatus =
   | 'idle'
@@ -15,7 +15,10 @@ export type ARStatus =
   | 'error';
 
 interface Options {
-  target: ARTarget;
+  /** Danh sách nghệ nhân — mỗi người 1 targetIndex trong file .mind gộp */
+  artisans: Artisan[];
+  /** Đường dẫn file .mind GỘP dùng chung cho mọi target */
+  targetSrc: string;
   /** bật/tắt AR (vd chỉ start sau khi user bấm nút — cần user gesture cho iOS) */
   active: boolean;
 }
@@ -57,14 +60,27 @@ function teardownMindAR(m: MindARRuntime | null) {
 }
 
 // Khởi tạo MindAR + three, load model, gắn anchor, chạy render loop.
+// ĐA TARGET: 1 file .mind gộp, mỗi nghệ nhân 1 anchor theo targetIndex. Chĩa vào
+// ảnh nào thì anchor đó onTargetFound -> đặt activeIndex = nghệ nhân tương ứng.
 // Dọn dẹp (stop camera + dispose) khi rời trang / active=false để tránh treo camera & memory leak.
-export function useMindAR({ target, active }: Options) {
+export function useMindAR({ artisans, targetSrc, active }: Options) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<ARStatus>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // targetIndex của nghệ nhân đang được camera thấy (null = chưa thấy ai)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   // giữ instance để listener pagehide có thể teardown ngay
   const mindarRef = useRef<MindARRuntime | null>(null);
+  // true khi đang tạm dừng để nhường camera cho AR gốc (Quick Look / Scene Viewer):
+  // KHÔNG teardown instance (giữ renderer/scene/model) để resume() bật lại camera là hiện ngay.
+  const pausedRef = useRef(false);
+
+  // Nghệ nhân đang hiển thị — suy từ activeIndex để HUD / "xem cỡ thật" dùng đúng dữ liệu.
+  const activeArtisan = useMemo(
+    () => (activeIndex == null ? null : artisans.find((a) => a.targetIndex === activeIndex) ?? null),
+    [activeIndex, artisans],
+  );
 
   useEffect(() => {
     if (!active) return;
@@ -78,7 +94,12 @@ export function useMindAR({ target, active }: Options) {
     // trên cả iOS & Android và KHÔNG fire khi hộp thoại xin quyền camera bật lên.
     // (Trước đây dùng visibilitychange -> nó fire lúc xin quyền -> teardown giữa chừng ->
     //  gỡ mất thẻ <video> -> camera đen. Bỏ hẳn.)
-    const releaseOnHide = () => teardownMindAR(mindarRef.current);
+    const releaseOnHide = () => {
+      // Đang mở AR gốc (paused): camera đã stop rồi, GIỮ instance để resume() dùng lại
+      // renderer/scene/model đã có. Nếu teardown ở đây thì lúc quay về model sẽ mất.
+      if (pausedRef.current) return;
+      teardownMindAR(mindarRef.current);
+    };
     window.addEventListener('pagehide', releaseOnHide);
 
     (async () => {
@@ -86,22 +107,18 @@ export function useMindAR({ target, active }: Options) {
         setStatus('loading');
         setErrorMsg(null);
 
-        // import động: mind-ar chỉ chạy client, tránh SSR đụng window/document
-        const [{ MindARThree }, THREE, raw] = await Promise.all([
+        // import động: mind-ar chỉ chạy client, tránh SSR đụng window/document.
+        // Preload model của TẤT CẢ nghệ nhân song song (theo thứ tự artisans[]).
+        const [{ MindARThree }, THREE, ...rawModels] = await Promise.all([
           import('mind-ar/dist/mindar-image-three.prod.js'),
           import('three'),
-          loadModel(target.modelUrl),
+          ...artisans.map((a) => loadModel(a.ar.modelUrl)),
         ]);
         if (cancelled) return;
 
-        const model = normalizeModel(raw, target.scale, target.offset, {
-          rotationDeg: target.rotationDeg,
-          groundAlign: target.groundAlign,
-        });
-
         const mindar = new MindARThree({
           container,
-          imageTargetSrc: target.targetUrl,
+          imageTargetSrc: targetSrc, // file .mind GỘP chứa mọi ảnh mốc
           uiScanning: false, // tự làm HUD hint
           uiLoading: false,
         }) as MindARRuntime;
@@ -115,17 +132,64 @@ export function useMindAR({ target, active }: Options) {
         dir.position.set(0.5, 1, 1);
         scene.add(hemi, dir);
 
-        const anchor = mindar.addAnchor(0);
-        anchor.group.add(model);
-        anchor.onTargetFound = () => !cancelled && setStatus('tracking');
-        anchor.onTargetLost = () => !cancelled && setStatus('scanning');
+        // AnimationMixer cho model có rig (vd Mixamo). Cập nhật mỗi frame trong render
+        // loop bằng delta của clock. Model tĩnh (không clip) không tạo mixer.
+        const mixers: THREE.AnimationMixer[] = [];
+        const clock = new THREE.Clock();
+
+        // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
+        artisans.forEach((artisan, i) => {
+          // clone: rawModels[i] là instance cache dùng chung; normalizeModel MUTATE nó,
+          // nên phải normalize trên BẢN SAO, nếu không lần khởi tạo lại (thoát Quick Look)
+          // sẽ normalize lần 2 lên object đã biến đổi -> model biến mất dù vẫn track.
+          const clone = cloneModel(rawModels[i]);
+
+          // Phát animation nếu model có clip. Mixer bind vào bản CLONE (chứa skeleton).
+          // PHẢI tạo mixer + pose frame 0 TRƯỚC normalizeModel: animation Mixamo có thể
+          // dời tâm nhân vật ra xa gốc (offset baked trong clip), nên normalize phải đo
+          // theo POSE THẬT của frame đầu — nếu đo bind-pose thì tâm lệch, sau khi phóng
+          // to nhân vật văng khỏi khung -> không thấy gì.
+          const clips = rawModels[i].userData.clips as THREE.AnimationClip[] | undefined;
+          if (clips && clips.length) {
+            const idx = artisan.ar.animationIndex ?? 0;
+            const clip = clips[idx] ?? clips[0];
+            const mixer = new THREE.AnimationMixer(clone);
+            mixer.clipAction(clip).play(); // loop mặc định = vô hạn
+            mixer.update(0); // đặt skeleton về frame 0 để normalizeModel đo đúng pose
+            mixers.push(mixer);
+          }
+
+          const model = normalizeModel(clone, artisan.ar.scale, artisan.ar.offset, {
+            rotationDeg: artisan.ar.rotationDeg,
+            groundAlign: artisan.ar.groundAlign,
+          });
+
+          const anchor = mindar.addAnchor(artisan.targetIndex);
+          anchor.group.add(model);
+          anchor.onTargetFound = () => {
+            if (cancelled) return;
+            setActiveIndex(artisan.targetIndex);
+            setStatus('tracking');
+          };
+          anchor.onTargetLost = () => {
+            if (cancelled) return;
+            // chỉ về 'scanning' nếu đúng người đang hiển thị bị mất (maxTrack=1 nên
+            // thường chỉ 1 anchor active, nhưng vẫn kiểm tra cho chắc)
+            setActiveIndex((cur) => (cur === artisan.targetIndex ? null : cur));
+            setStatus((s) => (s === 'tracking' ? 'scanning' : s));
+          };
+        });
 
         setStatus('starting');
         await mindar.start(); // mở camera (cần HTTPS / user gesture trên iOS)
         if (cancelled) return;
 
         setStatus('scanning');
-        renderer.setAnimationLoop(() => renderer.render(scene, camera));
+        renderer.setAnimationLoop(() => {
+          const delta = clock.getDelta();
+          for (const mx of mixers) mx.update(delta);
+          renderer.render(scene, camera);
+        });
 
         // Giữ fov/model khớp mỗi khi container ĐỔI KÍCH THƯỚC. Video coverage đã do
         // CSS object-cover lo (xem ARScene), còn resize() ở đây chỉ để camera fov +
@@ -176,8 +240,45 @@ export function useMindAR({ target, active }: Options) {
       window.removeEventListener('pagehide', releaseOnHide);
       teardownMindAR(mindarRef.current);
       mindarRef.current = null;
+      setActiveIndex(null);
     };
-  }, [active, target]);
+  }, [active, targetSrc, artisans]);
 
-  return { containerRef, status, errorMsg };
+  // Tạm dừng để nhường camera cho AR gốc (Quick Look iOS / Scene Viewer Android).
+  // Dùng mindar.stop(): chỉ tắt camera + controller, GIỮ NGUYÊN renderer/WebGL context/
+  // scene/model (giống switchCamera của MindAR). Nhờ vậy không tạo context WebGL thứ 2
+  // trên iOS -> quay lại vẫn render được model (teardown+dựng-mới thì model biến mất).
+  const pause = useCallback(() => {
+    const m = mindarRef.current;
+    if (!m) return;
+    pausedRef.current = true;
+    try { (m as unknown as { stop: () => void }).stop(); } catch { /* noop */ }
+    setActiveIndex(null);
+    setStatus('idle');
+  }, []);
+
+  // Bật lại camera trên CHÍNH instance cũ (mindar.start()). Phải gọi trong user-gesture
+  // (cú chạm nút "Quét tiếp") vì iOS cần gesture cho getUserMedia. Model vẫn nằm trong
+  // scene từ trước nên hiện lại ngay khi track được.
+  const resume = useCallback(async () => {
+    const m = mindarRef.current;
+    if (!m) return;
+    pausedRef.current = false;
+    setStatus('starting');
+    setErrorMsg(null);
+    try {
+      await (m as unknown as { start: () => Promise<void> }).start();
+      setStatus('scanning');
+    } catch (err) {
+      const name = (err as { name?: string })?.name;
+      if (name === 'NotAllowedError' || name === 'SecurityError') {
+        setStatus('denied');
+      } else {
+        setStatus('error');
+        setErrorMsg((err as Error)?.message ?? 'Lỗi mở lại camera');
+      }
+    }
+  }, []);
+
+  return { containerRef, status, errorMsg, activeArtisan, pause, resume };
 }

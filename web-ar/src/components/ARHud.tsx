@@ -5,7 +5,8 @@ import type { ARStatus } from '@/features/ar/useMindAR';
 
 interface Props {
   status: ARStatus;
-  artisanName: string;
+  /** Tên nghệ nhân đang được camera thấy; rỗng khi chưa track được ai */
+  artisanName?: string;
   aiEnabled: boolean;
   onAskAI?: () => void;
   /** Cho phép nút "Xem cỡ thật" (mở AR gốc đặt model xuống sàn theo mét thật) */
@@ -36,7 +37,7 @@ export default function ARHud({
           ← Trở về
         </Link>
         <span className="rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur">
-          {artisanName}
+          {artisanName ?? 'Đang tìm ảnh mốc…'}
         </span>
       </div>
 
@@ -52,7 +53,7 @@ export default function ARHud({
 
       {/* Bottom: nút "Xem cỡ thật" + nút hỏi AI (GĐ2) */}
       <div className="flex flex-col items-center gap-3">
-        {canRealScale && (scanning || tracking) && (
+        {canRealScale && tracking && (
           <button
             onClick={onViewRealScale}
             className="pointer-events-auto rounded-full bg-white px-6 py-3 text-sm font-semibold text-black shadow-lg"
