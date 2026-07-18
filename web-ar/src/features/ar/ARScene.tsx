@@ -8,6 +8,7 @@ import Loading from '@/components/Loading';
 import CameraPermission from '@/components/CameraPermission';
 import UnsupportedBrowser from '@/components/UnsupportedBrowser';
 import ARHud from '@/components/ARHud';
+import ChatPanel from '@/components/ChatPanel';
 import { launchRealScaleAR } from '@/lib/realScaleAR';
 import { isWebXRARSupported } from '@/lib/webxr';
 import { startWebXRSession, type WebXRController } from './webxrController';
@@ -35,6 +36,8 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const [retryKey, setRetryKey] = useState(0);
   // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
   const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
+  // Khung chat AI với nghệ nhân đang quét (Giai đoạn 2).
+  const [chatOpen, setChatOpen] = useState(false);
 
   // WebXR (Android): ghim model vào sàn thật trong web (giữ AI). iOS không hỗ trợ -> dùng native.
   const [xrSupported, setXrSupported] = useState(false);
@@ -250,10 +253,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
           aiEnabled={activeArtisan?.aiEnabled ?? false}
           canRealScale={!!activeArtisan}
           onViewRealScale={handleViewRealScale}
-          onAskAI={() => {
-            // Giai đoạn 2: mở khung chat -> askAI(). Hiện để trống chỗ.
-            alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.');
-          }}
+          onAskAI={() => setChatOpen(true)}
         />
       )}
 
@@ -262,6 +262,15 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
         <div className="absolute bottom-28 left-1/2 z-20 max-w-xs -translate-x-1/2 rounded-xl bg-black/85 px-4 py-3 text-center text-xs leading-relaxed text-white">
           {realScaleMsg}
         </div>
+      )}
+
+      {/* Khung chat AI: chỉ khi nghệ nhân bật aiEnabled và đang thấy 1 nghệ nhân */}
+      {chatOpen && activeArtisan?.aiEnabled && (
+        <ChatPanel
+          key={activeArtisan.slug}
+          artisan={activeArtisan}
+          onClose={() => setChatOpen(false)}
+        />
       )}
 
       {/* Overlay của WebXR (dom-overlay). LUÔN render để làm root + giữ ref; khi 'off'
@@ -291,7 +300,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
                 {activeArtisan?.aiEnabled && (
                   <button
                     data-xr-ui
-                    onClick={() => alert('Tính năng hỏi-đáp AI sẽ có ở Giai đoạn 2.')}
+                    onClick={() => setChatOpen(true)}
                     className="pointer-events-auto rounded-full bg-white px-6 py-3 text-sm font-medium text-black shadow-lg"
                   >
                     💬 Hỏi nghệ nhân

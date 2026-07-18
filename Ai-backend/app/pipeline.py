@@ -14,6 +14,18 @@ from .semantic_router import SemanticRouter
 from .vector_store import ChromaVectorStore
 
 
+def _build_persona(
+    name: str | None, craft: str | None, bio: str | None
+) -> dict[str, str] | None:
+    """Gom thông tin nhập vai nghệ nhân; None nếu không có gì -> dùng persona chung."""
+    fields = {
+        key: value.strip()
+        for key, value in (("name", name), ("craft", craft), ("bio", bio))
+        if value and value.strip()
+    }
+    return fields or None
+
+
 class SmartHeritageLibrary:
     def __init__(
         self,
@@ -76,9 +88,19 @@ class SmartHeritageLibrary:
                 chunk_overlap_words=settings.chunk_overlap_words,
             )
 
-    def ask_text(self, question: str, synthesize: bool = True, transcript: str | None = None) -> PipelineResponse:
+    def ask_text(
+        self,
+        question: str,
+        synthesize: bool = True,
+        transcript: str | None = None,
+        persona_name: str | None = None,
+        persona_craft: str | None = None,
+        persona_bio: str | None = None,
+    ) -> PipelineResponse:
         timings: dict[str, int] = {}
         started = time.perf_counter()
+
+        persona = _build_persona(persona_name, persona_craft, persona_bio)
 
         router_started = time.perf_counter()
         decision = self.router.route(question)
@@ -90,7 +112,7 @@ class SmartHeritageLibrary:
         sources = self.retriever.retrieve(question)
         timings["retriever"] = self._elapsed_ms(retrieval_started)
         llm_started = time.perf_counter()
-        answer = self.narrator.generate(question, sources)
+        answer = self.narrator.generate(question, sources, persona=persona)
         timings["llm"] = self._elapsed_ms(llm_started)
 
         audio_url = None
@@ -115,11 +137,21 @@ class SmartHeritageLibrary:
         audio_bytes: bytes,
         content_type: str = "application/octet-stream",
         synthesize: bool = True,
+        persona_name: str | None = None,
+        persona_craft: str | None = None,
+        persona_bio: str | None = None,
     ) -> PipelineResponse:
         started = time.perf_counter()
         transcript_started = time.perf_counter()
         transcript = self.stt.transcribe(audio_bytes, content_type)
-        response = self.ask_text(transcript.text, synthesize=synthesize, transcript=transcript.text)
+        response = self.ask_text(
+            transcript.text,
+            synthesize=synthesize,
+            transcript=transcript.text,
+            persona_name=persona_name,
+            persona_craft=persona_craft,
+            persona_bio=persona_bio,
+        )
         timings = dict(response.timings_ms)
         timings["stt"] = self._elapsed_ms(transcript_started)
         timings["total"] = self._elapsed_ms(started)

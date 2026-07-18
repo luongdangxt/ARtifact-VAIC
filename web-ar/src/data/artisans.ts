@@ -47,7 +47,7 @@ export const artisans: Artisan[] = [
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
-    aiEnabled: false,
+    aiEnabled: true,
   },
   {
     slug: 'ong-do',
@@ -74,7 +74,7 @@ export const artisans: Artisan[] = [
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
-    aiEnabled: false,
+    aiEnabled: true,
   },
 ];
 

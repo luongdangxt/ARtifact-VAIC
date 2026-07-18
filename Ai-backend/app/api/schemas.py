@@ -9,6 +9,10 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     synthesize: bool = False
     transcript: str | None = None
+    # Nhập vai nghệ nhân (tùy chọn). Thiếu -> giữ nguyên persona "Nghệ Nhân AI" chung.
+    persona_name: str | None = Field(default=None, max_length=200)
+    persona_craft: str | None = Field(default=None, max_length=200)
+    persona_bio: str | None = Field(default=None, max_length=2000)
 
 
 class ChatMessage(BaseModel):
