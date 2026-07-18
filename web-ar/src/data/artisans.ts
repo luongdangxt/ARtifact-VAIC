@@ -7,7 +7,7 @@ import type { Artisan } from '@/lib/types';
 // KHÔNG có bước chọn thủ công.
 //
 // File .mind GỘP 2 target, compile từ ảnh mốc TẠM bằng scripts/compile-targets.mjs.
-// Thứ tự compile: [0] quan-ho-nam, [1] dong-ho-nam — KHỚP targetIndex bên dưới.
+// Thứ tự compile: [0] quan-ho-nam, [1] ong-do — KHỚP targetIndex bên dưới.
 // (ảnh mốc #1 GIỮ NGUYÊN quan-ho-nu.png — chỉ đổi MODEL neo lên thẻ, không compile lại .mind)
 // Khi có ảnh mốc THẬT: thay PNG trong public/markers rồi chạy lại
 //   node scripts/gen-temp-markers.mjs   (chỉ khi cần sinh lại ảnh tạm)
@@ -50,18 +50,27 @@ export const artisans: Artisan[] = [
     aiEnabled: false,
   },
   {
-    slug: 'dong-ho-nam',
+    slug: 'ong-do',
     targetIndex: 1, // ảnh mốc #2 — KHỚP thứ tự compile file .mind
     name: 'Ông đồ tranh Đông Hồ',
     craft: 'Tranh dân gian Đông Hồ',
-    bio: 'Nhân vật nam (ông đồ) trong cảnh vẽ tranh Đông Hồ. Quét ảnh mốc để thấy model 3D; '
+    bio: 'Nhân vật nam (ông đồ) trong cảnh vẽ tranh Đông Hồ, có animation (rig Mixamo). '
+      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động; '
       + 'bấm “Xem cỡ thật” để dựng nhân vật kích thước thật trên sàn.',
     ar: {
-      modelUrl: '/models/glb/dong-ho-nam.glb',
+      // GLB có animation (7 clip Mixamo) — đã nén texture WebP 2K (~3.2MB).
+      // Dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
+      modelUrl: '/models/glb/ong-do.glb',
       markerUrl: '/markers/dong-ho-nam.png', // ẢNH TẠM — thay ảnh thật sau
       scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
       offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
-      modelUsdzUrl: '/models/usdz/dong-ho-nam.usdz',
+      // Clip 5 = cử động TẠI CHỖ (clip 0-2 có bước đi -> ra khỏi thẻ; 3-4 đứng hình; 5-6 tại chỗ).
+      animationIndex: 5,
+      // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
+      // USDZ bản ông đồ CÓ animation (UsdSkelAnimation clip mixamo_com_006 = clip 6 tại chỗ,
+      // 616 frame @60fps), đã scale ×100 về cao ~1.72m thật (bản export gốc bị 0.01 ->
+      // 1.7cm; sửa bằng scale ×100 trên /root, mpu=1.0 up=Z khớp các model khác).
+      modelUsdzUrl: '/models/usdz/ong-do.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },

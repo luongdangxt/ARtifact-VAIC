@@ -17,7 +17,7 @@ import { statSync } from 'node:fs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GLB_DIR = resolve(__dirname, '../public/models/glb');
 
-const FILES = ['quan-ho-nu.glb', 'dong-ho-nam.glb', 'quan-ho-nam.glb'];
+const FILES = ['quan-ho-nu.glb', 'quan-ho-nam.glb', 'ong-do.glb'];
 const MAX_SIZE = 2048; // cạnh dài tối đa của texture
 const QUALITY = 90;    // WebP q90 — gần như không thấy mất mát
 
