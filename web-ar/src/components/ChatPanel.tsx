@@ -74,8 +74,19 @@ function pickRecorderMime(): string {
   return '';
 }
 
-// Tạo 1 file WAV im lặng cực ngắn để "mở khoá" thẻ <audio> trên iOS: iOS chỉ cho play()
-// tự động NẾU element đã từng play() trong một cú chạm của user. Ta gọi lúc user bấm mic.
+function getAudioContextCtor(): typeof AudioContext | undefined {
+  return window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+}
+
+function decodeAudioData(ctx: AudioContext, data: ArrayBuffer): Promise<AudioBuffer> {
+  return new Promise((resolve, reject) => {
+    const result = ctx.decodeAudioData(data, resolve, reject);
+    if (result) result.then(resolve, reject);
+  });
+}
+
+// Tạo 1 file WAV im lặng cực ngắn làm fallback cho <audio>. Đường phát chính dùng
+// AudioContext đã được resume trong cú chạm của user, ổn định hơn trên iOS/Safari.
 function makeSilentWavUrl(): string {
   const samples = 256;
   const buf = new ArrayBuffer(44 + samples);
@@ -113,6 +124,8 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const [speaking, setSpeaking] = useState(false); // đang phát giọng nghệ nhân?
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const silentUrlRef = useRef<string | null>(null);
   const unlockedRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
@@ -140,7 +153,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+      activeSourceRef.current?.stop();
       audioRef.current?.pause();
+      void audioCtxRef.current?.close();
       if (silentUrlRef.current) URL.revokeObjectURL(silentUrlRef.current);
     };
   }, []);
@@ -153,35 +168,96 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   // Mở khoá autoplay iOS — gọi TRONG cú chạm của user (bấm mic / gửi chữ).
   function unlockAudio() {
-    if (unlockedRef.current || !audioRef.current || !silentUrlRef.current) return;
+    if (unlockedRef.current) return;
+    const AC = getAudioContextCtor();
+    if (AC) {
+      const ctx = audioCtxRef.current ?? new AC();
+      audioCtxRef.current = ctx;
+
+      const source = ctx.createBufferSource();
+      source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      source.connect(ctx.destination);
+      source.start(0);
+
+      void ctx
+        .resume()
+        .then(() => {
+          unlockedRef.current = ctx.state === 'running';
+        })
+        .catch((err) => {
+          console.warn('AudioContext unlock failed', err);
+        });
+    }
+
+    if (!audioRef.current || !silentUrlRef.current) return;
     const a = audioRef.current;
     a.src = silentUrlRef.current;
-    a.muted = true;
+    a.muted = false;
+    a.volume = 0.01;
     a.play()
       .then(() => {
         a.pause();
         a.currentTime = 0;
-        a.muted = false;
+        a.volume = 1;
         unlockedRef.current = true;
       })
-      .catch(() => {
-        a.muted = false;
+      .catch((err) => {
+        a.volume = 1;
+        console.warn('HTMLAudioElement unlock failed', err);
       });
   }
 
-  function playAudio(url: string) {
-    if (!audioRef.current) audioRef.current = new Audio();
-    const a = audioRef.current;
-    a.src = url;
+  async function playAudio(url: string, mode: 'auto' | 'manual' = 'auto') {
+    activeSourceRef.current?.stop();
+    activeSourceRef.current = null;
+    audioRef.current?.pause();
     setSpeaking(true);
-    a.play()
-      .then(() => setSpeaking(true))
-      .catch(() => setSpeaking(false)); // iOS chặn nếu chưa mở khoá -> user bấm 🔊 nghe lại
+
+    try {
+      const AC = getAudioContextCtor();
+      const ctx = audioCtxRef.current ?? (AC ? new AC() : null);
+      if (ctx) {
+        audioCtxRef.current = ctx;
+        if (ctx.state === 'suspended') await ctx.resume();
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`audio fetch failed: ${res.status}`);
+        const buffer = await decodeAudioData(ctx, await res.arrayBuffer());
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.onended = () => {
+          if (activeSourceRef.current === source) {
+            activeSourceRef.current = null;
+            setSpeaking(false);
+          }
+        };
+        activeSourceRef.current = source;
+        source.start(0);
+        return;
+      }
+
+      if (!audioRef.current) audioRef.current = new Audio();
+      const a = audioRef.current;
+      a.src = url;
+      await a.play();
+    } catch (err) {
+      console.warn('TTS playback failed', err);
+      setSpeaking(false);
+      setError(
+        mode === 'manual'
+          ? 'Không phát được âm thanh. Kiểm tra kết nối hoặc định dạng file audio.'
+          : 'Trình duyệt đã chặn phát giọng nói tự động. Bấm nút 🔊 để nghe lại.',
+      );
+    }
   }
 
   function pushAssistant(reply: ChatMessage) {
     setMessages((m) => [...m, reply]);
-    if (reply.audioUrl) playAudio(reply.audioUrl);
+    if (reply.audioUrl) {
+      void playAudio(reply.audioUrl);
+    } else {
+      setError('AI đã trả lời bằng chữ nhưng backend chưa trả về file âm thanh.');
+    }
   }
 
   async function ensureStream(): Promise<MediaStream> {
@@ -309,7 +385,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                   <span className="whitespace-pre-wrap">{m.content}</span>
                   {m.role === 'assistant' && m.audioUrl && (
                     <button
-                      onClick={() => playAudio(m.audioUrl!)}
+                      onClick={() => {
+                        unlockAudio();
+                        void playAudio(m.audioUrl!, 'manual');
+                      }}
                       aria-label="Nghe lại"
                       className="ml-2 align-middle text-xs text-white/70"
                     >
@@ -361,7 +440,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
               <span className="whitespace-pre-wrap text-left">{lastAssistant.content}</span>
               {lastAssistant.audioUrl && (
                 <button
-                  onClick={() => playAudio(lastAssistant.audioUrl!)}
+                  onClick={() => {
+                    unlockAudio();
+                    void playAudio(lastAssistant.audioUrl!, 'manual');
+                  }}
                   aria-label="Nghe lại"
                   className="shrink-0 text-xs text-white/70"
                 >
