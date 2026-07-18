@@ -1,0 +1,17 @@
+{
+    "name": "ARtifact.MiniGame",
+    "rootNamespace": "ARtifact.MiniGame",
+    "references": [
+        "ARtifact.Core",
+        "Oculus.VR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

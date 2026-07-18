@@ -36,8 +36,11 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   const [retryKey, setRetryKey] = useState(0);
   // thông báo ngắn khi mở "cỡ thật" không được (thiếu USDZ / không phải điện thoại)
   const [realScaleMsg, setRealScaleMsg] = useState<string | null>(null);
-  // Khung chat AI với nghệ nhân đang quét (Giai đoạn 2).
-  const [chatOpen, setChatOpen] = useState(false);
+  // Phiên trò chuyện AI (Giai đoạn 2). GHIM nghệ nhân lúc bắt đầu để hội thoại + ghi âm
+  // TỒN TẠI XUYÊN SUỐT, không tắt khi camera lia khỏi model (activeArtisan tạm null).
+  const [session, setSession] = useState<Artisan | null>(null);
+  // slug vừa bị user đóng (✕) để KHÔNG tự mở lại ngay khi vẫn đang thấy nghệ nhân đó.
+  const dismissedRef = useRef<string | null>(null);
 
   // WebXR (Android): ghim model vào sàn thật trong web (giữ AI). iOS không hỗ trợ -> dùng native.
   const [xrSupported, setXrSupported] = useState(false);
@@ -154,6 +157,23 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
     active: started,
   });
 
+  // Voice-first: vừa THẤY nghệ nhân có bật AI là tự mở phiên trò chuyện (xin mic + sẵn sàng
+  // bấm-giữ để nói). Không tự mở lại nghệ nhân user vừa đóng; khi mất tracking hẳn thì cho
+  // phép mở lại lần sau. Phiên đã mở thì giữ nguyên (không phụ thuộc activeArtisan nữa).
+  useEffect(() => {
+    if (activeArtisan?.slug) {
+      if (
+        activeArtisan.aiEnabled &&
+        !session &&
+        dismissedRef.current !== activeArtisan.slug
+      ) {
+        setSession(activeArtisan);
+      }
+    } else {
+      dismissedRef.current = null;
+    }
+  }, [activeArtisan, session]);
+
   if (supported === false) {
     return (
       <div className="relative h-dvh w-full bg-black">
@@ -250,10 +270,11 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
           key={retryKey}
           status={status}
           artisanName={activeArtisan?.name}
-          aiEnabled={activeArtisan?.aiEnabled ?? false}
+          // Nút "Hỏi nghệ nhân" chỉ để MỞ LẠI khi user đã đóng phiên (bình thường tự mở).
+          aiEnabled={(activeArtisan?.aiEnabled ?? false) && !session}
           canRealScale={!!activeArtisan}
           onViewRealScale={handleViewRealScale}
-          onAskAI={() => setChatOpen(true)}
+          onAskAI={() => activeArtisan && setSession(activeArtisan)}
         />
       )}
 
@@ -264,12 +285,17 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
         </div>
       )}
 
-      {/* Khung chat AI: chỉ khi nghệ nhân bật aiEnabled và đang thấy 1 nghệ nhân */}
-      {chatOpen && activeArtisan?.aiEnabled && (
+      {/* Phiên trò chuyện AI: đã mở là GIỮ MOUNT xuyên suốt (kể cả khi mất tracking), chỉ
+          đóng khi user bấm ✕. `tracking` chỉ để panel hiện gợi ý, không điều khiển mount. */}
+      {session && (
         <ChatPanel
-          key={activeArtisan.slug}
-          artisan={activeArtisan}
-          onClose={() => setChatOpen(false)}
+          key={session.slug}
+          artisan={session}
+          tracking={activeArtisan?.slug === session.slug && status === 'tracking'}
+          onClose={() => {
+            dismissedRef.current = session.slug;
+            setSession(null);
+          }}
         />
       )}
 
@@ -297,10 +323,10 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
 
             {xrPhase === 'placed' && (
               <div className="flex flex-col items-center gap-3">
-                {activeArtisan?.aiEnabled && (
+                {activeArtisan?.aiEnabled && !session && (
                   <button
                     data-xr-ui
-                    onClick={() => setChatOpen(true)}
+                    onClick={() => activeArtisan && setSession(activeArtisan)}
                     className="pointer-events-auto rounded-full bg-white px-6 py-3 text-sm font-medium text-black shadow-lg"
                   >
                     💬 Hỏi nghệ nhân

@@ -106,7 +106,14 @@ class SmartHeritageLibrary:
         decision = self.router.route(question)
         timings["semantic_router"] = self._elapsed_ms(router_started)
         if not decision.allowed:
-            return self._refusal_response(question, transcript, decision.reason, decision.category, timings, started)
+            # Nghệ nhân vẫn phải LÊN TIẾNG kể cả khi từ chối/chào hỏi (câu ngoài phạm vi),
+            # nếu không du khách sẽ tưởng NPC "im lặng". Tổng hợp giọng cho luôn câu từ chối.
+            refusal_audio = None
+            if synthesize:
+                refusal_audio = self.tts.synthesize(decision.reason).audio_url
+            return self._refusal_response(
+                question, transcript, decision.reason, decision.category, timings, started, refusal_audio
+            )
 
         retrieval_started = time.perf_counter()
         sources = self.retriever.retrieve(question)
@@ -189,6 +196,7 @@ class SmartHeritageLibrary:
         category: str,
         timings: dict[str, int],
         started: float,
+        audio_url: str | None = None,
     ) -> PipelineResponse:
         return PipelineResponse(
             allowed=False,
@@ -196,7 +204,7 @@ class SmartHeritageLibrary:
             answer=reason,
             transcript=transcript,
             sources=[],
-            audio_url=None,
+            audio_url=audio_url,
             timings_ms=cls._finish_timings(timings, started),
             refusal_reason=category,
         )
