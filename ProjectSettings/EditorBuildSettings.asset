@@ -9,6 +9,7 @@ EditorBuildSettings:
     path: Assets/_Project/Scenes/ARtifact.unity
     guid: 2a72569752f97fd57a8e3130a62040be
   m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 470033fbde8c8ac96bfba773e699936e, type: 2}
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 86f90a0f5c8743c00b717d724d226818, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 6e9064703abfa24099d9231b35cd7df8, type: 2}
