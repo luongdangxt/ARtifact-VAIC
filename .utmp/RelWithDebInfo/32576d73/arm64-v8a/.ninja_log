@@ -1,0 +1,10 @@
+# ninja log v5
+1	1672	1784399338207681983	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	6287b260b0baa8f3
+5	1683	1784399338206896819	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	b955c303fc72ec39
+0	1727	1784399338259293883	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	5d2e34762af73e60
+12	1882	1784399338412837371	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	2ac40aafc7046d30
+0	1943	1784399338476712114	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	5337c951790044a6
+9	2038	1784399338571562052	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	f67b79e9d3f006fb
+5	2240	1784399338773949553	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	40a55c0a770906c7
+0	2326	1784399338863427932	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	13e1ffe3985adb58
+2326	2353	1784399338895320210	/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/32576d73/obj/arm64-v8a/libgame.so	ffec899af517bc00

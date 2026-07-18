@@ -7,7 +7,11 @@ function baseUrl(): string {
   // Trên server (SSR/route handler) fetch tương đối không hoạt động -> cần URL tuyệt đối.
   // Trên client dùng đường dẫn tương đối.
   if (typeof window !== 'undefined') return '';
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  // Ưu tiên URL cấu hình thủ công; trên Vercel tự lấy domain deployment hiện tại
+  // (VERCEL_URL có sẵn phía server, gồm cả preview) -> không cần set env vẫn chạy.
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:3000';
 }
 
 export async function fetchArtisans(): Promise<Artisan[]> {

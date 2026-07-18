@@ -1,12 +1,16 @@
 // CHỈ dùng phía server (route handlers). Không import vào client component.
 // Nối tới backend AI (FastAPI). Cấu hình qua env server-only:
-//   API_BASE_URL   — vd http://localhost:8000 (local) hoặc URL public (production)
+//   API_BASE_URL   — override URL backend (vd http://localhost:8000 khi chạy backend local)
 //   API_AUTH_TOKEN — nếu backend bật API_AUTH_TOKEN (Bearer)
 
 import type { Artisan } from '@/lib/types';
 
+// Backend production mặc định (URL public, không phải secret) -> Vercel chạy được ngay
+// mà không cần set env. Đặt API_BASE_URL để trỏ sang backend khác (vd localhost khi dev).
+const DEFAULT_BACKEND_URL = 'https://artifact.primeralabs.vn';
+
 export function backendBaseUrl(): string {
-  return (process.env.API_BASE_URL ?? 'http://localhost:8000').replace(/\/$/, '');
+  return (process.env.API_BASE_URL ?? DEFAULT_BACKEND_URL).replace(/\/$/, '');
 }
 
 export function backendAuthHeaders(): Record<string, string> {
