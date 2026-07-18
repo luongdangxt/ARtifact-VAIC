@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 // Load + cache model .glb. Nếu load lỗi (thiếu file, sai format) -> trả placeholder
 // để Phase 0 vẫn chạy được mà không cần asset thật.
@@ -34,7 +35,15 @@ export function loadModel(url: string): Promise<THREE.Group> {
   const promise = new Promise<THREE.Group>((resolve) => {
     getLoader().load(
       url,
-      (gltf) => resolve(gltf.scene),
+      (gltf) => {
+        // Gắn animation clip vào userData của scene để tầng trên (useMindAR) tạo
+        // AnimationMixer phát. GLTFLoader trả clip RỜI khỏi scene; nếu chỉ lấy
+        // gltf.scene thì mất animation -> model đứng yên (T-pose). Clip là AnimationClip
+        // stateless (bind vào node theo TÊN lúc clipAction), nên dùng chung được cho mọi
+        // bản clone của model — SkeletonUtils.clone giữ nguyên tên node.
+        gltf.scene.userData.clips = gltf.animations ?? [];
+        resolve(gltf.scene);
+      },
       undefined,
       (err) => {
         console.warn(`[modelLoader] load lỗi ${url}, dùng placeholder:`, err);
@@ -45,6 +54,16 @@ export function loadModel(url: string): Promise<THREE.Group> {
 
   cache.set(url, promise);
   return promise;
+}
+
+// Bản SAO mới của model từ cache. BẮT BUỘC clone trước khi normalizeModel vì
+// loadModel trả về CÙNG một instance (đã cache) mỗi lần, còn normalizeModel thì
+// MUTATE (dịch tâm + reparent). Nếu dùng thẳng instance cache, lần khởi tạo lại
+// (vd thoát Quick Look rồi bật lại MindAR) sẽ normalize lần 2 lên object đã bị
+// biến đổi -> model lệch/biến mất dù anchor vẫn track. clone của SkeletonUtils
+// giữ đúng cả model có xương (nhân vật người), dùng chung geometry/material nên nhẹ.
+export function cloneModel(model: THREE.Group): THREE.Group {
+  return cloneSkinned(model) as THREE.Group;
 }
 
 // Chuẩn hoá kích thước model về ~`scale` đơn vị và căn TÂM về gốc anchor.
@@ -60,13 +79,44 @@ export interface NormalizeOptions {
   groundAlign?: boolean;
 }
 
+// Bounding box theo POSE THẬT (đã skin), KHÔNG phải geometry thô. three.js
+// Box3.setFromObject với SkinnedMesh lấy box của POSITION gốc (bỏ qua skinning) ->
+// sai nặng khi model rig có scale lạ ở Armature (vd Mixamo xuất scale 0.01): box nhỏ
+// gấp ~100 lần thực tế -> normalizeModel chia ra hệ số phóng khổng lồ (600×+) ->
+// model to vọt + văng khỏi khung -> KHÔNG thấy gì. Ở đây quét từng đỉnh ĐÃ áp bone
+// transform để lấy đúng kích thước + tâm nhìn thấy. Model không rig -> fallback
+// setFromObject (rẻ hơn, không cần quét đỉnh).
+function posedBoundingBox(root: THREE.Object3D): THREE.Box3 {
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3();
+  const v = new THREE.Vector3();
+  let skinned = false;
+  root.traverse((o) => {
+    const mesh = o as THREE.SkinnedMesh;
+    if (mesh.isSkinnedMesh) {
+      skinned = true;
+      mesh.skeleton.update();
+      const pos = mesh.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        // getVertexPosition trả toạ độ đỉnh SAU skinning nhưng trong hệ MESH-LOCAL;
+        // phải nhân matrixWorld mới ra toạ độ THẬT (gồm cả scale 0.01 ở Armature) ->
+        // đo đúng kích thước mắt nhìn. Thiếu bước này box sai không gian -> chia lệch.
+        mesh.getVertexPosition(i, v);
+        v.applyMatrix4(mesh.matrixWorld);
+        box.expandByPoint(v);
+      }
+    }
+  });
+  return skinned ? box : box.setFromObject(root);
+}
+
 export function normalizeModel(
   model: THREE.Group,
   scale: number,
   offset: [number, number, number],
   opts?: NormalizeOptions,
 ): THREE.Group {
-  const box = new THREE.Box3().setFromObject(model);
+  const box = posedBoundingBox(model);
   const size = new THREE.Vector3();
   const center = new THREE.Vector3();
   box.getSize(size);
@@ -98,7 +148,7 @@ export function normalizeModel(
   // scaler dọc trục pháp tuyến thẻ (Z) sao cho đáy (min.z) = 0 -> chân đứng trên thẻ.
   if (opts?.groundAlign) {
     wrapper.updateMatrixWorld(true);
-    const b = new THREE.Box3().setFromObject(scaler);
+    const b = posedBoundingBox(scaler);
     scaler.position.z -= b.min.z;
   }
 

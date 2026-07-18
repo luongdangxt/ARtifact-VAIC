@@ -2,8 +2,11 @@
 // Tầng AR chỉ phụ thuộc vào các type này, không phụ thuộc nguồn dữ liệu (mock/DB/API).
 
 export interface ARTarget {
-  /** Đường dẫn file .mind đã compile, vd '/targets/nghe-nhan-01.mind' */
-  targetUrl: string;
+  /**
+   * @deprecated Đa target dùng CHUNG 1 file .mind (xem TARGETS_MIND trong data/artisans).
+   * Giữ optional cho tương thích ngược; nghệ nhân được nhận diện qua Artisan.targetIndex.
+   */
+  targetUrl?: string;
   /** Đường dẫn model 3D .glb, vd '/models/nghe-nhan-01.glb' */
   modelUrl: string;
   /** Hệ số phóng to model sau khi load */
@@ -32,11 +35,22 @@ export interface ARTarget {
    * (mặc định căn tâm -> nửa model chìm dưới thẻ). Dùng chung với rotationDeg để đứng thật.
    */
   groundAlign?: boolean;
+  /**
+   * Model có sẵn animation (vd rig Mixamo, nhiều clip) thì phát clip theo index này,
+   * lặp vô hạn. Bỏ trống = 0 (clip đầu). Model tĩnh (không clip) thì bỏ qua.
+   */
+  animationIndex?: number;
 }
 
 export interface Artisan {
-  /** 'nghe-nhan-01' — dùng trong URL & mã QR */
+  /** 'nghe-nhan-01' — định danh nội bộ (dữ liệu/HUD), KHÔNG phải bước chọn của user */
   slug: string;
+  /**
+   * Chỉ số ảnh mốc của nghệ nhân này trong file .mind gộp (TARGETS_MIND).
+   * Thứ tự add ảnh lúc compile = targetIndex (0, 1, 2, …). Máy quét chung TỰ ĐỘNG
+   * nhận diện: chĩa vào ảnh nào thì hiện nghệ nhân có targetIndex tương ứng.
+   */
+  targetIndex: number;
   name: string;
   /** nghề / di sản */
   craft: string;
