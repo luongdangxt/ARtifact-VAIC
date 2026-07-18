@@ -31,9 +31,9 @@ export const artisans: Artisan[] = [
       // GLB: dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
       modelUrl: '/models/glb/quan-ho-nu.glb',
       markerUrl: '/markers/quan-ho-nu.png', // ẢNH TẠM — thay ảnh thật sau
-      scale: 0.3,
+      scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
       // offset trong hệ ảnh-mốc: X phải, Y lên (TRONG mặt phẳng card), Z nhô khỏi card.
-      offset: [0, 0, 0],
+      offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
       // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
       modelUsdzUrl: '/models/usdz/quan-ho-nu.usdz',
       groundAlign: false,
@@ -51,8 +51,8 @@ export const artisans: Artisan[] = [
     ar: {
       modelUrl: '/models/glb/dong-ho-nam.glb',
       markerUrl: '/markers/dong-ho-nam.png', // ẢNH TẠM — thay ảnh thật sau
-      scale: 0.3,
-      offset: [0, 0, 0],
+      scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
+      offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
       modelUsdzUrl: '/models/usdz/dong-ho-nam.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
