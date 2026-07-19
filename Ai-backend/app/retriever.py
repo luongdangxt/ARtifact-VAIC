@@ -4,7 +4,7 @@ import re
 
 from .embeddings import strip_vietnamese_accents
 from .models import SourceSnippet
-from .qa_pairs import normalized_terms, qa_record_score
+from .qa_pairs import is_narrative_request, normalized_terms, qa_record_score
 from .vector_store import ChromaVectorStore
 
 
@@ -24,9 +24,36 @@ class HeritageRetriever:
     def retrieve(self, question: str) -> list[SourceSnippet]:
         records = self.vector_store.load()
         expanded_question = _expand_heritage_aliases(question)
+        narrative_request = is_narrative_request(question)
         results = self.vector_store.similarity_search(expanded_question, max(self.top_k * 4, self.top_k))
         results.extend(self._lexical_matches(expanded_question, records))
-        results = self._merge_qa_results(expanded_question, results, records)
+        results = [
+            (record, score)
+            for record, score in results
+            if _record_matches_focus(expanded_question, record)
+        ]
+        results = [
+            (record, score)
+            for record, score in results
+            if record.metadata.get("content_type") != "qa_pair"
+            or _qa_matches_inferred_intent(
+                expanded_question,
+                record.text,
+                f"{record.metadata.get('title', '')} {record.metadata.get('source', '')}",
+            )
+        ]
+        if narrative_request:
+            # Với yêu cầu kể/giới thiệu, quiz hành chính là chất liệu rất tệ và dễ
+            # khiến model đọc nguyên đáp án hoặc hiểu sai "dòng dữ liệu" thành
+            # "dòng nhạc". Chỉ dùng các đoạn văn giới thiệu có ngữ cảnh.
+            results = [
+                (record, score)
+                for record, score in results
+                if record.metadata.get("content_type") != "qa_pair"
+            ]
+            results.sort(key=lambda item: item[1], reverse=True)
+        else:
+            results = self._merge_qa_results(expanded_question, results, records)
         results = self._prefer_exact_short_phrase(question, results)
         if not results:
             return []
@@ -35,34 +62,87 @@ class HeritageRetriever:
         threshold = max(self.min_score, best_score * self.min_ratio)
         if best_score >= 2.0:
             threshold = max(threshold, best_score * 0.90)
-        snippets: list[SourceSnippet] = []
-        seen_sources: set[str] = set()
+        selected: list[tuple[object, float]] = []
+        seen_source_types: set[tuple[str, str]] = set()
         for record, score in results:
             if score < threshold:
                 continue
             metadata = record.metadata
             source_name = str(metadata.get("source", "unknown"))
-            if source_name in seen_sources:
+            content_type = str(metadata.get("content_type", "document"))
+            if content_type != "qa_pair" and (source_name, "qa_pair") in seen_source_types:
+                # Chọn companion có chủ đích ở dưới (ưu tiên phần mở đầu của hồ sơ),
+                # thay vì lấy chunk QA dài nhưng tình cờ có điểm lexical cao.
                 continue
-            seen_sources.add(source_name)
-            snippets.append(
-                SourceSnippet(
-                    chunk_id=record.id,
-                    text=record.text,
-                    score=score,
-                    source=source_name,
-                    title=str(metadata.get("title", metadata.get("source", "unknown"))),
-                    page=metadata.get("page"),
-                )
-            )
-            if len(snippets) >= self.top_k:
+            source_key = (source_name, content_type)
+            if source_key in seen_source_types:
+                continue
+            seen_source_types.add(source_key)
+            selected.append((record, score))
+            if len(selected) >= self.top_k:
                 break
-        return snippets
+
+        # Một QA exact-match là bằng chứng tốt cho dữ kiện, nhưng nếu chỉ gửi đúng
+        # hai dòng Câu hỏi/Đáp án thì LLM không có chất liệu để diễn đạt tự nhiên.
+        # Luôn ghép thêm đoạn văn thường tốt nhất từ chính PDF đó, kể cả khi đoạn
+        # này thấp hơn ngưỡng 90% dành cho QA match.
+        qa_sources = {
+            str(record.metadata.get("source", "unknown"))
+            for record, _ in selected
+            if record.metadata.get("content_type") == "qa_pair"
+        }
+        for source_name in qa_sources:
+            if len(selected) >= self.top_k:
+                break
+            if (source_name, "document") in seen_source_types:
+                continue
+            companion_candidates = [
+                (record, score)
+                for record, score in results
+                if str(record.metadata.get("source", "unknown")) == source_name
+                and record.metadata.get("content_type") != "qa_pair"
+            ]
+            companion = min(
+                companion_candidates,
+                key=lambda item: (
+                    item[0].metadata.get("page", 9999),
+                    item[0].metadata.get("chunk_index", 9999),
+                    -item[1],
+                ),
+                default=None,
+            )
+            if companion is not None:
+                selected.append(companion)
+                seen_source_types.add((source_name, "document"))
+
+        selected.sort(key=lambda item: (item[0].metadata.get("content_type") != "qa_pair", -item[1]))
+        return [self._to_snippet(record, score) for record, score in selected[: self.top_k]]
+
+    @staticmethod
+    def _to_snippet(record, score: float) -> SourceSnippet:
+        metadata = record.metadata
+        return SourceSnippet(
+            chunk_id=record.id,
+            text=record.text,
+            score=score,
+            source=str(metadata.get("source", "unknown")),
+            title=str(metadata.get("title", metadata.get("source", "unknown"))),
+            page=metadata.get("page"),
+            content_type=str(metadata.get("content_type", "document")),
+        )
 
     def _merge_qa_results(self, question: str, vector_results: list, records: list | None = None) -> list:
         qa_results = []
         for record in records if records is not None else self.vector_store.load():
             metadata = record.metadata
+            if not _record_matches_focus(question, record):
+                continue
+            if metadata.get("content_type") == "qa_pair" and not _qa_matches_inferred_intent(
+                question,
+                record.text,
+                f"{metadata.get('title', '')} {metadata.get('source', '')}",
+            ):
+                continue
             qa_score = qa_record_score(
                 question,
                 record.text,
@@ -158,3 +238,60 @@ def _expand_heritage_aliases(question: str) -> str:
     if "vinh danh" in plain or "ghi danh" in plain:
         additions.append("UNESCO ghi danh năm")
     return f"{question} {' '.join(additions)}".strip()
+
+
+def _focus_terms(question: str) -> list[str]:
+    plain = " ".join(normalized_terms(question))
+    match = re.search(r"di san dang duoc quet\s+(.+?)(?:\s+nhan vat|$)", plain)
+    if not match:
+        return []
+    focus_text = re.split(
+        r"\s+(?:nha nhac am nhac cung dinh|unesco ghi danh nam)\b",
+        match.group(1),
+        maxsplit=1,
+    )[0]
+    # Giữ toàn bộ tên craft thay vì chỉ "đông hồ": cụm đầy đủ phân biệt
+    # Tranh dân gian Đông Hồ với "lễ cúng dòng họ" sau khi bỏ dấu.
+    return normalized_terms(focus_text)
+
+
+def _record_matches_focus(question: str, record) -> bool:
+    focus = _focus_terms(question)
+    if not focus:
+        return True
+    metadata = record.metadata
+    haystack = " ".join(normalized_terms(f"{metadata.get('title', '')} {metadata.get('source', '')}"))
+    return " ".join(focus) in haystack
+
+
+def _qa_matches_inferred_intent(
+    question: str,
+    record_text: str,
+    record_context: str = "",
+) -> bool:
+    question_plain = " ".join(normalized_terms(question))
+    if "y dinh duoc suy ra" not in question_plain:
+        return True
+    focus = _focus_terms(question)
+    if focus:
+        context_words = " ".join(normalized_terms(record_context or record_text))
+        if " ".join(focus) not in context_words:
+            return False
+    record_plain = " ".join(normalized_terms(record_text))
+    intent_requirements = (
+        ("hoi dia ban", ("dia ban", "o dau", "tinh ", "thanh pho")),
+        ("hoi nien dai", ("nien dai", "ra doi", "hinh thanh", "xuat hien", "khong the tu suy ra")),
+        (
+            "hoi cong dong",
+            ("cong dong chu the", "nguoi thuc hanh", "ai thuc hanh", "vai tro co ban"),
+        ),
+        ("hoi trang thai unesco", ("unesco", "ghi danh")),
+        (
+            "hoi cach thuc hanh",
+            ("cach lam", "ky thuat", "quy trinh", "thuc hanh nhu", "nguyen lieu", "cong cu"),
+        ),
+    )
+    for intent_marker, required_phrases in intent_requirements:
+        if intent_marker in question_plain:
+            return any(phrase in record_plain for phrase in required_phrases)
+    return True

@@ -51,10 +51,15 @@ export async function askAIVoice(
   slug: string,
   audio: Blob,
   filename = 'question.webm',
+  history: ChatMessage[] = [],
 ): Promise<VoiceReply> {
   const form = new FormData();
   form.append('slug', slug);
   form.append('file', audio, filename);
+  form.append(
+    'history',
+    JSON.stringify(history.slice(-8).map(({ role, content }) => ({ role, content }))),
+  );
   const res = await fetch(`${baseUrl()}/api/ai/voice`, {
     method: 'POST',
     body: form,

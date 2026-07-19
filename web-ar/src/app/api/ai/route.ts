@@ -28,6 +28,10 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         question,
         synthesize: true,
+        history: (body.messages ?? []).slice(-9, -1).map(({ role, content }) => ({
+          role,
+          content,
+        })),
         ...personaFields(artisan),
       }),
     });

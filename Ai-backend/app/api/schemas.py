@@ -5,6 +5,11 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class ChatMessage(BaseModel):
+    role: str = "user"
+    content: str = Field(min_length=1, max_length=4000)
+
+
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     synthesize: bool = False
@@ -13,11 +18,7 @@ class AskRequest(BaseModel):
     persona_name: str | None = Field(default=None, max_length=200)
     persona_craft: str | None = Field(default=None, max_length=200)
     persona_bio: str | None = Field(default=None, max_length=2000)
-
-
-class ChatMessage(BaseModel):
-    role: str = "user"
-    content: str
+    history: list[ChatMessage] = Field(default_factory=list, max_length=8)
 
 
 class ChatCompletionRequest(BaseModel):

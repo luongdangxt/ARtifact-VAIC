@@ -27,11 +27,9 @@ export const artisans: Artisan[] = [
     name: 'Liền anh Quan họ',
     craft: 'Dân ca Quan họ Bắc Ninh',
     bio: 'Nhân vật nam (liền anh) trong canh hát Quan họ, có animation (rig Mixamo). '
-      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động; '
-      + 'bấm “Xem cỡ thật” để đặt nhân vật xuống sàn theo kích thước thật.',
+      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
     ar: {
       // GLB có animation (6 clip Mixamo) — đã nén texture WebP 2K (~2.7MB).
-      // Dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
       modelUrl: '/models/glb/quan-ho-nam.glb',
       markerUrl: '/markers/quan-ho-nu.png', // ẢNH TẠM — thay ảnh thật sau
       scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
@@ -39,11 +37,6 @@ export const artisans: Artisan[] = [
       offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
       // Clip 5 = cử động TẠI CHỖ (clip 0-2 có bước đi -> ra khỏi thẻ; 3-4 đứng hình).
       animationIndex: 5,
-      // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
-      // USDZ bản nam CÓ animation (UsdSkelAnimation clip mixamo_com_005 = clip 5 tại chỗ,
-      // 616 frame @60fps), đã scale ×100 về cao ~1.77m thật (bản export gốc bị 0.01 ->
-      // 1.8cm; sửa bằng scale ×100 trên /root, mpu=1.0 up=Z khớp các model khác).
-      modelUsdzUrl: '/models/usdz/quan-ho-nam.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
@@ -55,22 +48,15 @@ export const artisans: Artisan[] = [
     name: 'Ông đồ tranh Đông Hồ',
     craft: 'Tranh dân gian Đông Hồ',
     bio: 'Nhân vật nam (ông đồ) trong cảnh vẽ tranh Đông Hồ, có animation (rig Mixamo). '
-      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động; '
-      + 'bấm “Xem cỡ thật” để dựng nhân vật kích thước thật trên sàn.',
+      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
     ar: {
       // GLB có animation (7 clip Mixamo) — đã nén texture WebP 2K (~3.2MB).
-      // Dùng cho MindAR (model trên thẻ) + Android Scene Viewer (cỡ thật).
       modelUrl: '/models/glb/ong-do.glb',
       markerUrl: '/markers/dong-ho-nam.png', // ẢNH TẠM — thay ảnh thật sau
       scale: 2.0, // model to (~2× bề rộng ảnh mốc) để thấy rõ, khỏi đưa điện thoại lại gần
       offset: [0, -0.5, 0], // hạ xuống để đầu không quá cao, gần tầm mắt khách hơn
       // Clip 5 = cử động TẠI CHỖ (clip 0-2 có bước đi -> ra khỏi thẻ; 3-4 đứng hình; 5-6 tại chỗ).
       animationIndex: 5,
-      // "Xem cỡ thật": iOS đọc USDZ (Quick Look), Android đọc GLB (Scene Viewer).
-      // USDZ bản ông đồ CÓ animation (UsdSkelAnimation clip mixamo_com_006 = clip 6 tại chỗ,
-      // 616 frame @60fps), đã scale ×100 về cao ~1.72m thật (bản export gốc bị 0.01 ->
-      // 1.7cm; sửa bằng scale ×100 trên /root, mpu=1.0 up=Z khớp các model khác).
-      modelUsdzUrl: '/models/usdz/ong-do.usdz',
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
     },
@@ -89,6 +75,6 @@ export function getArtisanBySlug(slug: string): Artisan | undefined {
 //    (https://hiukim.github.io/mind-ar-js-doc/tools/compile hoặc node compiler).
 //    THỨ TỰ add ảnh = targetIndex (ảnh #1 -> index 0, ảnh #2 -> index 1, …).
 //    Lưu ra public/targets/artisans.mind, rồi đổi TARGETS_MIND ở trên trỏ file này.
-// 3. Bỏ model .glb (+ .usdz nếu cần "xem cỡ thật") vào public/models/…
+// 3. Bỏ model .glb vào public/models/…
 // 4. Thêm entry vào artisans[] với targetIndex KHỚP thứ tự ảnh + đường dẫn model.
 // ─────────────────────────────────────────────────────────────────────────────

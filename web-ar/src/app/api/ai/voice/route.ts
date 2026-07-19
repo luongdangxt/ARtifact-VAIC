@@ -25,6 +25,7 @@ function extFromMime(type: string): string {
 export async function POST(req: Request) {
   const inForm = await req.formData();
   const slug = (inForm.get('slug') as string | null) ?? '';
+  const history = (inForm.get('history') as string | null) ?? '';
   const file = inForm.get('file');
   if (!(file instanceof Blob)) {
     return NextResponse.json({ error: 'Thiếu file âm thanh.' }, { status: 400 });
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   const outForm = new FormData();
   outForm.append('file', file, filename);
   outForm.append('synthesize', 'true');
+  if (history) outForm.append('history_json', history);
   const persona = personaFields(artisan);
   if (persona.persona_name) outForm.append('persona_name', persona.persona_name);
   if (persona.persona_craft) outForm.append('persona_craft', persona.persona_craft);

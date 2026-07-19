@@ -1,5 +1,0 @@
-/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/.utmp/RelWithDebInfo/32576d73/arm64-v8a/CMakeFiles/edit_cache.dir
-/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/.utmp/RelWithDebInfo/32576d73/arm64-v8a/CMakeFiles/rebuild_cache.dir
-/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/.utmp/RelWithDebInfo/32576d73/arm64-v8a/GameActivity/CMakeFiles/game.dir
-/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/.utmp/RelWithDebInfo/32576d73/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
-/home/dang/Documents/GitHub/ARtifact-VAIC/ARtifact VAIC/.utmp/RelWithDebInfo/32576d73/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
