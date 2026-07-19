@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Artisan, ChatMessage } from '@/lib/types';
 import { askAI, askAIVoice } from '@/lib/api-client';
+import { getSharedAudioContext, unlockSharedAudio } from '@/lib/audioUnlock';
 
 interface Props {
   artisan: Artisan;
@@ -74,10 +75,6 @@ function pickRecorderMime(): string {
   return '';
 }
 
-function getAudioContextCtor(): typeof AudioContext | undefined {
-  return window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-}
-
 function decodeAudioData(ctx: AudioContext, data: ArrayBuffer): Promise<AudioBuffer> {
   return new Promise((resolve, reject) => {
     const result = ctx.decodeAudioData(data, resolve, reject);
@@ -111,6 +108,10 @@ function makeSilentWavUrl(): string {
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 
+// Nghệ nhân đã tự giới thiệu trong lần load trang này (theo slug) — module-level để
+// đóng/mở lại panel (hoặc lia qua lại giữa 2 nghệ nhân) KHÔNG chào lại từ đầu.
+const introducedSlugs = new Set<string>();
+
 // Khung trò chuyện với nghệ nhân. MẶC ĐỊNH là VOICE (bấm-giữ để nói); có nút tròn nhỏ
 // để bung khung chat CHỮ (gõ + xem lại lịch sử). Panel tồn tại xuyên suốt phiên, không
 // tắt khi camera lia khỏi model. Reset khi đổi nghệ nhân do ARScene remount qua key.
@@ -124,7 +125,6 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const [speaking, setSpeaking] = useState(false); // đang phát giọng nghệ nhân?
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const silentUrlRef = useRef<string | null>(null);
   const unlockedRef = useRef(false);
@@ -155,9 +155,44 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
       activeSourceRef.current?.stop();
       audioRef.current?.pause();
-      void audioCtxRef.current?.close();
+      // AudioContext là SHARED (đã unlock từ cú bấm ở màn chào) — KHÔNG close ở đây,
+      // đóng rồi thì phiên chat sau mở lại sẽ mất trạng thái unlock trên iOS.
       if (silentUrlRef.current) URL.revokeObjectURL(silentUrlRef.current);
     };
+  }, []);
+
+  // TỰ GIỚI THIỆU: panel mount đúng lúc model vừa hiện lên (ARScene mở session khi
+  // track được), nên nghệ nhân chủ động chào + kể ngắn về di sản luôn, không đợi hỏi.
+  // Câu mồi KHÔNG đưa vào messages (chỉ hiện câu trả lời); giọng nói tự phát trên
+  // AudioContext shared đã unlock từ nút "Quét AR ngay" (bị chặn thì đã có nút 🔊).
+  useEffect(() => {
+    if (introducedSlugs.has(artisan.slug)) return;
+    introducedSlugs.add(artisan.slug);
+    let cancelled = false;
+    setBusy(true);
+    askAI(artisan.slug, [
+      {
+        role: 'user',
+        content:
+          `Hãy chào du khách vừa quét ảnh mốc và tự giới thiệu ngắn gọn (3-4 câu) ` +
+          `về bản thân cùng di sản ${artisan.craft}, rồi mời họ đặt câu hỏi.`,
+      },
+    ])
+      .then((reply) => {
+        if (!cancelled) pushAssistant(reply);
+      })
+      .catch(() => {
+        // lỗi mạng thì bỏ qua lời chào, cho phép chào lại nếu panel mở lần sau
+        introducedSlugs.delete(artisan.slug);
+      })
+      .finally(() => {
+        if (!cancelled) setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // chỉ chạy 1 lần khi mount; đổi nghệ nhân thì ARScene remount panel qua key
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tự cuộn xuống cuối khi có tin mới (lúc mở khung chat chữ).
@@ -167,18 +202,12 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   }, [messages, busy, expanded]);
 
   // Mở khoá autoplay iOS — gọi TRONG cú chạm của user (bấm mic / gửi chữ).
+  // Dùng AudioContext SHARED: thường đã unlock sẵn từ cú bấm "Quét AR ngay".
   function unlockAudio() {
     if (unlockedRef.current) return;
-    const AC = getAudioContextCtor();
-    if (AC) {
-      const ctx = audioCtxRef.current ?? new AC();
-      audioCtxRef.current = ctx;
-
-      const source = ctx.createBufferSource();
-      source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-      source.connect(ctx.destination);
-      source.start(0);
-
+    unlockSharedAudio();
+    const ctx = getSharedAudioContext();
+    if (ctx) {
       void ctx
         .resume()
         .then(() => {
@@ -214,10 +243,8 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     setSpeaking(true);
 
     try {
-      const AC = getAudioContextCtor();
-      const ctx = audioCtxRef.current ?? (AC ? new AC() : null);
+      const ctx = getSharedAudioContext();
       if (ctx) {
-        audioCtxRef.current = ctx;
         if (ctx.state === 'suspended') await ctx.resume();
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error(`audio fetch failed: ${res.status}`);
@@ -345,7 +372,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
   const status = busy
-    ? 'Đang trả lời…'
+    ? messages.length === 0
+      ? 'Nghệ nhân đang chào bạn…' // đang tải lời tự giới thiệu lúc model vừa hiện
+      : 'Đang trả lời…'
     : recording
       ? 'Đang nghe… (thả tay để gửi)'
       : null;
