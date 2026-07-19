@@ -5,20 +5,18 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-class ChatMessage(BaseModel):
-    role: str = "user"
-    content: str = Field(min_length=1, max_length=4000)
-
-
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
     synthesize: bool = False
     transcript: str | None = None
-    # Nhập vai nghệ nhân (tùy chọn). Thiếu -> giữ nguyên persona "Nghệ Nhân AI" chung.
-    persona_name: str | None = Field(default=None, max_length=200)
-    persona_craft: str | None = Field(default=None, max_length=200)
-    persona_bio: str | None = Field(default=None, max_length=2000)
-    history: list[ChatMessage] = Field(default_factory=list, max_length=8)
+    persona_name: str | None = None
+    persona_craft: str | None = None
+    persona_bio: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: str = "user"
+    content: str
 
 
 class ChatCompletionRequest(BaseModel):

@@ -124,11 +124,6 @@ class FPTTextToSpeech:
             raise RuntimeError(format_url_error("FPT Cloud TTS", exc)) from exc
 
         _raise_if_json_error(audio_bytes, response_type)
-        # FPT.AI-VITs đôi khi trả PCM WAV có RIFF/data chunk size lớn gấp đôi
-        # số byte thực tế. Một số desktop player vẫn phát được, nhưng Safari và
-        # Web Audio API có thể từ chối decode với EncodingError. Chuẩn hoá header
-        # trước khi lưu để mọi client nhận cùng một file WAV hợp lệ.
-        audio_bytes = normalize_wav_header(audio_bytes)
         output_path = self._write_audio(audio_bytes)
         return SpeechAudio(
             audio_url=str(output_path),
@@ -242,37 +237,3 @@ def _raise_if_json_error(audio_bytes: bytes, response_type: str) -> None:
     except json.JSONDecodeError:
         return
     raise RuntimeError(f"FPT Cloud TTS trả về JSON thay vì audio: {payload}")
-
-
-def normalize_wav_header(audio_bytes: bytes) -> bytes:
-    """Validate a RIFF/WAVE response and repair incorrect RIFF/data sizes.
-
-    FPT's PCM payload is otherwise valid, but its size fields have been observed
-    to describe twice the bytes actually returned. Browsers are stricter about
-    this than ffmpeg/desktop players, so use the real response length as truth.
-    """
-    if len(audio_bytes) < 44 or audio_bytes[:4] != b"RIFF" or audio_bytes[8:12] != b"WAVE":
-        raise RuntimeError("FPT Cloud TTS không trả về file RIFF/WAVE hợp lệ.")
-
-    normalized = bytearray(audio_bytes)
-    normalized[4:8] = (len(normalized) - 8).to_bytes(4, "little")
-
-    offset = 12
-    while offset + 8 <= len(normalized):
-        chunk_id = bytes(normalized[offset : offset + 4])
-        declared_size = int.from_bytes(normalized[offset + 4 : offset + 8], "little")
-        data_offset = offset + 8
-
-        if chunk_id == b"data":
-            actual_size = len(normalized) - data_offset
-            if actual_size <= 0:
-                raise RuntimeError("FPT Cloud TTS trả về WAV không có dữ liệu âm thanh.")
-            normalized[offset + 4 : offset + 8] = actual_size.to_bytes(4, "little")
-            return bytes(normalized)
-
-        next_offset = data_offset + declared_size + (declared_size % 2)
-        if next_offset > len(normalized):
-            raise RuntimeError("FPT Cloud TTS trả về WAV có chunk bị cắt ngắn.")
-        offset = next_offset
-
-    raise RuntimeError("FPT Cloud TTS trả về WAV không có data chunk.")

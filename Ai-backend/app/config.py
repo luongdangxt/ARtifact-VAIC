@@ -19,10 +19,7 @@ def _load_dotenv(path: Path) -> None:
         key, value = line.split("=", 1)
         key = key.strip()
         value = value.strip().strip('"').strip("'")
-        # Values explicitly provided by the process (for example when running a
-        # local server against a copied vector store) must take precedence over
-        # the repository's .env defaults.
-        os.environ.setdefault(key, value)
+        os.environ[key] = value
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -86,7 +83,7 @@ class Settings:
     fpt_stt_model: str = "FPT.AI-whisper-large-v3-turbo"
     fpt_stt_language: str = "vi"
     fpt_tts_model: str = "FPT.AI-VITs"
-    fpt_tts_voice: str = "std_leminh"  # giọng NAM (Bắc); 2 nghệ nhân đều là nam
+    fpt_tts_voice: str = "std_kimngan"
     fpt_tts_speed: str = "0"
     fpt_tts_format: str = "wav"
     fpt_tts_download_timeout: int = 90

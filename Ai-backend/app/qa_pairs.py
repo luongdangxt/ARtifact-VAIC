@@ -215,43 +215,6 @@ def is_question_like(text: str) -> bool:
     return bool(terms.intersection(QUESTION_CUE_TERMS))
 
 
-def is_narrative_request(text: str) -> bool:
-    plain = " ".join(normalized_terms(text))
-    if "y dinh duoc suy ra" in plain:
-        if "yeu cau gioi thieu chung" in plain:
-            return True
-        if any(
-            marker in plain
-            for marker in (
-                "hoi dia ban",
-                "hoi nien dai",
-                "hoi cong dong",
-                "hoi trang thai unesco",
-                "hoi cach thuc hanh",
-            )
-        ):
-            return False
-    return any(
-        phrase in plain
-        for phrase in (
-            "ke cho",
-            "ke ve",
-            "ke nghe",
-            "gioi thieu",
-            "tom tat",
-            "noi ve",
-            "noi nghe",
-            "noi them",
-            "cho minh nghe",
-            "nhu mot nghe nhan",
-            "cau chuyen ve",
-            "cai nay",
-            "la sao",
-            "co gi hay",
-        )
-    )
-
-
 def token_overlap(left: set[str], right: set[str]) -> float:
     if not left or not right:
         return 0.0

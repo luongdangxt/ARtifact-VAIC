@@ -15,7 +15,6 @@ from ..pipeline import SmartHeritageLibrary
 from .schemas import (
     AskRequest,
     ChatCompletionRequest,
-    ChatMessage,
     SpeechRequest,
     public_pipeline_response,
 )
@@ -65,7 +64,6 @@ def ask(payload: AskRequest, _: Auth) -> dict:
         persona_name=payload.persona_name,
         persona_craft=payload.persona_craft,
         persona_bio=payload.persona_bio,
-        history=[message.model_dump() for message in payload.history],
     )
     return public_pipeline_response(response, _public_audio_url(response.audio_url))
 
@@ -76,11 +74,7 @@ def chat_completions(payload: ChatCompletionRequest, _: Auth):
     if not question.strip():
         raise HTTPException(status_code=422, detail="messages phải chứa một message user có content.")
 
-    response = pipeline.ask_text(
-        question,
-        synthesize=payload.synthesize,
-        history=[message.model_dump() for message in payload.messages[:-1]][-8:],
-    )
+    response = pipeline.ask_text(question, synthesize=payload.synthesize)
     completion_id = f"chatcmpl-{uuid.uuid4().hex}"
     if payload.stream:
         # LLM nội bộ hiện buffer toàn bộ response; SSE này giữ tương thích client nhưng chỉ phát một chunk cuối.
@@ -140,7 +134,6 @@ async def audio_ask(
     persona_name: str | None = Form(None),
     persona_craft: str | None = Form(None),
     persona_bio: str | None = Form(None),
-    history_json: str | None = Form(None),
 ):
     audio_bytes = await file.read()
     _check_audio_size(audio_bytes)
@@ -151,7 +144,6 @@ async def audio_ask(
         persona_name=persona_name,
         persona_craft=persona_craft,
         persona_bio=persona_bio,
-        history=_parse_history(history_json),
     )
     return public_pipeline_response(response, _public_audio_url(response.audio_url))
 
@@ -180,19 +172,6 @@ def _check_audio_size(audio_bytes: bytes) -> None:
         raise HTTPException(status_code=400, detail="File âm thanh rỗng.")
     if len(audio_bytes) > settings.api_max_audio_bytes:
         raise HTTPException(status_code=413, detail="File âm thanh vượt quá giới hạn cho phép.")
-
-
-def _parse_history(value: str | None) -> list[dict[str, str]]:
-    if not value:
-        return []
-    try:
-        raw = json.loads(value)
-        if not isinstance(raw, list):
-            raise ValueError
-        messages = [ChatMessage.model_validate(item).model_dump() for item in raw[-8:]]
-    except (json.JSONDecodeError, TypeError, ValueError):
-        raise HTTPException(status_code=422, detail="history_json không hợp lệ.")
-    return [message for message in messages if message["role"] in {"user", "assistant"}]
 
 
 def _audio_path(value: str | None) -> Path | None:
