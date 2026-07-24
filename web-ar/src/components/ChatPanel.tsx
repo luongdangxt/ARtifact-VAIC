@@ -13,57 +13,15 @@ interface Props {
   onClose: () => void;
 }
 
-// FPT STT (FPT.AI-whisper-large-v3-turbo) CHỈ nhận WAV (PCM) — đã kiểm chứng trực tiếp:
-// gửi webm/opus (Android) hay mp4/aac (iOS) đều bị 503 "Transcription service unavailable".
-// Vì MediaRecorder KHÔNG xuất WAV, ta giải mã bản ghi bằng Web Audio rồi tự đóng gói WAV
-// 16-bit mono ngay trong trình duyệt trước khi gửi. Không cần đụng backend.
-function encodeWav(samples: Float32Array, sampleRate: number): Blob {
-  const dataLen = samples.length * 2;
-  const view = new DataView(new ArrayBuffer(44 + dataLen));
-  const w = (o: number, s: string) => {
-    for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i));
-  };
-  w(0, 'RIFF');
-  view.setUint32(4, 36 + dataLen, true);
-  w(8, 'WAVE');
-  w(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true); // PCM
-  view.setUint16(22, 1, true); // mono
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true); // byte rate
-  view.setUint16(32, 2, true); // block align
-  view.setUint16(34, 16, true); // bits/sample
-  w(36, 'data');
-  view.setUint32(40, dataLen, true);
-  let off = 44;
-  for (let i = 0; i < samples.length; i++) {
-    const s = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    off += 2;
-  }
-  return new Blob([view], { type: 'audio/wav' });
-}
-
-// Giải mã blob thu được (webm/mp4/…) -> gộp về mono -> WAV. decodeAudioData tự giải nén
-// container (Safari đọc mp4/aac, Chrome đọc webm/opus) nên chạy được trên cả 2 nền tảng.
-async function blobToWav(blob: Blob): Promise<Blob> {
-  const AC: typeof AudioContext =
-    window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new AC();
-  try {
-    const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
-    const ch = decoded.numberOfChannels;
-    const n = decoded.length;
-    const mono = new Float32Array(n);
-    for (let c = 0; c < ch; c++) {
-      const data = decoded.getChannelData(c);
-      for (let i = 0; i < n; i++) mono[i] += data[i] / ch;
-    }
-    return encodeWav(mono, decoded.sampleRate);
-  } finally {
-    void ctx.close();
-  }
+// Gemini STT nhận thẳng bản ghi nén gốc (webm/opus của Chrome/Android, mp4/aac của iOS)
+// nên KHÔNG cần convert WAV nữa — gửi luôn blob gốc cho nhẹ (~8KB vs ~113KB WAV).
+// Chỉ cần đặt đúng đuôi file theo mime để backend/Whisper chọn demuxer chuẩn.
+function extFromBlobType(type: string): string {
+  const t = (type || '').toLowerCase();
+  if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) return 'm4a';
+  if (t.includes('ogg')) return 'ogg';
+  if (t.includes('wav')) return 'wav';
+  return 'webm';
 }
 
 // Chọn mimeType tốt nhất cho MediaRecorder theo thiết bị (iOS ưu tiên mp4).
@@ -335,9 +293,13 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     setBusy(true);
     setError(null);
     try {
-      // FPT STT chỉ nhận WAV -> chuyển đổi ngay trên máy trước khi gửi.
-      const wav = await blobToWav(raw);
-      const reply = await askAIVoice(artisan.slug, wav, 'question.wav', messages);
+      // Gửi thẳng bản ghi gốc (đã nén) — Gemini STT nhận webm/mp4/ogg... không cần WAV.
+      const reply = await askAIVoice(
+        artisan.slug,
+        raw,
+        `question.${extFromBlobType(raw.type)}`,
+        messages,
+      );
       const spoken = reply.transcript?.trim();
       setMessages((m) => [
         ...m,

@@ -109,3 +109,6 @@ Ai-backend/.cache/
 Ai-backend/storage/
 Ai-backend/heritage_ai/data/documents/*
 !Ai-backend/heritage_ai/data/documents/.gitkeep
+
+# Subset PDF copy để ingest nhanh khi test API local (không commit)
+Ai-backend/dataset-subset/
