@@ -1,0 +1,21 @@
+# Không đưa những thứ này vào image (sẽ mount lúc chạy hoặc không cần)
+.git
+.gitignore
+.env
+.env.example
+storage/
+.cache/
+dataset/
+__pycache__/
+*.py[codz]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+venv/
+.venv/
+env/
+README.md
+Dockerfile
+docker-compose.yml
+DOCKER.md

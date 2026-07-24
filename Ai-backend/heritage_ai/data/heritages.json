@@ -1,0 +1,72 @@
+[
+  {
+    "id": "nha-nhac-cung-dinh-hue",
+    "name": "Nhã nhạc cung đình Huế",
+    "aliases": ["Nhã nhạc", "nhạc cung đình Huế"],
+    "overview": "Nhã nhạc là loại hình âm nhạc cung đình từng được trình diễn trong những dịp trọng đại của triều đình, đặc biệt phát triển dưới triều Nguyễn tại Huế.",
+    "history": "Âm nhạc cung đình Việt Nam hình thành qua nhiều thế kỷ và đạt mức phát triển hoàn chỉnh trong thời Nguyễn. Không gian lịch sử quan trọng của di sản gắn với kinh đô Huế.",
+    "practice": "Một buổi trình diễn có thể kết hợp dàn nhạc, ca và múa với hệ thống bài bản, nhạc khí và nghi thức phù hợp từng hoàn cảnh. Quy mô dàn nhạc thay đổi tùy nghi lễ và chương trình.",
+    "meaning": "Di sản phản ánh đời sống nghi lễ, thẩm mỹ âm nhạc và kỹ năng trình diễn của văn hóa cung đình Việt Nam, đồng thời lưu giữ một kho bài bản và kỹ thuật truyền nghề phong phú.",
+    "location": "Không gian văn hóa tiêu biểu của Nhã nhạc nằm tại Huế, gắn với các thiết chế và sinh hoạt văn hóa của cố đô.",
+    "etiquette": "Khi xem biểu diễn, du khách nên giữ trật tự, tuân theo hướng dẫn của không gian tổ chức và tránh dùng đèn flash nếu có quy định hạn chế.",
+    "visitor_tip": "Hãy tìm hiểu bối cảnh của từng tiết mục trước khi nghe; điều đó giúp bạn nhận ra mối liên hệ giữa âm nhạc, nghi lễ, trang phục và không gian cung đình.",
+    "sources": ["Hồ sơ và giới thiệu của UNESCO về Nhã nhạc", "Tư liệu của Trung tâm Bảo tồn Di tích Cố đô Huế"],
+    "follow_up_questions": ["Nhã nhạc sử dụng những nhạc cụ nào?", "Nhã nhạc gắn với các nghi lễ nào?", "Tôi nên lưu ý gì khi xem biểu diễn?"]
+  },
+  {
+    "id": "dan-ca-quan-ho-bac-ninh",
+    "name": "Dân ca Quan họ Bắc Ninh",
+    "aliases": ["Quan họ", "dân ca Quan họ", "Quan họ Bắc Ninh"],
+    "overview": "Quan họ là hình thức hát giao duyên nổi tiếng của vùng Kinh Bắc, trong đó các nhóm liền anh và liền chị trao đổi những câu hát giàu chất trữ tình.",
+    "history": "Quan họ được nuôi dưỡng qua nhiều thế hệ trong đời sống cộng đồng và lễ hội của các làng vùng Bắc Ninh, Bắc Giang. Việc truyền dạy truyền thống chủ yếu dựa trên thực hành và quan hệ giữa các thế hệ.",
+    "practice": "Người hát thực hiện các làn điệu theo lối đối đáp. Một bên cất câu ra, bên kia dùng câu đối phù hợp về làn điệu và ý nghĩa; kỹ thuật hát, lời ca và phép ứng xử đều được coi trọng.",
+    "meaning": "Quan họ thể hiện tình cảm, sự thanh lịch, lòng hiếu khách và mối gắn kết giữa cộng đồng. Giá trị của di sản nằm cả trong tiếng hát lẫn tập quán xã hội bao quanh việc hát.",
+    "location": "Không gian Quan họ tập trung tại các làng thuộc vùng văn hóa Kinh Bắc, ngày nay chủ yếu nằm ở Bắc Ninh và Bắc Giang.",
+    "etiquette": "Du khách nên lắng nghe trọn câu hát, tôn trọng không gian giao duyên và xin phép trước khi ghi hình cận cảnh người thực hành.",
+    "visitor_tip": "Nếu có cơ hội, hãy nghe Quan họ trong không gian cộng đồng và tìm hiểu cả cách mời trầu, xưng hô, trang phục thay vì chỉ nghe một bài hát trên sân khấu.",
+    "sources": ["Hồ sơ và giới thiệu của UNESCO về Dân ca Quan họ Bắc Ninh", "Tư liệu của cơ quan văn hóa tỉnh Bắc Ninh"],
+    "follow_up_questions": ["Liền anh và liền chị là ai?", "Hát đối đáp trong Quan họ diễn ra thế nào?", "Trang phục Quan họ có đặc điểm gì?"]
+  },
+  {
+    "id": "nghe-thuat-bai-choi-trung-bo",
+    "name": "Nghệ thuật Bài Chòi Trung Bộ Việt Nam",
+    "aliases": ["Bài Chòi", "nghệ thuật Bài Chòi", "hát Bài Chòi"],
+    "overview": "Bài Chòi kết hợp âm nhạc, thơ ca, diễn xuất, hội họa và trò chơi dân gian, được cộng đồng nhiều tỉnh miền Trung thực hành trong sinh hoạt văn hóa và dịp lễ hội.",
+    "history": "Bài Chòi được lưu truyền trong cộng đồng miền Trung qua nhiều thế hệ. Hình thức và cách thể hiện có sự đa dạng giữa các địa phương, phản ánh lịch sử và đời sống của từng vùng.",
+    "practice": "Trong hội chơi, người tham gia ngồi tại các chòi và nhận thẻ bài. Anh hiệu hoặc chị hiệu rút thẻ, hô hát những câu gợi tên quân bài; người có đủ thẻ theo luật chơi sẽ thắng. Bài Chòi còn có hình thức trình diễn sân khấu.",
+    "meaning": "Bài Chòi tạo không gian vui chơi chung, truyền tải kinh nghiệm sống, đạo lý và sự dí dỏm của người dân miền Trung. Khả năng ứng tác làm cho mỗi cuộc chơi có sức sống riêng.",
+    "location": "Di sản được thực hành tại nhiều cộng đồng thuộc khu vực Trung Bộ Việt Nam, với sắc thái địa phương khác nhau.",
+    "etiquette": "Du khách nên làm theo hướng dẫn của người điều khiển cuộc chơi, không tự ý cầm hoặc đổi thẻ bài và tôn trọng cách diễn xướng của địa phương.",
+    "visitor_tip": "Hãy tham gia một hội chơi cộng đồng nếu có điều kiện; việc trực tiếp chờ câu hô và nhận biết thẻ bài giúp bạn hiểu Bài Chòi rõ hơn xem biểu diễn đơn thuần.",
+    "sources": ["Hồ sơ và giới thiệu của UNESCO về Nghệ thuật Bài Chòi Trung Bộ Việt Nam", "Tư liệu của Viện Văn hóa Nghệ thuật quốc gia Việt Nam"],
+    "follow_up_questions": ["Một hội Bài Chòi diễn ra như thế nào?", "Anh hiệu và chị hiệu làm nhiệm vụ gì?", "Giá trị cộng đồng của Bài Chòi là gì?"]
+  },
+  {
+    "id": "don-ca-tai-tu-nam-bo",
+    "name": "Đờn ca tài tử Nam Bộ",
+    "aliases": ["Đờn ca tài tử", "đàn ca tài tử", "tài tử Nam Bộ"],
+    "overview": "Đờn ca tài tử là nghệ thuật âm nhạc của cộng đồng Nam Bộ, kết hợp tiếng đờn và lời ca trong không gian sinh hoạt gần gũi, giàu tính ngẫu hứng.",
+    "history": "Loại hình này hình thành và phát triển tại Nam Bộ trên cơ sở tiếp nhận, biến đổi nhiều nguồn âm nhạc truyền thống. Kiến thức thường được truyền trực tiếp giữa thầy, bạn đờn và các thế hệ trong cộng đồng.",
+    "practice": "Người thực hành sử dụng hệ thống bài bản và nhiều nhạc cụ như đàn kìm, đàn tranh, đàn cò, đàn bầu, sáo; guitar phím lõm cũng giữ vai trò quen thuộc. Người đờn và người ca phối hợp, biến hóa theo lòng bản.",
+    "meaning": "Đờn ca tài tử là phương tiện giao lưu, bày tỏ cảm xúc và gắn kết cộng đồng. Chữ 'tài tử' nhấn mạnh người có tài và niềm say mê nghệ thuật, không đơn giản mang nghĩa nghiệp dư.",
+    "location": "Di sản hiện diện rộng rãi tại các tỉnh, thành Nam Bộ trong gia đình, câu lạc bộ, lễ hội và những cuộc gặp gỡ cộng đồng.",
+    "etiquette": "Khi nghe trong không gian nhỏ, du khách nên hạn chế nói chuyện, chờ hết bài mới trao đổi và xin phép trước khi ghi âm hoặc ghi hình.",
+    "visitor_tip": "Hãy ngồi gần nhóm trình diễn để quan sát cách các nhạc công lắng nghe và đối thoại bằng âm thanh; đây là nét hấp dẫn khó cảm nhận nếu chỉ đọc mô tả.",
+    "sources": ["Hồ sơ và giới thiệu của UNESCO về Đờn ca tài tử Nam Bộ", "Tư liệu của Viện Âm nhạc Việt Nam"],
+    "follow_up_questions": ["Đờn ca tài tử có những nhạc cụ nào?", "Guitar phím lõm có gì đặc biệt?", "Từ tài tử trong tên gọi có nghĩa gì?"]
+  },
+  {
+    "id": "khong-gian-van-hoa-cong-chieng-tay-nguyen",
+    "name": "Không gian văn hóa Cồng chiêng Tây Nguyên",
+    "aliases": ["Cồng chiêng Tây Nguyên", "cồng chiêng", "văn hóa cồng chiêng"],
+    "overview": "Không gian văn hóa Cồng chiêng Tây Nguyên bao gồm tiếng cồng chiêng, người thực hành, nghi lễ, lễ hội và môi trường cộng đồng của nhiều dân tộc tại Tây Nguyên.",
+    "history": "Cồng chiêng được trao truyền qua nhiều thế hệ trong các cộng đồng Tây Nguyên. Mỗi cộng đồng có hệ thống bài chiêng, cách sử dụng và quan niệm riêng nên không thể xem mọi truyền thống cồng chiêng là giống nhau.",
+    "practice": "Cồng và chiêng được diễn tấu theo dàn trong những bối cảnh cộng đồng khác nhau. Người chơi phối hợp tiết tấu và cao độ; cách tổ chức dàn, kỹ thuật và ý nghĩa nghi lễ thay đổi theo từng dân tộc và địa phương.",
+    "meaning": "Cồng chiêng gắn với bản sắc, ký ức, tín ngưỡng và sự cố kết cộng đồng. Giá trị di sản không chỉ nằm ở nhạc cụ mà còn ở toàn bộ không gian văn hóa nơi âm nhạc được thực hành.",
+    "location": "Không gian di sản trải rộng tại khu vực Tây Nguyên, trong các cộng đồng thuộc nhiều tỉnh và nhiều dân tộc khác nhau.",
+    "etiquette": "Du khách cần tôn trọng quy định của chủ thể cộng đồng, không tự ý chạm vào nhạc cụ hoặc đi vào không gian nghi lễ, và luôn xin phép trước khi chụp ảnh, quay phim.",
+    "visitor_tip": "Hãy tìm một chương trình do chính cộng đồng giới thiệu và lắng nghe phần giải thích về bối cảnh của bài chiêng; tránh coi đây chỉ là một tiết mục giải trí tách khỏi đời sống văn hóa.",
+    "sources": ["Hồ sơ và giới thiệu của UNESCO về Không gian văn hóa Cồng chiêng Tây Nguyên", "Tư liệu của cơ quan quản lý văn hóa các tỉnh Tây Nguyên"],
+    "follow_up_questions": ["Cồng và chiêng khác nhau như thế nào?", "Vì sao gọi là không gian văn hóa?", "Du khách cần lưu ý gì khi tham dự nghi lễ?"]
+  }
+]

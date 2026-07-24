@@ -29,6 +29,9 @@ UnityVR/[Aa]ssets/Plugins/Editor/JetBrains*
 # Visual Studio cache directory
 .vs/
 
+# JetBrains IDE
+.idea/
+
 # Gradle cache directory
 .gradle/
 
@@ -79,8 +82,6 @@ UnityVR/Assets/folder chia theo bối cảnh/nghe-lam-gom/USDZ/binh-gom.usdz
 .env
 .env.*
 !.env.example
-__pycache__/
-*.py[cod]
 logs/
 *.log
 *.wav
@@ -88,8 +89,23 @@ logs/
 *.m4a
 *.ogg
 
-data/questions/*
-!data/questions/.gitkeep
-data/vector_store/*.jsonl
-data/vector_store/chroma/
-!data/vector_store/.gitkeep
+# --- Python / Ai-backend ---
+__pycache__/
+*.py[codz]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Downloaded model cache (HuggingFace, etc.)
+Ai-backend/.cache/
+
+# Runtime-generated vector store
+Ai-backend/storage/
+Ai-backend/heritage_ai/data/documents/*
+!Ai-backend/heritage_ai/data/documents/.gitkeep
