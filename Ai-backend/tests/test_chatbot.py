@@ -14,18 +14,42 @@ from heritage_ai.repository import HeritageRepository
 from heritage_ai.text_utils import normalize_text
 
 
+# Ba di sản dùng xuyên suốt test, tra theo id chứ KHÔNG theo vị trí trong
+# heritages.json — file đó được sinh lại bởi scripts/build_heritage_docs.py nên thứ
+# tự thay đổi được, bám vị trí là test vỡ mà không phải do lỗi thật.
+TEST_HERITAGE_IDS = {
+    "Nhã nhạc": "nha-nhac-cung-dinh-hue",
+    "Quan họ": "dan-ca-quan-ho-bac-ninh",
+    "Bài Chòi": "nghe-thuat-bai-choi-trung-bo",
+}
+
+
+def _mentioned_id(query: str) -> str | None:
+    return next(
+        (heritage_id for text, heritage_id in TEST_HERITAGE_IDS.items() if text in query),
+        None,
+    )
+
+
 class FakeGeminiClient:
     def __init__(self) -> None:
         self.analyze_calls = 0
 
     def analyze_query(self, query: str, heritage_names: list[str]) -> QueryAnalysis:
         self.analyze_calls += 1
+        repository = HeritageRepository(include_dataset=False)
+        heritage_id = _mentioned_id(query)
+        name = (
+            next(item["name"] for item in repository.all() if item["id"] == heritage_id)
+            if heritage_id
+            else None
+        )
         if "Quan họ" in query:
-            return QueryAnalysis("history", "normal", heritage_names[1], False, "")
+            return QueryAnalysis("history", "normal", name, False, "")
         if "Nhã nhạc" in query:
-            return QueryAnalysis("overview", "short", heritage_names[0], False, "")
+            return QueryAnalysis("overview", "short", name, False, "")
         if "Bài Chòi" in query:
-            return QueryAnalysis("overview", "normal", heritage_names[2], False, "")
+            return QueryAnalysis("overview", "normal", name, False, "")
         return QueryAnalysis(
             "overview", "normal", None, True, "Bạn muốn tìm hiểu di sản nào?"
         )
@@ -54,9 +78,6 @@ class FakeRetriever:
         "etiquette": "etiquette",
         "location": "location",
     }
-    # Vị trí trong repository của di sản được nhắc tên (khớp với FakeGeminiClient).
-    MENTIONS = {"Nhã nhạc": 0, "Quan họ": 1, "Bài Chòi": 2}
-
     def __init__(self, repository: HeritageRepository) -> None:
         self.repository = repository
 
@@ -69,13 +90,22 @@ class FakeRetriever:
         Câu không nhắc tên di sản nào -> các score sát nhau, đúng tình huống router
         local chịu thua và nhường cho Gemini phân giải.
         """
-        names = [item["name"] for item in self.repository.all()[:limit]]
+        items = self.repository.all()
+        names_by_id = {item["id"]: item["name"] for item in items}
+        # Ba di sản của test luôn nằm trong danh sách ứng viên, bất kể chúng đứng
+        # thứ mấy trong heritages.json.
+        names = [names_by_id[heritage_id] for heritage_id in TEST_HERITAGE_IDS.values()]
+        names += [
+            item["name"] for item in items if item["name"] not in names
+        ][: max(0, limit - len(names))]
+
         ranked = [(name, 0.70 - index * 0.001) for index, name in enumerate(names)]
-        mentioned = next(
-            (index for text, index in self.MENTIONS.items() if text in query), None
-        )
+        mentioned = _mentioned_id(query)
         if mentioned is not None:
-            ranked[mentioned] = (names[mentioned], 0.90)
+            target = names_by_id[mentioned]
+            ranked = [
+                (name, 0.90 if name == target else score) for name, score in ranked
+            ]
         return sorted(ranked, key=lambda item: item[1], reverse=True)
 
     def retrieve(self, query: str, heritage_id: str, intent: str):
@@ -211,9 +241,17 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertEqual(item["id"], "nghe-thuat-bai-choi-trung-bo")
 
     def test_detects_history_intent(self) -> None:
+        # Kiểm đúng thứ cần kiểm: câu hỏi nguồn gốc phải lấy tư liệu trường
+        # `history`, không phải `practice`. So với nội dung lấy thẳng từ repository
+        # nên dataset đổi lời văn thì test vẫn đúng.
+        quan_ho = next(
+            item
+            for item in HeritageRepository(include_dataset=False).all()
+            if item["id"] == TEST_HERITAGE_IDS["Quan họ"]
+        )
         answer = self.chatbot.ask("Nguồn gốc của Quan họ là gì?")
-        self.assertIn("được nuôi dưỡng qua nhiều thế hệ", answer)
-        self.assertNotIn("Người hát thực hiện các làn điệu", answer)
+        self.assertIn(quan_ho["history"], answer)
+        self.assertNotIn(quan_ho["practice"], answer)
 
     def test_unknown_heritage_returns_guidance(self) -> None:
         answer = self.chatbot.ask("Hãy kể về một di sản khác")

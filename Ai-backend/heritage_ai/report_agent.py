@@ -12,7 +12,10 @@ _log = logging.getLogger(__name__)
 
 # Mã trích dẫn [1], [2]... trong lời kể. Vẫn yêu cầu Gemini gắn để bám sát tư liệu,
 # nhưng cắt trước khi trả về vì mục "Nguồn tham khảo" không còn hiển thị nữa.
-_CITATION_RE = re.compile(r"\s*\[\d+\]")
+# Phải nuốt cả dấu phân cách GIỮA các mã liền nhau: một câu dẫn hai nguồn được viết
+# "... tinh tế [1], [2]." — xóa riêng từng mã sẽ để lại "... tinh tế,." và TTS đọc
+# thành một quãng ngắt cụt lủn.
+_CITATION_RE = re.compile(r"\s*\[\d+\](?:\s*[,;]\s*\[\d+\])*")
 
 
 class TextReportAgent:

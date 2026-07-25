@@ -1,0 +1,27 @@
+{
+  "id": "nghe-thuat-bai-choi-trung-bo",
+  "name": "Nghệ thuật Bài Chòi Trung Bộ Việt Nam",
+  "aliases": [
+    "Bài Chòi",
+    "hô bài chòi",
+    "hội bài chòi"
+  ],
+  "unesco_year": 2017,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Bài-chòi.txt",
+      "source": "Wikipedia tiếng Việt – Bài chòi",
+      "source_url": "https://vi.wikipedia.org/wiki/B%C3%A0i_ch%C3%B2i",
+      "fetched_at": "2026-07-25",
+      "chars": 3920
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2017)",
+      "source_url": "https://ich.unesco.org/en/RL/the-art-of-bai-choi-in-central-viet-nam-01222",
+      "fetched_at": "2026-07-25",
+      "chars": 2285
+    }
+  ]
+}

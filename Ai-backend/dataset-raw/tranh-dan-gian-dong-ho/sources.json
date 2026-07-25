@@ -1,0 +1,28 @@
+{
+  "id": "tranh-dan-gian-dong-ho",
+  "name": "Nghề làm tranh dân gian Đông Hồ",
+  "aliases": [
+    "tranh Đông Hồ",
+    "tranh dân gian Đông Hồ",
+    "làng Đông Hồ",
+    "giấy điệp"
+  ],
+  "unesco_year": 2025,
+  "unesco_list": "USL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Tranh-Đông-Hồ.txt",
+      "source": "Wikipedia tiếng Việt – Tranh Đông Hồ",
+      "source_url": "https://vi.wikipedia.org/wiki/Tranh_%C4%90%C3%B4ng_H%E1%BB%93",
+      "fetched_at": "2026-07-25",
+      "chars": 7701
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2025)",
+      "source_url": "https://ich.unesco.org/en/USL/craft-of-making-ong-h-folk-woodblock-printings-01737",
+      "fetched_at": "2026-07-25",
+      "chars": 2606
+    }
+  ]
+}

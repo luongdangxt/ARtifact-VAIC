@@ -223,6 +223,70 @@ Kiểm tra nhanh số lượng PDF:
 find dataset -type f -iname '*.pdf' | wc -l
 ```
 
+### Lưu ý quan trọng về chất lượng dataset PDF
+
+485 PDF này KHÔNG phải tư liệu nghiên cứu. Mỗi file chỉ là một trang sinh tự động
+theo cùng một khuôn, thay tên di sản vào chỗ trống:
+
+> Di sản **{TÊN}** là một biểu hiện văn hóa phi vật thể của cộng đồng tại **{TỈNH}**.
+> Di sản được hình thành, thực hành và trao truyền qua nhiều thế hệ…
+
+Thông tin thật duy nhất là 4 dòng metadata cuối trang: STT, loại hình, địa phương,
+số quyết định. Vì vậy 485 PDF chỉ tạo ra khoảng 490 chunk gần như rỗng nghĩa, và
+chatbot trả lời được đúng những câu chung chung.
+
+Chúng chỉ nên coi là danh mục tên di sản để router nhận diện câu hỏi. Muốn chatbot
+kể được chuyện thật thì phải đào tư liệu bằng pipeline ở mục 8b.
+
+## 8b. Đào lại tư liệu thật cho di sản UNESCO
+
+Pipeline 3 bước trong `scripts/`, dựng tư liệu chi tiết cho 17 di sản văn hóa phi
+vật thể Việt Nam được UNESCO ghi danh (gồm cả Quan họ và Đông Hồ — hai nghệ nhân
+đang chạy trong app AR).
+
+```text
+scripts/heritage_registry.py       Danh mục 17 di sản + URL nguồn (sửa ở đây khi thêm)
+        ↓
+scripts/crawl_heritage_sources.py  Tải Wikipedia tiếng Việt + hồ sơ UNESCO
+        ↓  dataset-raw/<id>/*.txt + sources.json (nguyên văn, có URL và ngày tải)
+scripts/build_heritage_docs.py     Gemini cắt tư liệu theo 7 intent, KHÔNG sáng tác
+        ↓  heritage_ai/data/documents/<id>__<intent>.md + .metadata.json
+scripts/verify_heritage_docs.py    Đối chiếu số + tên riêng ngược lại tư liệu gốc
+```
+
+Chạy đầy đủ:
+
+```bash
+python scripts/crawl_heritage_sources.py          # ~5 phút, có backoff khi Wikipedia 429
+python scripts/build_heritage_docs.py             # gọi Gemini, ~1 phút/di sản
+python scripts/verify_heritage_docs.py            # kiểm chi tiết không có nguồn
+python create_vectorDB.py --reset                 # nạp lại VectorDB
+```
+
+Chỉ làm lại một di sản:
+
+```bash
+python scripts/crawl_heritage_sources.py --only tranh-dan-gian-dong-ho --force
+python scripts/build_heritage_docs.py --only tranh-dan-gian-dong-ho
+```
+
+Vài điểm cần biết:
+
+- `build_heritage_docs.py` mặc định dùng `gemini-3.6-flash`, MẠNH hơn model runtime
+  trong `.env`. Đây là job offline chạy một lần nên ưu tiên chất lượng tách intent.
+  Hết quota free tier thì đổi `--model gemini-2.5-flash`.
+- Script cũng ghi đè `heritage_ai/data/heritages.json` bằng bản tóm tắt 17 di sản
+  (giữ nguyên `id` cũ nên không tách đôi heritage_id trong ChromaDB). Dùng
+  `--no-catalog` nếu không muốn đụng file này.
+- `ingest.py` tự bỏ qua trang PDF khuôn mẫu của di sản nào đã có tư liệu thật, để
+  chúng không tranh chỗ trong `top_k` (PDF mang `intent="all"` nên lọt mọi bộ lọc).
+- `verify_heritage_docs.py` báo động giả rất nhiều với chi tiết dịch từ hồ sơ UNESCO
+  tiếng Anh ("Cửu Long" ← Mekong, "72" ← seventy-two). Đọc kỹ phần đầu file script
+  trước khi kết luận một cảnh báo là bịa.
+
+Thêm di sản mới: bổ sung một mục vào `HERITAGES` trong `scripts/heritage_registry.py`
+(kiểm tra `wiki_vi` có tồn tại trên vi.wikipedia.org trước), rồi chạy lại 3 bước.
+
 ## 9. Tạo VectorDB
 
 ### Tạo mới hoàn toàn
