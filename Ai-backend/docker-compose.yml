@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  ai-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-backend
+    ports:
+      - "5567:5567"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # Map file .env để backend nhận các biến môi trường
+      - ./.env:/app/.env
+    restart: unless-stopped
