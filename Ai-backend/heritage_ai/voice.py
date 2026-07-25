@@ -1,8 +1,10 @@
-"""STT + TTS bằng Gemini API (REST) cho backend local.
+"""STT + TTS cho backend local.
 
-Dùng CHUNG GEMINI_API_KEY với phần text — không cần dịch vụ ngoài (FPT...).
-- TTS: `gemini-2.5-flash-preview-tts` trả PCM 24kHz mono -> encode MP3 (lameenc).
-  Câu dài được cắt đoạn ngắn, TTS SONG SONG rồi ghép PCM để giảm độ trễ.
+- TTS chính: Gemini `gemini-2.5-flash-preview-tts` trả PCM 24kHz mono -> encode
+  MP3 (lameenc). Câu dài được cắt đoạn ngắn, TTS SONG SONG rồi ghép PCM để giảm
+  độ trễ.
+- TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI) trả WAV.
+  Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt.
 - STT: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline -> transcript.
   Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client không cần convert.
 """
@@ -10,12 +12,16 @@ Dùng CHUNG GEMINI_API_KEY với phần text — không cần dịch vụ ngoài
 from __future__ import annotations
 
 import base64
+import json
+import logging
 import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
+
+_log = logging.getLogger(__name__)
 
 _API = "https://generativelanguage.googleapis.com/v1beta/models"
 
@@ -33,6 +39,13 @@ _TTS_CONCURRENCY = int(os.getenv("GEMINI_TTS_CONCURRENCY", "6"))  # số call TT
 # Trần số đoạn: mỗi đoạn = 1 request TTS. Free tier giới hạn REQUEST/NGÀY nên cần chặn
 # để câu dài không nổ quota (đặt 0 = bỏ trần). Có billing thì tăng lên cho nhanh hơn.
 _TTS_MAX_CHUNKS = int(os.getenv("GEMINI_TTS_MAX_CHUNKS", "10"))
+
+# --- TTS dự phòng: FPT.AI-VITs (endpoint kiểu OpenAI /v1/audio/speech) -------
+FPT_TTS_URL = os.getenv("FPT_TTS_URL", "https://mkp-api.fptcloud.com/v1/audio/speech")
+FPT_TTS_MODEL = os.getenv("FPT_TTS_MODEL", "FPT.AI-VITs")
+FPT_TTS_VOICE = os.getenv("FPT_TTS_VOICE", "std_leminh")  # giọng NAM cho NPC nghệ nhân
+# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower()
 
 
 class VoiceError(RuntimeError):
@@ -106,6 +119,67 @@ def transcribe(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
     if not text:
         raise VoiceError("Không nhận diện được lời nói.")
     return text
+
+
+def synthesize(text: str) -> tuple[bytes, str]:
+    """Chữ -> (audio bytes, đuôi file). Gemini là chính, FPT.AI-VITs là dự phòng.
+
+    Trả kèm đuôi vì hai nguồn cho định dạng khác nhau (mp3 vs wav); phía API dùng
+    đuôi này để đặt tên file + Content-Type.
+    """
+    if TTS_PROVIDER == "fpt":
+        return synthesize_fpt_wav(text), "wav"
+
+    try:
+        return synthesize_mp3(text), "mp3"
+    except VoiceError as exc:
+        if TTS_PROVIDER == "gemini" or not _fpt_api_key():
+            raise
+        # Gemini hỏng (hết quota 429, model lỗi...) -> vẫn có tiếng nhờ FPT.
+        _log.warning("Gemini TTS lỗi, chuyển sang FPT.AI-VITs: %s", exc)
+        return synthesize_fpt_wav(text), "wav"
+
+
+def _fpt_api_key() -> str:
+    return (os.getenv("FPT_API_KEY") or "").strip()
+
+
+def synthesize_fpt_wav(text: str) -> bytes:
+    """Chữ -> WAV bằng FPT.AI-VITs (1 request cho cả câu trả lời)."""
+    spoken = text.strip()[:_MAX_TTS_CHARS]
+    if not spoken:
+        raise VoiceError("Không có nội dung để đọc.")
+    key = _fpt_api_key()
+    if not key:
+        raise VoiceError("Chưa có FPT_API_KEY cho TTS dự phòng.")
+
+    payload = {
+        "model": FPT_TTS_MODEL,
+        "input": spoken,
+        "response_format": "wav",
+        "voice": FPT_TTS_VOICE,
+    }
+    try:
+        resp = requests.post(
+            FPT_TTS_URL,
+            headers={
+                "Authorization": f"Bearer {key}",
+                "Content-Type": "application/json",
+            },
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            timeout=90,
+        )
+    except requests.RequestException as exc:
+        raise VoiceError(f"FPT TTS không kết nối được: {exc}") from exc
+
+    if resp.status_code != 200:
+        raise VoiceError(f"FPT TTS lỗi HTTP {resp.status_code}: {resp.text[:160]}")
+
+    audio = resp.content
+    # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON, không phải audio.
+    if not audio.startswith(b"RIFF"):
+        raise VoiceError(f"FPT TTS không trả về WAV: {audio[:160]!r}")
+    return audio
 
 
 def synthesize_mp3(text: str) -> bytes:

@@ -55,14 +55,17 @@ def _store_audio(data: bytes, ext: str) -> str:
 
 
 def _synthesize_url(answer: str) -> str | None:
-    """TTS câu trả lời -> URL file MP3 (proxy sẽ stream). None nếu TTS lỗi."""
+    """TTS câu trả lời -> URL file audio (proxy sẽ stream). None nếu TTS lỗi.
+
+    voice.synthesize tự chọn nguồn: Gemini (mp3) và dự phòng FPT.AI-VITs (wav).
+    """
     try:
-        mp3 = voice_mod.synthesize_mp3(voice_mod.spoken_text(answer))
+        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer))
     except voice_mod.VoiceError as exc:
-        # Hỏng TTS (vd 429 hết quota) -> vẫn giữ câu trả lời chữ, chỉ log để biết.
+        # Cả hai nguồn TTS đều hỏng -> vẫn giữ câu trả lời chữ, chỉ log để biết.
         logging.getLogger("heritage_ai.api").warning("TTS thất bại: %s", exc)
         return None
-    return f"/v1/audio/files/{_store_audio(mp3, 'mp3')}"
+    return f"/v1/audio/files/{_store_audio(audio, ext)}"
 
 
 # MIME phát nhạc theo đuôi file (dùng khi serve /v1/audio/files).

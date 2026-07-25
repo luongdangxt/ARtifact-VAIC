@@ -180,6 +180,14 @@ RAG_MIN_RELEVANCE=0.15
 | `RAG_EMBEDDING_DEVICE` | `auto` | Tự chọn GPU hoặc CPU; có thể đặt `cuda`/`cpu` |
 | `RAG_TOP_K` | `5` | Số chunk tối đa đưa vào câu trả lời |
 | `RAG_MIN_RELEVANCE` | `0.15` | Ngưỡng liên quan tối thiểu |
+| `TTS_PROVIDER` | `auto` | `auto` = Gemini trước, hỏng thì FPT; `gemini`/`fpt` = ép một nguồn |
+| `FPT_API_KEY` | *(trống)* | Key FPT Cloud Marketplace; bỏ trống = tắt TTS dự phòng |
+| `FPT_TTS_MODEL` | `FPT.AI-VITs` | Model TTS dự phòng (trả WAV) |
+| `FPT_TTS_VOICE` | `std_leminh` | Giọng đọc FPT (nam); giọng nữ: `std_kimngan` |
+
+TTS dự phòng: khi Gemini TTS lỗi hoặc hết quota (429), `heritage_ai/voice.py` tự
+gọi FPT.AI-VITs để NPC vẫn có tiếng — câu trả lời chữ không bao giờ bị chặn vì
+TTS. File audio trả về là `.wav` thay vì `.mp3`; proxy `web-ar` đã hỗ trợ cả hai.
 
 File `.env` đã được khai báo trong `.gitignore`. Không đưa API key vào code,
 ảnh chụp màn hình hoặc GitHub.
