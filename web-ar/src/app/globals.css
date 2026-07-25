@@ -19,6 +19,19 @@
   }
 }
 
+/* Gợi ý câu hỏi trong AR hiện ra sau khi nghệ nhân nói xong — cho trồi lên nhẹ
+   thay vì bật ra đột ngột giữa khung hình camera. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
