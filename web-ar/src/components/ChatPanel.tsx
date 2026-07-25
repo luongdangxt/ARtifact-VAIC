@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { Artisan, ChatMessage } from '@/lib/types';
 import { askAI, askAIVoice } from '@/lib/api-client';
 import { getSharedAudioContext, unlockSharedAudio } from '@/lib/audioUnlock';
@@ -66,6 +66,111 @@ function makeSilentWavUrl(): string {
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 
+// Trần độ dài một mẩu phụ đề: máy hẹp nhất (~320px, text-sm) được ~32 ký tự/dòng, nên
+// 90 ký tự là khoảng 3 dòng. Ô phụ đề nở theo nội dung và KHÔNG cắt cụt bằng "…" nữa —
+// chữ bị nuốt mất thì du khách đọc hụt câu, mà giọng nói vẫn đọc tiếp phần không thấy.
+const MAX_CAPTION_CHARS = 90;
+
+// Phụ đề chạy TRƯỚC tiếng nói bao nhiêu chữ. Khớp đúng từng chữ nghe thì đúng nhưng
+// đọc lại thấy đuối: mắt luôn đợi chữ hiện ra. Đi trước 2 chữ là vừa đủ để mắt lướt
+// tới đâu tai nghe tới đó. Tăng/giảm ở đây nếu muốn chữ chạy xa hơn hoặc bám sát hơn.
+const CAPTION_LEAD_WORDS = 2;
+
+// Cắt câu trả lời thành từng câu để chạy phụ đề. Không dùng lookbehind (iOS < 16.4
+// chưa hỗ trợ) — quét thủ công: ngắt ở dấu kết câu KHI theo sau là khoảng trắng, nên
+// "1.500 nghệ nhân" hay "TP.HCM" không bị cắt đôi.
+function splitSentences(text: string): string[] {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (!clean) return [];
+  const parts: string[] = [];
+  let cur = '';
+  for (let i = 0; i < clean.length; i++) {
+    const ch = clean[i];
+    cur += ch;
+    const isEnd = '.!?…'.includes(ch) && (i === clean.length - 1 || clean[i + 1] === ' ');
+    if (isEnd) {
+      parts.push(cur.trim());
+      cur = '';
+    }
+  }
+  if (cur.trim()) parts.push(cur.trim());
+
+  // Gộp mẩu quá ngắn ("Vâng.", "Ừm.") vào câu trước để phụ đề không nhấp nháy.
+  const merged: string[] = [];
+  for (const p of parts) {
+    const prev = merged[merged.length - 1];
+    if (prev && (p.length < 24 || prev.length < 24) && prev.length + p.length <= MAX_CAPTION_CHARS)
+      merged[merged.length - 1] = prev + ' ' + p;
+    else merged.push(p);
+  }
+  return merged;
+}
+
+// Xẻ nhỏ câu dài quá khổ ô phụ đề. Ưu tiên ngắt ở dấu phẩy/chấm phẩy (nghỉ hơi tự
+// nhiên, đọc lên vẫn thuận), không có thì ngắt ở khoảng trắng cuối cùng vừa khung.
+function splitClause(sentence: string): string[] {
+  if (sentence.length <= MAX_CAPTION_CHARS) return [sentence];
+  const out: string[] = [];
+  let rest = sentence;
+  while (rest.length > MAX_CAPTION_CHARS) {
+    const window = rest.slice(0, MAX_CAPTION_CHARS);
+    // Chỉ nhận mốc ngắt nằm sau nửa khung, tránh đẻ ra mẩu tí hon 2-3 chữ.
+    const half = Math.floor(MAX_CAPTION_CHARS / 2);
+    let cut = Math.max(window.lastIndexOf(', '), window.lastIndexOf('; '), window.lastIndexOf(': '));
+    if (cut >= half) cut += 1;
+    else cut = window.lastIndexOf(' ');
+    if (cut < half) cut = MAX_CAPTION_CHARS; // câu không có khoảng trắng -> cắt cứng
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
+// Danh sách mẩu phụ đề: câu -> mẩu vừa khung.
+function splitCaptionChunks(text: string): string[] {
+  return splitSentences(text).flatMap(splitClause);
+}
+
+// "Trọng số thời gian" của một mẩu — thời lượng TTS đọc nó, quy ra đơn vị ký tự.
+// Đếm ký tự trần thì lệch, vì có những thứ tốn ÍT ký tự mà tốn NHIỀU thời gian:
+//   • dấu ngắt câu: đọc tới dấu chấm/phẩy là nghỉ hơi, 1 ký tự mà cả nhịp thở;
+//   • chữ số: "2009" bốn ký tự nhưng đọc thành "hai nghìn không trăm lẻ chín";
+//   • từ viết tắt: "UNESCO" đọc rời từng chữ cái.
+// Chỗ nào nhiều những thứ đó thì giọng nói chậm lại còn chữ vẫn chạy đều -> phụ đề
+// vượt lên trước, và vượt tới đâu giữ nguyên tới đó nên càng về cuối càng lệch.
+function timeWeight(chunk: string): number {
+  let w = chunk.length;
+  for (const ch of chunk) {
+    if ('.!?…'.includes(ch)) w += 9;
+    else if (',;:'.includes(ch)) w += 4;
+    else if (ch >= '0' && ch <= '9') w += 4;
+  }
+  const acronyms = chunk.match(/[A-Z]{2,}/g);
+  if (acronyms) for (const a of acronyms) w += a.length * 2;
+  return w;
+}
+
+// Không có file audio (TTS lỗi/hết quota) thì vẫn chạy phụ đề theo tốc độ đọc ước
+// lượng ~15 đơn vị trọng số/giây — xấp xỉ nhịp nói của giọng đọc tiếng Việt. Cố ý
+// đoán hơi CHẬM: phụ đề trễ nửa nhịp thì dễ chịu, chạy trước tiếng thì rất khó chịu.
+function estimateDuration(text: string): number {
+  return Math.max(2.5, timeWeight(text) / 15);
+}
+
+// Đồng hồ đếm giây từ lúc gọi. Để ở module-level vì `performance.now()` là hàm không
+// thuần khiết — react-hooks/purity chặn nếu gọi thẳng trong thân component.
+function wallClock(): () => number {
+  const t0 = performance.now();
+  return () => (performance.now() - t0) / 1000;
+}
+
+interface Caption {
+  shown: string; // phần chữ đã hiện ra của mẩu hiện tại
+  index: number;
+  total: number;
+}
+
 // Nghệ nhân đã tự giới thiệu trong lần load trang này (theo slug) — module-level để
 // đóng/mở lại panel (hoặc lia qua lại giữa 2 nghệ nhân) KHÔNG chào lại từ đầu.
 const introducedSlugs = new Set<string>();
@@ -89,7 +194,11 @@ function SuggestionChips({
 }) {
   if (items.length === 0) return null;
   return (
-    <div className="flex flex-wrap justify-center gap-2">
+    <div
+      className={`flex flex-wrap justify-center gap-2 ${
+        tone === 'overlay' ? 'w-full max-w-md animate-[fadeIn_.25s_ease-out]' : ''
+      }`}
+    >
       {items.map((q) => (
         <button
           key={q}
@@ -120,6 +229,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const [recording, setRecording] = useState(false);
   const [expanded, setExpanded] = useState(false); // khung chat chữ đang mở?
   const [speaking, setSpeaking] = useState(false); // đang phát giọng nghệ nhân?
+  // Phụ đề chạy TỪNG CÂU khớp với giọng nói (chế độ voice, khi chưa bung chat chữ) —
+  // thay cho việc đổ nguyên bài trả lời ra màn hình che mất model.
+  const [caption, setCaption] = useState<Caption | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
@@ -133,6 +245,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const captionRafRef = useRef<number | null>(null);
 
   // Xin quyền micro NGAY khi vào phiên (Android/desktop cho phép; iOS thường đòi cú chạm ->
   // sẽ tự xin lại ở lần bấm mic đầu tiên). Giữ luôn stream để bấm-nói tức thì, không hỏi lại.
@@ -154,6 +267,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       cancelled = true;
       streamRef.current?.getTracks().forEach((t) => t.stop());
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+      if (captionRafRef.current !== null) cancelAnimationFrame(captionRafRef.current);
       activeSourceRef.current?.stop();
       audioRef.current?.pause();
       // AudioContext là SHARED (đã unlock từ cú bấm ở màn chào) — KHÔNG close ở đây,
@@ -203,10 +317,85 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       });
   }
 
+  function stopCaptions() {
+    if (captionRafRef.current !== null) cancelAnimationFrame(captionRafRef.current);
+    captionRafRef.current = null;
+  }
+
+  // Chạy phụ đề bám theo ĐỒNG HỒ CỦA CHÍNH ÂM THANH (`getElapsed`) chứ không phải một
+  // chuỗi setTimeout: kể cả khi tab bị throttle hay decode trễ, chữ vẫn khớp tiếng nói.
+  //
+  // Mỗi khung hình quy tiến độ audio (`elapsed / duration`) THẲNG ra vị trí chữ trong
+  // toàn bài, thay vì cấp phát mốc thời gian cố định cho từng mẩu lúc bắt đầu. Nhờ vậy
+  // sai số KHÔNG cộng dồn (mỗi khung là một lần tính lại từ đầu bài) và `getDuration`
+  // được đọc lại liên tục — đường <audio> có `duration` = NaN lúc mới play sẽ tự chỉnh
+  // đúng nhịp ngay khi trình duyệt nạp xong metadata.
+  function startCaptions(text: string, getDuration: () => number, getElapsed: () => number) {
+    stopCaptions();
+    const parts = splitCaptionChunks(text);
+    if (parts.length === 0) return;
+
+    // Mốc trọng số tích luỹ ở đầu mỗi mẩu + tổng trọng số cả bài.
+    const weights = parts.map(timeWeight);
+    const starts: number[] = [];
+    let totalWeight = 0;
+    for (const w of weights) {
+      starts.push(totalWeight);
+      totalWeight += w;
+    }
+
+    let lastShown = '';
+    const tick = () => {
+      const duration = Math.max(0.1, getDuration());
+      const t = getElapsed();
+      const target = Math.min(1, t / duration) * totalWeight; // vị trí theo trọng số
+
+      let i = 0;
+      while (i + 1 < parts.length && target >= starts[i + 1]) i++;
+      const chunk = parts[i];
+      const frac = weights[i] > 0 ? (target - starts[i]) / weights[i] : 1;
+      const n = Math.min(chunk.length, Math.max(1, Math.ceil(frac * chunk.length)));
+      // Hiện TRỌN TỪ chứ không nhỏ giọt từng ký tự: vừa giống cách người ta đọc theo
+      // lời hát, vừa cắt số lần re-render của React xuống ~4 lần/giây thay vì ~15
+      // (một chữ cái mỗi 60-80ms) — điện thoại đang phải gánh cả vòng nhận diện AR.
+      // Vòng lặp đầu đóng nốt chữ ĐANG được đọc, mỗi vòng sau đẩy thêm một chữ nữa
+      // lên trước tiếng nói (xem CAPTION_LEAD_WORDS).
+      let end = n;
+      for (let k = 0; k <= CAPTION_LEAD_WORDS; k++) {
+        const space = chunk.indexOf(' ', end);
+        if (space === -1) {
+          end = chunk.length;
+          break;
+        }
+        end = space + 1;
+      }
+      const shown = chunk.slice(0, end).trimEnd();
+      // Chỉ setState khi chuỗi hiển thị đổi -> không render lại 60 lần/giây.
+      if (shown !== lastShown) {
+        lastShown = shown;
+        setCaption({ shown, index: i, total: parts.length });
+      }
+      if (t < duration) captionRafRef.current = requestAnimationFrame(tick);
+      else {
+        captionRafRef.current = null;
+        setCaption({ shown: chunk, index: i, total: parts.length });
+      }
+    };
+    tick();
+  }
+
+  // Không có audio: chạy phụ đề theo đồng hồ thường + tốc độ đọc ước lượng.
+  function startCaptionsUntimed(text: string) {
+    const duration = estimateDuration(text);
+    startCaptions(text, () => duration, wallClock());
+  }
+
   // Dừng DỨT ĐIỂM mọi âm thanh đang phát (Web Audio + <audio>) và vô hiệu hoá mọi lượt
   // playAudio còn đang chờ await. Gọi trước mỗi lượt phát mới và khi bắt đầu ghi âm.
   function stopPlayback() {
     playTokenRef.current += 1; // token đổi -> các playAudio đang await sẽ tự huỷ
+    stopCaptions();
+    setCaption(null); // sang lượt mới -> xoá phụ đề cũ, không để chữ cũ nằm lại
     const src = activeSourceRef.current;
     if (src) {
       src.onended = null; // tránh onended cũ set speaking=false trễ, đè lượt mới
@@ -224,10 +413,17 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     setSpeaking(false);
   }
 
-  async function playAudio(url: string, mode: 'auto' | 'manual' = 'auto') {
+  // `text`: nội dung câu trả lời để chạy phụ đề khớp tiếng nói (bỏ trống thì không chạy).
+  async function playAudio(url: string, mode: 'auto' | 'manual' = 'auto', text?: string) {
     stopPlayback(); // dừng đoạn đang phát trước khi mở lượt mới -> không phát chồng
     const token = playTokenRef.current;
     setSpeaking(true);
+    // Dựng sẵn ô phụ đề RỖNG trong lúc tải + giải mã audio: nếu để trống, ô sẽ rơi về
+    // bản xem trước của câu trả lời rồi mới nhảy sang phụ đề — giật một nhịp khó chịu.
+    if (text) {
+      const first = splitCaptionChunks(text)[0];
+      if (first) setCaption({ shown: '', index: 0, total: 1 });
+    }
 
     try {
       const ctx = getSharedAudioContext();
@@ -248,7 +444,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
           }
         };
         activeSourceRef.current = source;
+        const startedAt = ctx.currentTime;
         source.start(0);
+        // Đồng hồ của AudioContext là mốc chính xác nhất cho phụ đề.
+        if (text) startCaptions(text, () => buffer.duration, () => ctx.currentTime - startedAt);
         return;
       }
 
@@ -256,11 +455,26 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       const a = audioRef.current;
       a.src = url;
       await a.play();
-      if (token !== playTokenRef.current) a.pause(); // lượt mới đã bắt đầu khi đang chờ
+      if (token !== playTokenRef.current) {
+        a.pause(); // lượt mới đã bắt đầu khi đang chờ
+        return;
+      }
+      if (text) {
+        // `a.duration` thường còn NaN ngay sau play() -> tạm dùng ước lượng, getter đọc
+        // lại mỗi khung nên nhịp tự khớp lại khi metadata về (vài chục ms sau).
+        const fallback = estimateDuration(text);
+        startCaptions(
+          text,
+          () => (Number.isFinite(a.duration) && a.duration > 0 ? a.duration : fallback),
+          () => a.currentTime,
+        );
+      }
     } catch (err) {
       if (token !== playTokenRef.current) return; // lỗi của lượt đã bị thay thế -> bỏ qua
       console.warn('TTS playback failed', err);
       setSpeaking(false);
+      // Không nghe được thì vẫn cho chữ chạy để du khách theo dõi được câu trả lời.
+      if (text) startCaptionsUntimed(text);
       setError(
         mode === 'manual'
           ? 'Không phát được âm thanh. Kiểm tra kết nối hoặc định dạng file audio.'
@@ -273,7 +487,8 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     setMessages((m) => [...m, reply]);
     // Có audio thì tự phát; không có (vd TTS hết quota) thì vẫn giữ câu trả lời chữ,
     // KHÔNG báo lỗi đỏ — người dùng vẫn đọc được và có thể bấm 🔊 nếu sau này có audio.
-    if (reply.audioUrl) void playAudio(reply.audioUrl);
+    if (reply.audioUrl) void playAudio(reply.audioUrl, 'auto', reply.content);
+    else startCaptionsUntimed(reply.content);
   }
 
   async function ensureStream(): Promise<MediaStream> {
@@ -416,10 +631,19 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const asked = new Set(
     messages.filter((m) => m.role === 'user').map((m) => m.content.trim().toLowerCase()),
   );
-  const suggestions =
+  // Ở chế độ voice còn phải đợi nghệ nhân NÓI XONG (`speaking`) mới mời hỏi tiếp — chip
+  // bật lên giữa lúc đang nói vừa che hình vừa giục du khách cắt lời. Trong khung chat
+  // chữ thì hiện ngay, vì ở đó người dùng đọc chứ không chờ nghe.
+  const allSuggestions =
     !busy && !recording
       ? (lastAssistant?.suggestions ?? []).filter((q) => !asked.has(q.trim().toLowerCase()))
       : [];
+  // Chế độ voice: tối đa 2 chip cho gọn, khỏi đội hết màn hình.
+  const voiceSuggestions = speaking ? [] : allSuggestions.slice(0, 2);
+  // Nói xong rồi thì câu cuối nằm lại chẳng để làm gì (nó là MẨU cuối, tách khỏi mạch
+  // thì vô nghĩa) mà lại chiếm chỗ. Có gợi ý là NHƯỜNG hẳn chỗ đó cho câu hỏi — muốn
+  // đọc lại toàn văn thì bấm 💬. Không có gợi ý thì giữ chữ để du khách còn cái mà đọc.
+  const showCaption = voiceSuggestions.length === 0;
 
   const status = busy
     ? messages.length === 0
@@ -466,7 +690,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                     <button
                       onClick={() => {
                         unlockAudio();
-                        void playAudio(m.audioUrl!, 'manual');
+                        void playAudio(m.audioUrl!, 'manual', m.content);
                       }}
                       aria-label="Nghe lại"
                       className="ml-2 align-middle text-xs text-white/70"
@@ -484,11 +708,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                 </div>
               </div>
             )}
-            <SuggestionChips
-              items={suggestions}
-              tone="panel"
-              onPick={(q) => void sendText(q)}
-            />
+            <SuggestionChips items={allSuggestions} tone="panel" onPick={(q) => void sendText(q)} />
           </div>
 
           {error && <p className="px-4 pb-1 text-xs text-red-300">{error}</p>}
@@ -515,41 +735,70 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         </div>
       )}
 
-      {/* Câu trả lời mới nhất / trạng thái (chế độ voice, khi CHƯA bung chat) */}
-      {!expanded && (status || lastAssistant || !tracking) && (
-        <div className="pointer-events-auto max-w-md rounded-2xl bg-black/75 px-4 py-3 text-center text-sm text-white shadow-lg backdrop-blur">
+      {/* Chế độ voice (CHƯA bung chat): ô nhỏ chạy phụ đề từng câu khớp giọng nói —
+          cố ý KHÔNG đổ nguyên bài trả lời ra đây, model phải luôn nhìn thấy được.
+          Chạm vào ô để bung khung chat chữ đọc toàn văn. */}
+      {!expanded && showCaption && (status || caption || lastAssistant || !tracking) && (
+        <div className="pointer-events-auto w-full max-w-md">
           {status ? (
-            <span className="text-white/80">{status}</span>
-          ) : lastAssistant ? (
-            <span className="flex items-start gap-2">
-              {speaking && <span className="animate-pulse">🔊</span>}
-              <span className="whitespace-pre-wrap text-left">{lastAssistant.content}</span>
-              {lastAssistant.audioUrl && (
-                <button
-                  onClick={() => {
-                    unlockAudio();
-                    void playAudio(lastAssistant.audioUrl!, 'manual');
-                  }}
-                  aria-label="Nghe lại"
-                  className="shrink-0 text-xs text-white/70"
-                >
+            <p className="mx-auto w-fit rounded-full bg-black/70 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">
+              {status}
+            </p>
+          ) : caption ? (
+            <button
+              onClick={() => setExpanded(true)}
+              aria-label="Xem toàn văn câu trả lời"
+              className="w-full rounded-2xl bg-black/70 px-4 py-2.5 text-left shadow-lg backdrop-blur transition active:scale-[0.98]"
+            >
+              <span className="flex items-start gap-2">
+                <span className={`mt-px shrink-0 text-xs ${speaking ? 'animate-pulse' : 'opacity-40'}`}>
                   🔊
-                </button>
+                </span>
+                {/* Không cắt cụt: mẩu phụ đề đã được xẻ sẵn ≤ MAX_CAPTION_CHARS nên
+                    luôn vừa ~3 dòng, ô nở theo chữ mà không lấn lên model */}
+                <span className="text-sm leading-snug text-white">
+                  {/* Mỗi chữ một span để chữ MỚI hiện ra tự chạy animation lúc mount.
+                      Key gắn kèm số thứ tự mẩu: sang câu mới thì span cũ bị thay hẳn
+                      (mount lại) chứ không lặng lẽ đổi chữ tại chỗ. */}
+                  {caption.shown.split(' ').map((w, i) => (
+                    <Fragment key={`${caption.index}:${i}`}>
+                      {i > 0 && ' '}
+                      <span className="caption-word">{w}</span>
+                    </Fragment>
+                  ))}
+                </span>
+              </span>
+              {/* Thanh tiến độ: du khách biết còn bao nhiêu câu nữa mới hết lượt nói */}
+              {caption.total > 1 && (
+                <span className="mt-2 block h-0.5 w-full overflow-hidden rounded-full bg-white/15">
+                  <span
+                    className="block h-full rounded-full bg-white/60 transition-all duration-300"
+                    style={{ width: `${((caption.index + 1) / caption.total) * 100}%` }}
+                  />
+                </span>
               )}
-            </span>
+            </button>
+          ) : lastAssistant ? (
+            <button
+              onClick={() => setExpanded(true)}
+              aria-label="Xem toàn văn câu trả lời"
+              className="w-full rounded-2xl bg-black/70 px-4 py-2.5 text-left shadow-lg backdrop-blur transition active:scale-[0.98]"
+            >
+              <span className="line-clamp-2 text-sm leading-snug text-white/80">
+                {lastAssistant.content}
+              </span>
+            </button>
           ) : (
-            <span className="text-white/60">Đang tìm lại nghệ nhân… bạn vẫn có thể trò chuyện.</span>
+            <p className="mx-auto w-fit rounded-full bg-black/70 px-4 py-1.5 text-xs text-white/60 shadow-lg backdrop-blur">
+              Đang tìm lại nghệ nhân… bạn vẫn có thể trò chuyện.
+            </p>
           )}
         </div>
       )}
 
-      {/* Nút gợi ý ở chế độ voice: bấm là hỏi luôn, khỏi gõ */}
+      {/* Nút gợi ý ở chế độ voice: chỉ hiện khi nghệ nhân đã nói xong; bấm là hỏi luôn */}
       {!expanded && (
-        <SuggestionChips
-          items={suggestions}
-          tone="overlay"
-          onPick={(q) => void sendText(q)}
-        />
+        <SuggestionChips items={voiceSuggestions} tone="overlay" onPick={(q) => void sendText(q)} />
       )}
 
       {error && !expanded && (
@@ -589,7 +838,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
           onContextMenu={(e) => e.preventDefault()}
           disabled={busy}
           aria-label="Giữ để nói"
-          className={`flex h-20 w-20 select-none touch-none items-center justify-center rounded-full text-3xl shadow-xl transition active:scale-95 disabled:opacity-40 ${
+          className={`flex h-16 w-16 select-none touch-none items-center justify-center rounded-full text-2xl shadow-xl transition active:scale-95 disabled:opacity-40 ${
             recording ? 'scale-110 animate-pulse bg-red-500 text-white' : 'bg-white text-black'
           }`}
         >
@@ -605,7 +854,8 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         </button>
       </div>
 
-      {!expanded && !status && (
+      {/* Nhắc thao tác chỉ khi màn hình đang trống — có phụ đề rồi thì nhường chỗ cho chữ */}
+      {!expanded && !status && !caption && !lastAssistant && (
         <p className="pointer-events-none text-center text-xs text-white/70">
           Giữ nút micro để nói với nghệ nhân
         </p>
