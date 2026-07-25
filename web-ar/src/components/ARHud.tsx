@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import type { ARStatus } from '@/features/ar/useMindAR';
 
 interface Props {
@@ -23,26 +22,23 @@ export default function ARHud({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-10 flex flex-col justify-between p-4">
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/"
-          className="pointer-events-auto rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur"
-        >
-          ← Trở về
-        </Link>
+      {/* Top bar. KHÔNG có nút "Trở về": máy quét AR nằm ngay trên trang chào (`/`) nên
+          link về "/" chỉ nạp lại đúng trang đang đứng — bấm xong chẳng đi đâu cả. */}
+      <div className="flex items-center justify-center">
         <span className="rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur">
           {artisanName ?? 'Đang tìm ảnh mốc…'}
         </span>
       </div>
 
-      {/* Center hint khi chưa track được */}
+      {/* Hướng dẫn quét khi chưa track được. Chữ nằm TRÊN khung ngắm và cả cụm được đẩy
+          lên: nửa dưới màn hình là chỗ của phụ đề + gợi ý câu hỏi, để nguyên giữa màn
+          thì dòng chữ này lọt thỏm xuống dưới ô phụ đề, trông rất lộn xộn. */}
       {scanning && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-40 w-40 rounded-2xl border-2 border-dashed border-white/70 animate-pulse" />
+        <div className="-translate-y-8 flex flex-col items-center gap-3">
           <p className="rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur">
             Chĩa camera vào ảnh mốc
           </p>
+          <div className="h-40 w-40 rounded-2xl border-2 border-dashed border-white/70 animate-pulse" />
         </div>
       )}
 

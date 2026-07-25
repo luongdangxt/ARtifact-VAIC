@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Huy hiệu "N" của Next ở góc dưới trái CHỈ có trong dev, nhưng nó nằm đè lên vùng
+  // điều khiển AR và trông y như một nút bấm của app -> tắt hẳn cho khỏi gây hiểu nhầm
+  // khi test trên điện thoại. Lỗi biên dịch/runtime vẫn hiện bình thường.
+  devIndicators: false,
   // Dev server CHẶN mọi request /_next/* từ origin lạ (mặc định chỉ cho localhost).
   // Test AR trên điện thoại thì phải vào bằng IP LAN -> WebSocket HMR bị 403 -> client
   // dev của Next không hydrate -> trang render ra nhưng MỌI nút đều chết (bấm "Quét AR

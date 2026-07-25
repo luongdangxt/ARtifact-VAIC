@@ -623,6 +623,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       : [];
   // Chế độ voice: tối đa 2 chip cho gọn, khỏi đội hết màn hình.
   const voiceSuggestions = speaking ? [] : allSuggestions.slice(0, 2);
+  // Nói xong rồi thì câu cuối nằm lại chẳng để làm gì (nó là MẨU cuối, tách khỏi mạch
+  // thì vô nghĩa) mà lại chiếm chỗ. Có gợi ý là NHƯỜNG hẳn chỗ đó cho câu hỏi — muốn
+  // đọc lại toàn văn thì bấm 💬. Không có gợi ý thì giữ chữ để du khách còn cái mà đọc.
+  const showCaption = voiceSuggestions.length === 0;
 
   const status = busy
     ? messages.length === 0
@@ -717,7 +721,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       {/* Chế độ voice (CHƯA bung chat): ô nhỏ chạy phụ đề từng câu khớp giọng nói —
           cố ý KHÔNG đổ nguyên bài trả lời ra đây, model phải luôn nhìn thấy được.
           Chạm vào ô để bung khung chat chữ đọc toàn văn. */}
-      {!expanded && (status || caption || lastAssistant || !tracking) && (
+      {!expanded && showCaption && (status || caption || lastAssistant || !tracking) && (
         <div className="pointer-events-auto w-full max-w-md">
           {status ? (
             <p className="mx-auto w-fit rounded-full bg-black/70 px-4 py-1.5 text-xs text-white/80 shadow-lg backdrop-blur">
@@ -812,7 +816,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
           onContextMenu={(e) => e.preventDefault()}
           disabled={busy}
           aria-label="Giữ để nói"
-          className={`flex h-20 w-20 select-none touch-none items-center justify-center rounded-full text-3xl shadow-xl transition active:scale-95 disabled:opacity-40 ${
+          className={`flex h-16 w-16 select-none touch-none items-center justify-center rounded-full text-2xl shadow-xl transition active:scale-95 disabled:opacity-40 ${
             recording ? 'scale-110 animate-pulse bg-red-500 text-white' : 'bg-white text-black'
           }`}
         >
