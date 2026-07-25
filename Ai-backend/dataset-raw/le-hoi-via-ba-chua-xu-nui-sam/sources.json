@@ -1,0 +1,42 @@
+{
+  "id": "le-hoi-via-ba-chua-xu-nui-sam",
+  "name": "Lễ hội Vía Bà Chúa Xứ núi Sam",
+  "aliases": [
+    "vía Bà Chúa Xứ",
+    "miếu Bà Chúa Xứ",
+    "núi Sam",
+    "Châu Đốc"
+  ],
+  "unesco_year": 2024,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Lễ-hội-miếu-Bà-Chúa-Xứ.txt",
+      "source": "Wikipedia tiếng Việt – Lễ hội miếu Bà Chúa Xứ",
+      "source_url": "https://vi.wikipedia.org/wiki/L%E1%BB%85_h%E1%BB%99i_mi%E1%BA%BFu_B%C3%A0_Ch%C3%BAa_X%E1%BB%A9",
+      "fetched_at": "2026-07-25",
+      "chars": 7138
+    },
+    {
+      "file": "wikipedia-vi__Miếu-Bà-Chúa-Xứ-Núi-Sam.txt",
+      "source": "Wikipedia tiếng Việt – Miếu Bà Chúa Xứ Núi Sam",
+      "source_url": "https://vi.wikipedia.org/wiki/Mi%E1%BA%BFu_B%C3%A0_Ch%C3%BAa_X%E1%BB%A9_N%C3%BAi_Sam",
+      "fetched_at": "2026-07-25",
+      "chars": 7335
+    },
+    {
+      "file": "wikipedia-vi__Núi-Sam.txt",
+      "source": "Wikipedia tiếng Việt – Núi Sam",
+      "source_url": "https://vi.wikipedia.org/wiki/N%C3%BAi_Sam",
+      "fetched_at": "2026-07-25",
+      "chars": 9577
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2024)",
+      "source_url": "https://ich.unesco.org/en/RL/festival-of-ba-chua-x-goddess-at-sam-mountain-01999",
+      "fetched_at": "2026-07-25",
+      "chars": 2514
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -32,6 +33,9 @@ class LocalEmbedder:
         )
         self.device = device or os.getenv("RAG_EMBEDDING_DEVICE", "auto")
         self._encoder = encoder
+        # Server chạy đa luồng: khoá để nhiều request cùng lúc chỉ nạp model 1 lần
+        # (mỗi lần nạp ~15s + tốn RAM riêng).
+        self._encoder_lock = threading.Lock()
 
     def embed_documents(
         self, chunks: list[TextChunk], batch_size: int = 8
@@ -52,24 +56,28 @@ class LocalEmbedder:
     def _load_encoder(self) -> Any:
         if self._encoder is not None:
             return self._encoder
-        try:
-            from sentence_transformers import SentenceTransformer
-        except ImportError as exc:
-            raise LocalEmbeddingError(
-                "Chưa cài sentence-transformers. Hãy chạy: "
-                "python3 -m pip install -r requirements.txt"
-            ) from exc
+        with self._encoder_lock:
+            # Kiểm tra lại trong khoá: luồng chờ trước cửa có thể đã nạp xong.
+            if self._encoder is not None:
+                return self._encoder
+            try:
+                from sentence_transformers import SentenceTransformer
+            except ImportError as exc:
+                raise LocalEmbeddingError(
+                    "Chưa cài sentence-transformers. Hãy chạy: "
+                    "python3 -m pip install -r requirements.txt"
+                ) from exc
 
-        options: dict[str, Any] = {}
-        if self.device != "auto":
-            options["device"] = self.device
-        try:
-            self._encoder = SentenceTransformer(self.model, **options)
-        except Exception as exc:
-            raise LocalEmbeddingError(
-                f"Không tải được model embedding local {self.model}: {exc}"
-            ) from exc
-        return self._encoder
+            options: dict[str, Any] = {}
+            if self.device != "auto":
+                options["device"] = self.device
+            try:
+                self._encoder = SentenceTransformer(self.model, **options)
+            except Exception as exc:
+                raise LocalEmbeddingError(
+                    f"Không tải được model embedding local {self.model}: {exc}"
+                ) from exc
+            return self._encoder
 
     def _encode(self, texts: list[str], batch_size: int) -> list[list[float]]:
         if not texts:

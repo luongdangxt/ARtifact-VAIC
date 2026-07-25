@@ -1,0 +1,28 @@
+{
+  "id": "nghi-le-va-tro-choi-keo-co",
+  "name": "Nghi lễ và trò chơi Kéo co",
+  "aliases": [
+    "kéo co",
+    "kéo mỏ",
+    "kéo song",
+    "kéo co ngồi"
+  ],
+  "unesco_year": 2015,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Kéo-co.txt",
+      "source": "Wikipedia tiếng Việt – Kéo co",
+      "source_url": "https://vi.wikipedia.org/wiki/K%C3%A9o_co",
+      "fetched_at": "2026-07-25",
+      "chars": 5480
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2015)",
+      "source_url": "https://ich.unesco.org/en/RL/tugging-rituals-and-games-01080",
+      "fetched_at": "2026-07-25",
+      "chars": 2260
+    }
+  ]
+}

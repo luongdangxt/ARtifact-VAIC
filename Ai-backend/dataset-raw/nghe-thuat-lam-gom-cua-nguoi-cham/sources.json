@@ -1,0 +1,34 @@
+{
+  "id": "nghe-thuat-lam-gom-cua-nguoi-cham",
+  "name": "Nghệ thuật làm gốm của người Chăm",
+  "aliases": [
+    "gốm Chăm",
+    "gốm Bàu Trúc",
+    "làng gốm Bàu Trúc"
+  ],
+  "unesco_year": 2022,
+  "unesco_list": "USL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Làng-gốm-Bàu-Trúc.txt",
+      "source": "Wikipedia tiếng Việt – Làng gốm Bàu Trúc",
+      "source_url": "https://vi.wikipedia.org/wiki/L%C3%A0ng_g%E1%BB%91m_B%C3%A0u_Tr%C3%BAc",
+      "fetched_at": "2026-07-25",
+      "chars": 4372
+    },
+    {
+      "file": "wikipedia-vi__Làng-Chăm-Mỹ-Nghiệp.txt",
+      "source": "Wikipedia tiếng Việt – Làng Chăm Mỹ Nghiệp",
+      "source_url": "https://vi.wikipedia.org/wiki/L%C3%A0ng_Ch%C4%83m_M%E1%BB%B9_Nghi%E1%BB%87p",
+      "fetched_at": "2026-07-25",
+      "chars": 1214
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2022)",
+      "source_url": "https://ich.unesco.org/en/USL/art-of-pottery-making-of-chm-people-01574",
+      "fetched_at": "2026-07-25",
+      "chars": 3063
+    }
+  ]
+}

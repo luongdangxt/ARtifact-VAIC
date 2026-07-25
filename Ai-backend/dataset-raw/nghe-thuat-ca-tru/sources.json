@@ -1,0 +1,28 @@
+{
+  "id": "nghe-thuat-ca-tru",
+  "name": "Nghệ thuật Ca trù",
+  "aliases": [
+    "Ca trù",
+    "hát ca trù",
+    "hát ả đào",
+    "hát cô đầu"
+  ],
+  "unesco_year": 2009,
+  "unesco_list": "USL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Ca-trù.txt",
+      "source": "Wikipedia tiếng Việt – Ca trù",
+      "source_url": "https://vi.wikipedia.org/wiki/Ca_tr%C3%B9",
+      "fetched_at": "2026-07-25",
+      "chars": 11409
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2009)",
+      "source_url": "https://ich.unesco.org/en/USL/ca-tru-singing-00309",
+      "fetched_at": "2026-07-25",
+      "chars": 3101
+    }
+  ]
+}

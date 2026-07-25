@@ -57,6 +57,8 @@ export interface ChatMessage {
   content: string;
   /** URL WAV (qua proxy Next /api/ai/audio) để phát giọng nói của nghệ nhân. */
   audioUrl?: string;
+  /** Câu hỏi gợi ý -> render thành nút bấm dưới câu trả lời (chỉ ở tin nhắn mới nhất). */
+  suggestions?: string[];
 }
 
 /** Kết quả khi du khách hỏi bằng GIỌNG NÓI: kèm transcript (STT) để hiển thị câu đã nói. */

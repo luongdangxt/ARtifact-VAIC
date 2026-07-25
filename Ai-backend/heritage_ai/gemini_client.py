@@ -209,12 +209,14 @@ class GeminiClient:
                     "page": item.page,
                 }
             )
+        # Rút ngắn so với bản cũ (120/120-250/250-450 từ): thực tế Gemini viết bám
+        # cận dưới nên ra ~195 từ, NPC không nói lê thê và sinh nhanh hơn ~0.7s.
         if requested_length == "short":
-            length_instruction = "Tối đa 120 từ."
+            length_instruction = "Tối đa 85 từ."
         elif len(evidence) <= 2:
-            length_instruction = "Khoảng 120-250 từ, không lặp lại cùng một ý."
+            length_instruction = "Khoảng 85-175 từ, không lặp lại cùng một ý."
         else:
-            length_instruction = "Khoảng 250-450 từ."
+            length_instruction = "Khoảng 175-315 từ."
         prompt = (
             f"Câu hỏi của du khách: {query}\n"
             f"Di sản: {heritage_name}\n"
@@ -233,7 +235,7 @@ class GeminiClient:
                         "Chỉ sử dụng sự kiện có trong tư liệu được cung cấp; không tự "
                         "bổ sung niên đại, địa danh, danh hiệu UNESCO hoặc chi tiết "
                         "nghi lễ. Trả lời trực tiếp câu hỏi, không tạo mục nguồn tham "
-                        "khảo vì hệ thống sẽ tự gắn nguồn. Không giả danh một nghệ "
+                        "khảo, không thêm lời rào đón cuối câu. Không giả danh một nghệ "
                         "nhân có thật hoặc tự nhận là thành viên cộng đồng sở hữu di "
                         "sản; không dùng những cách nói như 'cha ông chúng tôi' hay "
                         "'quê hương chúng tôi'. Gắn mã trích dẫn [1], [2]... ngay "

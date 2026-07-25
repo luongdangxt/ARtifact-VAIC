@@ -59,14 +59,26 @@ def main() -> None:
     documents = loader.load_directory(args.documents)
     if not args.no_json:
         documents.extend(loader.load_heritage_json(args.heritages_json))
+    # PDF trong dataset/ chỉ là bản mô tả mẫu một trang, cùng khuôn cho mọi di sản.
+    # Di sản nào đã được dựng lại bằng scripts/build_heritage_docs.py thì tư liệu
+    # thật nằm trong data/documents/; giữ thêm trang mẫu chỉ khiến nó cạnh tranh
+    # chỗ trong top_k (nó mang intent="all" nên lọt qua mọi bộ lọc intent).
+    rebuilt_ids = {document.heritage_id for document in documents}
     if not args.no_dataset:
         repository = HeritageRepository(dataset_path=args.dataset)
         dataset_documents = loader.load_dataset_directory(
             args.dataset, repository.all()
         )
-        documents.extend(dataset_documents)
+        kept = [
+            document
+            for document in dataset_documents
+            if document.heritage_id not in rebuilt_ids
+        ]
+        documents.extend(kept)
         print(
-            f"Dataset: {len(dataset_documents)} trang PDF, "
+            f"Dataset: {len(dataset_documents)} trang PDF, bỏ qua "
+            f"{len(dataset_documents) - len(kept)} trang của "
+            f"{len(rebuilt_ids)} di sản đã có tư liệu đầy đủ; "
             f"{len(repository.all())} tên di sản trong catalog."
         )
     if not documents:

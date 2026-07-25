@@ -1,0 +1,35 @@
+{
+  "id": "thuc-hanh-then-tay-nung-thai",
+  "name": "Thực hành Then của người Tày, Nùng, Thái",
+  "aliases": [
+    "nghi lễ Then",
+    "hát Then",
+    "Then Tày",
+    "đàn tính"
+  ],
+  "unesco_year": 2019,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Nghi-lễ-Then.txt",
+      "source": "Wikipedia tiếng Việt – Nghi lễ Then",
+      "source_url": "https://vi.wikipedia.org/wiki/Nghi_l%E1%BB%85_Then",
+      "fetched_at": "2026-07-25",
+      "chars": 2451
+    },
+    {
+      "file": "wikipedia-vi__Hát-then.txt",
+      "source": "Wikipedia tiếng Việt – Hát then",
+      "source_url": "https://vi.wikipedia.org/wiki/H%C3%A1t_then",
+      "fetched_at": "2026-07-25",
+      "chars": 5085
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2019)",
+      "source_url": "https://ich.unesco.org/en/RL/practices-of-then-by-tay-nung-and-thai-ethnic-groups-in-viet-nam-01379",
+      "fetched_at": "2026-07-25",
+      "chars": 2349
+    }
+  ]
+}

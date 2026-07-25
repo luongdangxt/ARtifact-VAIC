@@ -196,6 +196,24 @@ class ChromaVectorStore:
         top_k: int = 20,
         min_relevance: float = 0.05,
     ) -> list[str]:
+        return [
+            name
+            for name, _ in self.rank_heritage_names(
+                query_embedding, top_k=top_k, min_relevance=min_relevance
+            )
+        ]
+
+    def rank_heritage_names(
+        self,
+        query_embedding: list[float],
+        top_k: int = 20,
+        min_relevance: float = 0.05,
+    ) -> list[tuple[str, float]]:
+        """Như candidate_heritage_names nhưng giữ lại score (cosine similarity).
+
+        Router local dùng khoảng cách giữa score hạng nhất và hạng nhì để biết mình
+        có chắc chắn không — chắc thì khỏi gọi Gemini phân giải.
+        """
         if self.collection.count() == 0:
             raise RagNotReadyError(
                 "Kho vector đang trống. Hãy chạy: "
@@ -215,12 +233,7 @@ class ChromaVectorStore:
             relevance = 1.0 - float(distance)
             if name and relevance >= min_relevance:
                 scores[name] = max(scores.get(name, -1.0), relevance)
-        return [
-            name
-            for name, _ in sorted(
-                scores.items(), key=lambda item: item[1], reverse=True
-            )
-        ]
+        return sorted(scores.items(), key=lambda item: item[1], reverse=True)
 
     def count(self) -> int:
         return self.collection.count()

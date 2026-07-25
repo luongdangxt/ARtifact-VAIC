@@ -1,0 +1,34 @@
+{
+  "id": "hoi-giong-den-phu-dong-va-den-soc",
+  "name": "Hội Gióng ở đền Phù Đổng và đền Sóc",
+  "aliases": [
+    "Hội Gióng",
+    "hội Gióng Phù Đổng",
+    "Thánh Gióng"
+  ],
+  "unesco_year": 2010,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Hội-Gióng.txt",
+      "source": "Wikipedia tiếng Việt – Hội Gióng",
+      "source_url": "https://vi.wikipedia.org/wiki/H%E1%BB%99i_Gi%C3%B3ng",
+      "fetched_at": "2026-07-25",
+      "chars": 10061
+    },
+    {
+      "file": "wikipedia-vi__Thánh-Gióng.txt",
+      "source": "Wikipedia tiếng Việt – Thánh Gióng",
+      "source_url": "https://vi.wikipedia.org/wiki/Th%C3%A1nh_Gi%C3%B3ng",
+      "fetched_at": "2026-07-25",
+      "chars": 25161
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2010)",
+      "source_url": "https://ich.unesco.org/en/RL/giong-festival-of-phu-djong-and-soc-temples-00443",
+      "fetched_at": "2026-07-25",
+      "chars": 2611
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "khong-gian-van-hoa-cong-chieng-tay-nguyen",
+  "name": "Không gian văn hóa Cồng chiêng Tây Nguyên",
+  "aliases": [
+    "Cồng chiêng Tây Nguyên",
+    "văn hóa cồng chiêng"
+  ],
+  "unesco_year": 2008,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Không-gian-văn-hóa-cồng-chiêng-Tây-Nguyên.txt",
+      "source": "Wikipedia tiếng Việt – Không gian văn hóa cồng chiêng Tây Nguyên",
+      "source_url": "https://vi.wikipedia.org/wiki/Kh%C3%B4ng_gian_v%C4%83n_h%C3%B3a_c%E1%BB%93ng_chi%C3%AAng_T%C3%A2y_Nguy%C3%AAn",
+      "fetched_at": "2026-07-25",
+      "chars": 1046
+    },
+    {
+      "file": "wikipedia-vi__Cồng-chiêng.txt",
+      "source": "Wikipedia tiếng Việt – Cồng chiêng",
+      "source_url": "https://vi.wikipedia.org/wiki/C%E1%BB%93ng_chi%C3%AAng",
+      "fetched_at": "2026-07-25",
+      "chars": 13808
+    },
+    {
+      "file": "wikipedia-vi__Lễ-hội-Cồng-chiêng.txt",
+      "source": "Wikipedia tiếng Việt – Lễ hội Cồng chiêng",
+      "source_url": "https://vi.wikipedia.org/wiki/L%E1%BB%85_h%E1%BB%99i_C%E1%BB%93ng_chi%C3%AAng",
+      "fetched_at": "2026-07-25",
+      "chars": 2441
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2008)",
+      "source_url": "https://ich.unesco.org/en/RL/space-of-gong-culture-00120",
+      "fetched_at": "2026-07-25",
+      "chars": 3180
+    }
+  ]
+}

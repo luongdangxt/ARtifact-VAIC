@@ -6,20 +6,50 @@ from heritage_ai.gemini_client import (
     GeminiResponseError,
     QueryAnalysis,
 )
+from heritage_ai.local_router import LocalRouter, classify_intent, classify_length
 from heritage_ai.models import Evidence, QueryContext, ResearchResult
 from heritage_ai.orchestrator import HeritageChatbot
 from heritage_ai.report_agent import TextReportAgent
 from heritage_ai.repository import HeritageRepository
+from heritage_ai.text_utils import normalize_text
+
+
+# Ba di sản dùng xuyên suốt test, tra theo id chứ KHÔNG theo vị trí trong
+# heritages.json — file đó được sinh lại bởi scripts/build_heritage_docs.py nên thứ
+# tự thay đổi được, bám vị trí là test vỡ mà không phải do lỗi thật.
+TEST_HERITAGE_IDS = {
+    "Nhã nhạc": "nha-nhac-cung-dinh-hue",
+    "Quan họ": "dan-ca-quan-ho-bac-ninh",
+    "Bài Chòi": "nghe-thuat-bai-choi-trung-bo",
+}
+
+
+def _mentioned_id(query: str) -> str | None:
+    return next(
+        (heritage_id for text, heritage_id in TEST_HERITAGE_IDS.items() if text in query),
+        None,
+    )
 
 
 class FakeGeminiClient:
+    def __init__(self) -> None:
+        self.analyze_calls = 0
+
     def analyze_query(self, query: str, heritage_names: list[str]) -> QueryAnalysis:
+        self.analyze_calls += 1
+        repository = HeritageRepository(include_dataset=False)
+        heritage_id = _mentioned_id(query)
+        name = (
+            next(item["name"] for item in repository.all() if item["id"] == heritage_id)
+            if heritage_id
+            else None
+        )
         if "Quan họ" in query:
-            return QueryAnalysis("history", "normal", heritage_names[1], False, "")
+            return QueryAnalysis("history", "normal", name, False, "")
         if "Nhã nhạc" in query:
-            return QueryAnalysis("overview", "short", heritage_names[0], False, "")
+            return QueryAnalysis("overview", "short", name, False, "")
         if "Bài Chòi" in query:
-            return QueryAnalysis("overview", "normal", heritage_names[2], False, "")
+            return QueryAnalysis("overview", "normal", name, False, "")
         return QueryAnalysis(
             "overview", "normal", None, True, "Bạn muốn tìm hiểu di sản nào?"
         )
@@ -48,12 +78,35 @@ class FakeRetriever:
         "etiquette": "etiquette",
         "location": "location",
     }
-
     def __init__(self, repository: HeritageRepository) -> None:
         self.repository = repository
 
     def candidate_heritage_names(self, query: str, limit: int = 8):
-        return [item["name"] for item in self.repository.all()[:limit]]
+        return [name for name, _ in self.rank_heritage_names(query, limit)]
+
+    def rank_heritage_names(self, query: str, limit: int = 8):
+        """Giả lập vector search: di sản được nhắc tên bỏ xa phần còn lại.
+
+        Câu không nhắc tên di sản nào -> các score sát nhau, đúng tình huống router
+        local chịu thua và nhường cho Gemini phân giải.
+        """
+        items = self.repository.all()
+        names_by_id = {item["id"]: item["name"] for item in items}
+        # Ba di sản của test luôn nằm trong danh sách ứng viên, bất kể chúng đứng
+        # thứ mấy trong heritages.json.
+        names = [names_by_id[heritage_id] for heritage_id in TEST_HERITAGE_IDS.values()]
+        names += [
+            item["name"] for item in items if item["name"] not in names
+        ][: max(0, limit - len(names))]
+
+        ranked = [(name, 0.70 - index * 0.001) for index, name in enumerate(names)]
+        mentioned = _mentioned_id(query)
+        if mentioned is not None:
+            target = names_by_id[mentioned]
+            ranked = [
+                (name, 0.90 if name == target else score) for name, score in ranked
+            ]
+        return sorted(ranked, key=lambda item: item[1], reverse=True)
 
     def retrieve(self, query: str, heritage_id: str, intent: str):
         heritage = next(
@@ -105,14 +158,81 @@ class RetryClient:
         self.models = RetryModels()
 
 
+class LocalRouterTests(unittest.TestCase):
+    def test_classifies_intent_from_vietnamese_keywords(self) -> None:
+        cases = {
+            "Quan họ Bắc Ninh có từ bao giờ?": "history",
+            "Quan họ là gì?": "overview",
+            "Tranh Đông Hồ làm bằng chất liệu gì?": "practice",
+            "Người ta in tranh Đông Hồ như thế nào?": "practice",
+            "Ý nghĩa của tranh Đông Hồ trong ngày Tết?": "meaning",
+            "Hát quan họ ở đâu?": "location",
+            "Đi xem hội Lim cần lưu ý gì?": "etiquette",
+            "Nghệ nhân truyền dạy quan họ ra sao?": "practice",
+            "Kể cho tôi nghe đi": "overview",
+        }
+        for query, expected in cases.items():
+            with self.subTest(query=query):
+                self.assertEqual(classify_intent(normalize_text(query)), expected)
+
+    def test_detects_short_answer_request(self) -> None:
+        self.assertEqual(
+            classify_length(normalize_text("Tóm tắt ngắn gọn về tranh Đông Hồ")),
+            "short",
+        )
+        self.assertEqual(
+            classify_length(normalize_text("Tranh Đông Hồ có từ bao giờ?")), "normal"
+        )
+
+    def test_generic_words_do_not_trigger_an_intent(self) -> None:
+        # "cách" đứng một mình là từ thường gặp ("cách mạng", "cách đây") nên chỉ các
+        # cụm cụ thể mới được tính là practice.
+        self.assertEqual(classify_intent(normalize_text("Bảo tàng Cách mạng")), "overview")
+        self.assertEqual(
+            classify_intent(normalize_text("Tranh này làm bằng cách nào?")), "practice"
+        )
+
+    def test_gives_up_when_two_heritages_are_close(self) -> None:
+        router = LocalRouter()
+        self.assertIsNone(
+            router.route("Kể tôi nghe", [("Quan họ", 0.78), ("Đông Hồ", 0.77)])
+        )
+        analysis = router.route("Quan họ có từ bao giờ?", [("Quan họ", 0.83), ("Đông Hồ", 0.76)])
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.heritage_name, "Quan họ")
+        self.assertEqual(analysis.intent, "history")
+        self.assertFalse(analysis.needs_clarification)
+
+    def test_single_candidate_needs_no_margin(self) -> None:
+        analysis = LocalRouter().route("Di sản này ở đâu?", [("Quan họ", 0.72)])
+        self.assertIsNotNone(analysis)
+        self.assertEqual(analysis.intent, "location")
+
+
 class HeritageChatbotTests(unittest.TestCase):
     def setUp(self) -> None:
         repository = HeritageRepository()
+        self.gemini = FakeGeminiClient()
         self.chatbot = HeritageChatbot(
             repository=repository,
-            gemini=FakeGeminiClient(),
+            gemini=self.gemini,
             retriever=FakeRetriever(repository),
         )
+
+    def test_confident_question_never_calls_gemini_router(self) -> None:
+        # Đây là mục tiêu của router local: bỏ hẳn một vòng gọi Gemini (~2.1s).
+        self.chatbot.ask("Nguồn gốc của Quan họ là gì?")
+        self.assertEqual(self.gemini.analyze_calls, 0)
+
+    def test_ambiguous_question_falls_back_to_gemini_router(self) -> None:
+        self.chatbot.ask("Hãy kể về một di sản khác")
+        self.assertEqual(self.gemini.analyze_calls, 1)
+
+    def test_local_only_mode_asks_back_instead_of_calling_gemini(self) -> None:
+        self.chatbot.query_processor.mode = "local"
+        answer = self.chatbot.ask("Hãy kể về một di sản khác")
+        self.assertIn("Bạn muốn tìm hiểu về di sản nào?", answer)
+        self.assertEqual(self.gemini.analyze_calls, 0)
 
     def test_repository_finds_name_without_diacritics(self) -> None:
         repository = HeritageRepository()
@@ -121,9 +241,17 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertEqual(item["id"], "nghe-thuat-bai-choi-trung-bo")
 
     def test_detects_history_intent(self) -> None:
+        # Kiểm đúng thứ cần kiểm: câu hỏi nguồn gốc phải lấy tư liệu trường
+        # `history`, không phải `practice`. So với nội dung lấy thẳng từ repository
+        # nên dataset đổi lời văn thì test vẫn đúng.
+        quan_ho = next(
+            item
+            for item in HeritageRepository(include_dataset=False).all()
+            if item["id"] == TEST_HERITAGE_IDS["Quan họ"]
+        )
         answer = self.chatbot.ask("Nguồn gốc của Quan họ là gì?")
-        self.assertIn("được nuôi dưỡng qua nhiều thế hệ", answer)
-        self.assertNotIn("Người hát thực hiện các làn điệu", answer)
+        self.assertIn(quan_ho["history"], answer)
+        self.assertNotIn(quan_ho["practice"], answer)
 
     def test_unknown_heritage_returns_guidance(self) -> None:
         answer = self.chatbot.ask("Hãy kể về một di sản khác")
@@ -181,7 +309,7 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertEqual(api_client.models.calls, 2)
         sleep_mock.assert_called_once_with(2)
 
-    def test_report_lists_only_sources_cited_by_model(self) -> None:
+    def test_report_omits_sources_and_citation_marks(self) -> None:
         context = QueryContext("Câu hỏi", "cau hoi", "overview")
         result = ResearchResult(
             heritage={"name": "Bài Chòi", "sources": [], "follow_up_questions": []},
@@ -194,8 +322,11 @@ class HeritageChatbotTests(unittest.TestCase):
 
         answer = TextReportAgent(CitingGeminiClient()).compose(context, result)
 
-        self.assertIn("Nguồn được dùng", answer)
-        self.assertNotIn("Nguồn không được dùng", answer)
+        # Chỉ còn lời kể: bỏ mục nguồn tham khảo, lời rào đón và mã trích dẫn [n].
+        self.assertEqual(answer, "Nội dung được sử dụng từ tư liệu thứ nhất.")
+        self.assertNotIn("Nguồn tham khảo", answer)
+        self.assertNotIn("Nguồn được dùng", answer)
+        self.assertNotIn("Lưu ý", answer)
 
 
 if __name__ == "__main__":

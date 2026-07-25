@@ -1,0 +1,26 @@
+{
+  "id": "don-ca-tai-tu-nam-bo",
+  "name": "Đờn ca tài tử Nam Bộ",
+  "aliases": [
+    "đờn ca tài tử",
+    "tài tử Nam Bộ"
+  ],
+  "unesco_year": 2013,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Đờn-ca-tài-tử-Nam-Bộ.txt",
+      "source": "Wikipedia tiếng Việt – Đờn ca tài tử Nam Bộ",
+      "source_url": "https://vi.wikipedia.org/wiki/%C4%90%E1%BB%9Dn_ca_t%C3%A0i_t%E1%BB%AD_Nam_B%E1%BB%99",
+      "fetched_at": "2026-07-25",
+      "chars": 6231
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2013)",
+      "source_url": "https://ich.unesco.org/en/RL/art-of-n-ca-tai-t-music-and-song-in-southern-viet-nam-00733",
+      "fetched_at": "2026-07-25",
+      "chars": 2550
+    }
+  ]
+}
