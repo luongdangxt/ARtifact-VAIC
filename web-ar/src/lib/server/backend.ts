@@ -32,10 +32,10 @@ export function personaFields(artisan: Artisan | undefined): {
   };
 }
 
-/** Đổi audio_url backend ('/v1/audio/files/abc.wav') -> proxy Next để giấu token. */
+/** Đổi audio_url backend ('/v1/audio/files/abc.mp3') -> proxy Next để giấu token. */
 export function toProxiedAudioUrl(audioUrl: string | null | undefined): string | undefined {
   if (!audioUrl) return undefined;
   const name = audioUrl.split('/').pop();
-  if (!name || !/^[\w.-]+\.wav$/i.test(name)) return undefined;
+  if (!name || !/^[\w.-]+\.(mp3|wav)$/i.test(name)) return undefined;
   return `/api/ai/audio?file=${encodeURIComponent(name)}`;
 }

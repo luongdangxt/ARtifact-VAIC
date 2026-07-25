@@ -1,16 +1,35 @@
-version: '3.8'
-
 services:
-  ai-backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ai-backend
-    ports:
-      - "5567:5567"
+  chatbot:
+    build: .
+    image: heritage-chatbot
+    # Chạy bằng đúng user host (uid:gid) để file sinh ra không thuộc root
+    # -> xóa thư mục dự án là sạch, không cần sudo.
+    user: "1000:1000"
+    environment:
+      # Cho các thư viện dùng ~/.cache ghi vào thư mục đã mount
+      HOME: /app/.cache
+      # Cho phép container thấy GPU
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    # Cấp GPU NVIDIA cho container (cần nvidia-container-toolkit trên host)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Cho phép nhập liệu tương tác (input()) trong terminal
+    stdin_open: true
+    tty: true
+    # Nạp biến môi trường (GEMINI_API_KEY...) từ file .env
+    env_file:
+      - .env
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      # Map file .env để backend nhận các biến môi trường
-      - ./.env:/app/.env
-    restart: unless-stopped
+      # Dataset PDF (chỉ đọc)
+      - ./dataset:/app/dataset:ro
+      # Vector DB tạo ra -> lưu trong thư mục dự án để xóa dự án là mất luôn
+      - ./storage:/app/storage
+      # Cache model embedding + torch -> cũng nằm trong thư mục dự án
+      - ./.cache:/app/.cache
+    command: python run.py

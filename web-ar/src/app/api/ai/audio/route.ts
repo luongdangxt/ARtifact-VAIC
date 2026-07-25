@@ -62,10 +62,12 @@ function requestedRange(req: Request, total: number): { start: number; end: numb
 // Đi qua proxy để browser phát được audio mà không lộ API_AUTH_TOKEN và không dính CORS.
 export async function GET(req: Request) {
   const file = new URL(req.url).searchParams.get('file') ?? '';
-  // Chỉ cho tên file .wav (chống path traversal).
-  if (!/^[\w.-]+\.wav$/i.test(file)) {
+  // Chỉ cho tên file .mp3/.wav (chống path traversal).
+  const extMatch = file.match(/\.(mp3|wav)$/i);
+  if (!/^[\w.-]+$/.test(file) || !extMatch) {
     return new Response('Bad file', { status: 400 });
   }
+  const ext = extMatch[1].toLowerCase();
 
   let res: Response;
   try {
@@ -81,25 +83,33 @@ export async function GET(req: Request) {
   }
 
   try {
-    const normalized = normalizeWavHeader(await res.arrayBuffer());
-    const total = normalized.buffer.byteLength;
+    const raw = await res.arrayBuffer();
+    // MP3: stream thẳng (đã nén, nhẹ). WAV: sửa header RIFF/data cho Safari/Web Audio.
+    let buffer = raw;
+    let changed = false;
+    if (ext === 'wav') {
+      const fixed = normalizeWavHeader(raw);
+      buffer = fixed.buffer;
+      changed = fixed.changed;
+    }
+    const total = buffer.byteLength;
     const range = requestedRange(req, total);
     const headers: Record<string, string> = {
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'no-store',
-      'Content-Type': 'audio/wav',
-      'X-Audio-Header-Normalized': normalized.changed ? 'true' : 'false',
+      'Content-Type': ext === 'mp3' ? 'audio/mpeg' : 'audio/wav',
+      'X-Audio-Header-Normalized': changed ? 'true' : 'false',
     };
 
     if (range) {
-      const body = normalized.buffer.slice(range.start, range.end + 1);
+      const body = buffer.slice(range.start, range.end + 1);
       headers['Content-Length'] = String(body.byteLength);
       headers['Content-Range'] = `bytes ${range.start}-${range.end}/${total}`;
       return new Response(body, { status: 206, headers });
     }
 
     headers['Content-Length'] = String(total);
-    return new Response(normalized.buffer, { status: 200, headers });
+    return new Response(buffer, { status: 200, headers });
   } catch (error) {
     console.error('Invalid upstream TTS audio', error);
     return new Response('Invalid upstream audio', { status: 502 });

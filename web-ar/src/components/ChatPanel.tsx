@@ -13,57 +13,15 @@ interface Props {
   onClose: () => void;
 }
 
-// FPT STT (FPT.AI-whisper-large-v3-turbo) CHỈ nhận WAV (PCM) — đã kiểm chứng trực tiếp:
-// gửi webm/opus (Android) hay mp4/aac (iOS) đều bị 503 "Transcription service unavailable".
-// Vì MediaRecorder KHÔNG xuất WAV, ta giải mã bản ghi bằng Web Audio rồi tự đóng gói WAV
-// 16-bit mono ngay trong trình duyệt trước khi gửi. Không cần đụng backend.
-function encodeWav(samples: Float32Array, sampleRate: number): Blob {
-  const dataLen = samples.length * 2;
-  const view = new DataView(new ArrayBuffer(44 + dataLen));
-  const w = (o: number, s: string) => {
-    for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i));
-  };
-  w(0, 'RIFF');
-  view.setUint32(4, 36 + dataLen, true);
-  w(8, 'WAVE');
-  w(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true); // PCM
-  view.setUint16(22, 1, true); // mono
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true); // byte rate
-  view.setUint16(32, 2, true); // block align
-  view.setUint16(34, 16, true); // bits/sample
-  w(36, 'data');
-  view.setUint32(40, dataLen, true);
-  let off = 44;
-  for (let i = 0; i < samples.length; i++) {
-    const s = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7fff, true);
-    off += 2;
-  }
-  return new Blob([view], { type: 'audio/wav' });
-}
-
-// Giải mã blob thu được (webm/mp4/…) -> gộp về mono -> WAV. decodeAudioData tự giải nén
-// container (Safari đọc mp4/aac, Chrome đọc webm/opus) nên chạy được trên cả 2 nền tảng.
-async function blobToWav(blob: Blob): Promise<Blob> {
-  const AC: typeof AudioContext =
-    window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new AC();
-  try {
-    const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
-    const ch = decoded.numberOfChannels;
-    const n = decoded.length;
-    const mono = new Float32Array(n);
-    for (let c = 0; c < ch; c++) {
-      const data = decoded.getChannelData(c);
-      for (let i = 0; i < n; i++) mono[i] += data[i] / ch;
-    }
-    return encodeWav(mono, decoded.sampleRate);
-  } finally {
-    void ctx.close();
-  }
+// Gemini STT nhận thẳng bản ghi nén gốc (webm/opus của Chrome/Android, mp4/aac của iOS)
+// nên KHÔNG cần convert WAV nữa — gửi luôn blob gốc cho nhẹ (~8KB vs ~113KB WAV).
+// Chỉ cần đặt đúng đuôi file theo mime để backend/Whisper chọn demuxer chuẩn.
+function extFromBlobType(type: string): string {
+  const t = (type || '').toLowerCase();
+  if (t.includes('mp4') || t.includes('m4a') || t.includes('aac')) return 'm4a';
+  if (t.includes('ogg')) return 'ogg';
+  if (t.includes('wav')) return 'wav';
+  return 'webm';
 }
 
 // Chọn mimeType tốt nhất cho MediaRecorder theo thiết bị (iOS ưu tiên mp4).
@@ -126,6 +84,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  // Số thứ tự lượt phát: mỗi lần phát/dừng tăng 1. playAudio có nhiều await (fetch +
+  // decode) ở giữa; sau mỗi await nó so token — nếu đã có lượt mới thì tự huỷ, nhờ vậy
+  // hai lần bấm 🔊 liên tiếp KHÔNG tạo ra hai nguồn cùng phát (lỗi âm thanh đè nhau).
+  const playTokenRef = useRef(0);
   const silentUrlRef = useRef<string | null>(null);
   const unlockedRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
@@ -236,10 +198,30 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       });
   }
 
+  // Dừng DỨT ĐIỂM mọi âm thanh đang phát (Web Audio + <audio>) và vô hiệu hoá mọi lượt
+  // playAudio còn đang chờ await. Gọi trước mỗi lượt phát mới và khi bắt đầu ghi âm.
+  function stopPlayback() {
+    playTokenRef.current += 1; // token đổi -> các playAudio đang await sẽ tự huỷ
+    const src = activeSourceRef.current;
+    if (src) {
+      src.onended = null; // tránh onended cũ set speaking=false trễ, đè lượt mới
+      try {
+        src.stop();
+      } catch {
+        /* đã dừng rồi */
+      }
+      activeSourceRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setSpeaking(false);
+  }
+
   async function playAudio(url: string, mode: 'auto' | 'manual' = 'auto') {
-    activeSourceRef.current?.stop();
-    activeSourceRef.current = null;
-    audioRef.current?.pause();
+    stopPlayback(); // dừng đoạn đang phát trước khi mở lượt mới -> không phát chồng
+    const token = playTokenRef.current;
     setSpeaking(true);
 
     try {
@@ -247,8 +229,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       if (ctx) {
         if (ctx.state === 'suspended') await ctx.resume();
         const res = await fetch(url, { cache: 'no-store' });
+        if (token !== playTokenRef.current) return; // đã có lượt phát/dừng mới
         if (!res.ok) throw new Error(`audio fetch failed: ${res.status}`);
         const buffer = await decodeAudioData(ctx, await res.arrayBuffer());
+        if (token !== playTokenRef.current) return; // bị thay thế khi đang decode
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.connect(ctx.destination);
@@ -267,7 +251,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       const a = audioRef.current;
       a.src = url;
       await a.play();
+      if (token !== playTokenRef.current) a.pause(); // lượt mới đã bắt đầu khi đang chờ
     } catch (err) {
+      if (token !== playTokenRef.current) return; // lỗi của lượt đã bị thay thế -> bỏ qua
       console.warn('TTS playback failed', err);
       setSpeaking(false);
       setError(
@@ -280,11 +266,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   function pushAssistant(reply: ChatMessage) {
     setMessages((m) => [...m, reply]);
-    if (reply.audioUrl) {
-      void playAudio(reply.audioUrl);
-    } else {
-      setError('AI đã trả lời bằng chữ nhưng backend chưa trả về file âm thanh.');
-    }
+    // Có audio thì tự phát; không có (vd TTS hết quota) thì vẫn giữ câu trả lời chữ,
+    // KHÔNG báo lỗi đỏ — người dùng vẫn đọc được và có thể bấm 🔊 nếu sau này có audio.
+    if (reply.audioUrl) void playAudio(reply.audioUrl);
   }
 
   async function ensureStream(): Promise<MediaStream> {
@@ -299,6 +283,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   async function startRecording() {
     if (busy || recording) return;
     setError(null);
+    stopPlayback(); // đang nghe nghệ nhân nói mà bấm mic -> tắt tiếng đó để khỏi thu vào
     unlockAudio(); // dùng chính cú chạm này để mở khoá loa cho TTS sau đó
     try {
       const stream = await ensureStream();
@@ -335,9 +320,13 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     setBusy(true);
     setError(null);
     try {
-      // FPT STT chỉ nhận WAV -> chuyển đổi ngay trên máy trước khi gửi.
-      const wav = await blobToWav(raw);
-      const reply = await askAIVoice(artisan.slug, wav, 'question.wav', messages);
+      // Gửi thẳng bản ghi gốc (đã nén) — Gemini STT nhận webm/mp4/ogg... không cần WAV.
+      const reply = await askAIVoice(
+        artisan.slug,
+        raw,
+        `question.${extFromBlobType(raw.type)}`,
+        messages,
+      );
       const spoken = reply.transcript?.trim();
       setMessages((m) => [
         ...m,
@@ -506,13 +495,19 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         <button
           onPointerDown={(e) => {
             e.preventDefault();
+            // Khoá pointer vào nút: ngón tay xê dịch khi đang giữ vẫn không rời nút, nên
+            // pointerup luôn bắn đúng chỗ và ghi âm không bị dừng non (bỏ onPointerLeave).
+            try {
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {
+              /* trình duyệt cũ không hỗ trợ -> vẫn dựa vào pointerup/cancel */
+            }
             void startRecording();
           }}
           onPointerUp={(e) => {
             e.preventDefault();
             stopRecording();
           }}
-          onPointerLeave={() => recording && stopRecording()}
           onPointerCancel={() => recording && stopRecording()}
           onContextMenu={(e) => e.preventDefault()}
           disabled={busy}

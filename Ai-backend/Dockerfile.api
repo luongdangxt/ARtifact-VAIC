@@ -1,0 +1,31 @@
+# API HTTP (FastAPI) cho web-ar gọi qua proxy /api/ai*.
+# Bản CPU-only (torch cpu) -> image nhẹ, không cần GPU/nvidia-container-toolkit.
+# Embedding 2 PDF di sản (Quan họ, Đông Hồ) chạy CPU thừa nhanh cho demo.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=utf-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/app/.cache/huggingface
+
+WORKDIR /app
+
+# torch CPU trước (wheel nhỏ hơn nhiều bản CUDA), rồi tới các thư viện còn lại.
+COPY requirements.txt .
+RUN pip install --upgrade pip \
+    && pip install torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install -r requirements.txt
+
+# python-multipart: FastAPI parse multipart/form-data (/v1/audio/ask).
+# lameenc: encode PCM (Gemini TTS) -> MP3 thuần Python, không cần ffmpeg.
+# Cài lớp riêng để giữ cache cho lớp cài nặng ở trên.
+RUN pip install "python-multipart>=0.0.9" "lameenc>=1.7.0"
+
+COPY heritage_ai/ ./heritage_ai/
+COPY run.py create_vectorDB.py ./
+
+EXPOSE 8000
+CMD ["uvicorn", "heritage_ai.api:app", "--host", "0.0.0.0", "--port", "8000"]

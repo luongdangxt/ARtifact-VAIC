@@ -1,0 +1,29 @@
+# API HTTP local cho web-ar (proxy /api/ai* -> http://localhost:8000).
+# Dùng:
+#   docker compose -f docker-compose.api.yml build
+#   docker compose -f docker-compose.api.yml run --rm api \
+#       python create_vectorDB.py --dataset dataset-subset --no-json   # ingest 1 lần
+#   docker compose -f docker-compose.api.yml up                        # chạy server
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: heritage-ai-api
+    user: "1000:1000"
+    environment:
+      HOME: /app/.cache
+      # Ép embedding chạy CPU (image không kèm CUDA).
+      RAG_EMBEDDING_DEVICE: cpu
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Dataset đầy đủ (chỉ đọc) -> repository dựng catalog tên di sản khi trả lời.
+      - ./dataset:/app/dataset:ro
+      # Subset 2 PDF để ingest nhanh (Quan họ, Đông Hồ).
+      - ./dataset-subset:/app/dataset-subset:ro
+      # Vector DB + cache model nằm trong thư mục dự án.
+      - ./storage:/app/storage
+      - ./.cache:/app/.cache
