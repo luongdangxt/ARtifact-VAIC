@@ -66,6 +66,11 @@ function makeSilentWavUrl(): string {
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 
+// Trần độ dài một mẩu phụ đề: máy hẹp nhất (~320px, text-sm) được ~32 ký tự/dòng, nên
+// 90 ký tự là khoảng 3 dòng. Ô phụ đề nở theo nội dung và KHÔNG cắt cụt bằng "…" nữa —
+// chữ bị nuốt mất thì du khách đọc hụt câu, mà giọng nói vẫn đọc tiếp phần không thấy.
+const MAX_CAPTION_CHARS = 90;
+
 // Cắt câu trả lời thành từng câu để chạy phụ đề. Không dùng lookbehind (iOS < 16.4
 // chưa hỗ trợ) — quét thủ công: ngắt ở dấu kết câu KHI theo sau là khoảng trắng, nên
 // "1.500 nghệ nhân" hay "TP.HCM" không bị cắt đôi.
@@ -88,17 +93,64 @@ function splitSentences(text: string): string[] {
   // Gộp mẩu quá ngắn ("Vâng.", "Ừm.") vào câu trước để phụ đề không nhấp nháy.
   const merged: string[] = [];
   for (const p of parts) {
-    if (merged.length > 0 && (p.length < 24 || merged[merged.length - 1].length < 24))
-      merged[merged.length - 1] += ' ' + p;
+    const prev = merged[merged.length - 1];
+    if (prev && (p.length < 24 || prev.length < 24) && prev.length + p.length <= MAX_CAPTION_CHARS)
+      merged[merged.length - 1] = prev + ' ' + p;
     else merged.push(p);
   }
   return merged;
 }
 
+// Xẻ nhỏ câu dài quá khổ ô phụ đề. Ưu tiên ngắt ở dấu phẩy/chấm phẩy (nghỉ hơi tự
+// nhiên, đọc lên vẫn thuận), không có thì ngắt ở khoảng trắng cuối cùng vừa khung.
+function splitClause(sentence: string): string[] {
+  if (sentence.length <= MAX_CAPTION_CHARS) return [sentence];
+  const out: string[] = [];
+  let rest = sentence;
+  while (rest.length > MAX_CAPTION_CHARS) {
+    const window = rest.slice(0, MAX_CAPTION_CHARS);
+    // Chỉ nhận mốc ngắt nằm sau nửa khung, tránh đẻ ra mẩu tí hon 2-3 chữ.
+    const half = Math.floor(MAX_CAPTION_CHARS / 2);
+    let cut = Math.max(window.lastIndexOf(', '), window.lastIndexOf('; '), window.lastIndexOf(': '));
+    if (cut >= half) cut += 1;
+    else cut = window.lastIndexOf(' ');
+    if (cut < half) cut = MAX_CAPTION_CHARS; // câu không có khoảng trắng -> cắt cứng
+    out.push(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) out.push(rest);
+  return out;
+}
+
+// Danh sách mẩu phụ đề: câu -> mẩu vừa khung.
+function splitCaptionChunks(text: string): string[] {
+  return splitSentences(text).flatMap(splitClause);
+}
+
+// "Trọng số thời gian" của một mẩu — thời lượng TTS đọc nó, quy ra đơn vị ký tự.
+// Đếm ký tự trần thì lệch, vì có những thứ tốn ÍT ký tự mà tốn NHIỀU thời gian:
+//   • dấu ngắt câu: đọc tới dấu chấm/phẩy là nghỉ hơi, 1 ký tự mà cả nhịp thở;
+//   • chữ số: "2009" bốn ký tự nhưng đọc thành "hai nghìn không trăm lẻ chín";
+//   • từ viết tắt: "UNESCO" đọc rời từng chữ cái.
+// Chỗ nào nhiều những thứ đó thì giọng nói chậm lại còn chữ vẫn chạy đều -> phụ đề
+// vượt lên trước, và vượt tới đâu giữ nguyên tới đó nên càng về cuối càng lệch.
+function timeWeight(chunk: string): number {
+  let w = chunk.length;
+  for (const ch of chunk) {
+    if ('.!?…'.includes(ch)) w += 9;
+    else if (',;:'.includes(ch)) w += 4;
+    else if (ch >= '0' && ch <= '9') w += 4;
+  }
+  const acronyms = chunk.match(/[A-Z]{2,}/g);
+  if (acronyms) for (const a of acronyms) w += a.length * 2;
+  return w;
+}
+
 // Không có file audio (TTS lỗi/hết quota) thì vẫn chạy phụ đề theo tốc độ đọc ước
-// lượng ~16 ký tự/giây — xấp xỉ nhịp nói tiếng Việt.
+// lượng ~15 đơn vị trọng số/giây — xấp xỉ nhịp nói của giọng đọc tiếng Việt. Cố ý
+// đoán hơi CHẬM: phụ đề trễ nửa nhịp thì dễ chịu, chạy trước tiếng thì rất khó chịu.
 function estimateDuration(text: string): number {
-  return Math.max(2.5, text.length / 16);
+  return Math.max(2.5, timeWeight(text) / 15);
 }
 
 // Đồng hồ đếm giây từ lúc gọi. Để ở module-level vì `performance.now()` là hàm không
@@ -268,41 +320,48 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   // Chạy phụ đề bám theo ĐỒNG HỒ CỦA CHÍNH ÂM THANH (`getElapsed`) chứ không phải một
   // chuỗi setTimeout: kể cả khi tab bị throttle hay decode trễ, chữ vẫn khớp tiếng nói.
-  // Trong mỗi câu, chữ hiện dần theo tỉ lệ thời gian đã trôi; mỗi câu được cấp thời
-  // lượng tỉ lệ với số ký tự của nó.
-  function startCaptions(text: string, duration: number, getElapsed: () => number) {
+  //
+  // Mỗi khung hình quy tiến độ audio (`elapsed / duration`) THẲNG ra vị trí chữ trong
+  // toàn bài, thay vì cấp phát mốc thời gian cố định cho từng mẩu lúc bắt đầu. Nhờ vậy
+  // sai số KHÔNG cộng dồn (mỗi khung là một lần tính lại từ đầu bài) và `getDuration`
+  // được đọc lại liên tục — đường <audio> có `duration` = NaN lúc mới play sẽ tự chỉnh
+  // đúng nhịp ngay khi trình duyệt nạp xong metadata.
+  function startCaptions(text: string, getDuration: () => number, getElapsed: () => number) {
     stopCaptions();
-    const parts = splitSentences(text);
+    const parts = splitCaptionChunks(text);
     if (parts.length === 0) return;
 
-    const totalChars = parts.reduce((s, p) => s + p.length, 0) || 1;
-    let acc = 0;
-    const bounds = parts.map((p) => {
-      const start = acc;
-      acc += (p.length / totalChars) * duration;
-      return { text: p, start, end: acc };
-    });
+    // Mốc trọng số tích luỹ ở đầu mỗi mẩu + tổng trọng số cả bài.
+    const weights = parts.map(timeWeight);
+    const starts: number[] = [];
+    let totalWeight = 0;
+    for (const w of weights) {
+      starts.push(totalWeight);
+      totalWeight += w;
+    }
 
     let lastShown = '';
     const tick = () => {
+      const duration = Math.max(0.1, getDuration());
       const t = getElapsed();
-      let i = bounds.findIndex((b) => t < b.end);
-      if (i === -1) i = bounds.length - 1;
-      const b = bounds[i];
-      const span = b.end - b.start;
-      const frac = span > 0 ? (t - b.start) / span : 1;
-      // +2 ký tự: chữ nhỉnh hơn tiếng một nhịp, đọc theo dễ chịu hơn là chạy sau.
-      const n = Math.min(b.text.length, Math.max(1, Math.ceil(frac * b.text.length) + 2));
-      const shown = b.text.slice(0, n);
+      const target = Math.min(1, t / duration) * totalWeight; // vị trí theo trọng số
+
+      let i = 0;
+      while (i + 1 < parts.length && target >= starts[i + 1]) i++;
+      const chunk = parts[i];
+      const frac = weights[i] > 0 ? (target - starts[i]) / weights[i] : 1;
+      // +1 ký tự: chữ nhỉnh hơn tiếng nửa nhịp, đọc theo dễ chịu hơn là chạy sau.
+      const n = Math.min(chunk.length, Math.max(1, Math.ceil(frac * chunk.length) + 1));
+      const shown = chunk.slice(0, n);
       // Chỉ setState khi chuỗi hiển thị đổi -> không render lại 60 lần/giây.
       if (shown !== lastShown) {
         lastShown = shown;
-        setCaption({ shown, full: b.text, index: i, total: bounds.length });
+        setCaption({ shown, full: chunk, index: i, total: parts.length });
       }
-      if (t < acc) captionRafRef.current = requestAnimationFrame(tick);
+      if (t < duration) captionRafRef.current = requestAnimationFrame(tick);
       else {
         captionRafRef.current = null;
-        setCaption({ shown: b.text, full: b.text, index: i, total: bounds.length });
+        setCaption({ shown: chunk, full: chunk, index: i, total: parts.length });
       }
     };
     tick();
@@ -310,7 +369,8 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   // Không có audio: chạy phụ đề theo đồng hồ thường + tốc độ đọc ước lượng.
   function startCaptionsUntimed(text: string) {
-    startCaptions(text, estimateDuration(text), wallClock());
+    const duration = estimateDuration(text);
+    startCaptions(text, () => duration, wallClock());
   }
 
   // Dừng DỨT ĐIỂM mọi âm thanh đang phát (Web Audio + <audio>) và vô hiệu hoá mọi lượt
@@ -344,7 +404,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     // Dựng sẵn ô phụ đề RỖNG trong lúc tải + giải mã audio: nếu để trống, ô sẽ rơi về
     // bản xem trước của câu trả lời rồi mới nhảy sang phụ đề — giật một nhịp khó chịu.
     if (text) {
-      const first = splitSentences(text)[0];
+      const first = splitCaptionChunks(text)[0];
       if (first) setCaption({ shown: '', full: first, index: 0, total: 1 });
     }
 
@@ -370,7 +430,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         const startedAt = ctx.currentTime;
         source.start(0);
         // Đồng hồ của AudioContext là mốc chính xác nhất cho phụ đề.
-        if (text) startCaptions(text, buffer.duration, () => ctx.currentTime - startedAt);
+        if (text) startCaptions(text, () => buffer.duration, () => ctx.currentTime - startedAt);
         return;
       }
 
@@ -383,8 +443,14 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         return;
       }
       if (text) {
-        const dur = Number.isFinite(a.duration) && a.duration > 0 ? a.duration : estimateDuration(text);
-        startCaptions(text, dur, () => a.currentTime);
+        // `a.duration` thường còn NaN ngay sau play() -> tạm dùng ước lượng, getter đọc
+        // lại mỗi khung nên nhịp tự khớp lại khi metadata về (vài chục ms sau).
+        const fallback = estimateDuration(text);
+        startCaptions(
+          text,
+          () => (Number.isFinite(a.duration) && a.duration > 0 ? a.duration : fallback),
+          () => a.currentTime,
+        );
       }
     } catch (err) {
       if (token !== playTokenRef.current) return; // lỗi của lượt đã bị thay thế -> bỏ qua
@@ -667,8 +733,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                 <span className={`mt-px shrink-0 text-xs ${speaking ? 'animate-pulse' : 'opacity-40'}`}>
                   🔊
                 </span>
-                {/* 3 dòng là trần cứng: câu dài hơn vẫn không lấn lên model */}
-                <span className="line-clamp-3 text-sm leading-snug text-white">
+                {/* Không cắt cụt: mẩu phụ đề đã được xẻ sẵn ≤ MAX_CAPTION_CHARS nên
+                    luôn vừa ~3 dòng, ô nở theo chữ mà không lấn lên model */}
+                <span className="text-sm leading-snug text-white">
                   {caption.shown}
                   {speaking && caption.shown.length < caption.full.length && (
                     <span className="animate-pulse text-white/70">▍</span>
