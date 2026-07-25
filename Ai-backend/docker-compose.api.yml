@@ -1,4 +1,4 @@
-# API HTTP local cho web-ar (proxy /api/ai* -> http://localhost:8000).
+# API HTTP local cho web-ar (proxy /api/ai* -> http://localhost:5567).
 # Dùng:
 #   docker compose -f docker-compose.api.yml build
 #   docker compose -f docker-compose.api.yml run --rm api \
@@ -18,7 +18,7 @@ services:
     env_file:
       - .env
     ports:
-      - "8000:8000"
+      - "5567:5567"
     volumes:
       # Dataset đầy đủ (chỉ đọc) -> repository dựng catalog tên di sản khi trả lời.
       - ./dataset:/app/dataset:ro

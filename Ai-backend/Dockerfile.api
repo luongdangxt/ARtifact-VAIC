@@ -27,5 +27,5 @@ RUN pip install "python-multipart>=0.0.9" "lameenc>=1.7.0"
 COPY heritage_ai/ ./heritage_ai/
 COPY run.py create_vectorDB.py ./
 
-EXPOSE 8000
-CMD ["uvicorn", "heritage_ai.api:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 5567
+CMD ["uvicorn", "heritage_ai.api:app", "--host", "0.0.0.0", "--port", "5567"]

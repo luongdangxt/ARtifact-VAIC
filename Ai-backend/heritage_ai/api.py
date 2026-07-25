@@ -12,16 +12,30 @@ Chạy:  uvicorn heritage_ai.api:app --host 0.0.0.0 --port 8000
 from __future__ import annotations
 
 import logging
+import os
 import uuid
 from collections import OrderedDict
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from heritage_ai import voice as voice_mod
 from heritage_ai.orchestrator import HeritageChatbot
 
 app = FastAPI(title="Heritage AI API", version="0.2.0")
+
+# Cấu hình CORS để cho phép gọi từ Frontend khác domain (có thể cấu hình qua biến môi trường CORS_ORIGINS)
+cors_origins_str = os.getenv("CORS_ORIGINS", "*")
+cors_origins = [origin.strip() for origin in cors_origins_str.split(",")] if cors_origins_str else ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Khởi tạo lười: model embedding + ChromaDB mở lúc request đầu, không chặn startup.
 _chatbot: HeritageChatbot | None = None
