@@ -181,7 +181,7 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertEqual(api_client.models.calls, 2)
         sleep_mock.assert_called_once_with(2)
 
-    def test_report_lists_only_sources_cited_by_model(self) -> None:
+    def test_report_omits_sources_and_citation_marks(self) -> None:
         context = QueryContext("Câu hỏi", "cau hoi", "overview")
         result = ResearchResult(
             heritage={"name": "Bài Chòi", "sources": [], "follow_up_questions": []},
@@ -194,8 +194,11 @@ class HeritageChatbotTests(unittest.TestCase):
 
         answer = TextReportAgent(CitingGeminiClient()).compose(context, result)
 
-        self.assertIn("Nguồn được dùng", answer)
-        self.assertNotIn("Nguồn không được dùng", answer)
+        # Chỉ còn lời kể: bỏ mục nguồn tham khảo, lời rào đón và mã trích dẫn [n].
+        self.assertEqual(answer, "Nội dung được sử dụng từ tư liệu thứ nhất.")
+        self.assertNotIn("Nguồn tham khảo", answer)
+        self.assertNotIn("Nguồn được dùng", answer)
+        self.assertNotIn("Lưu ý", answer)
 
 
 if __name__ == "__main__":

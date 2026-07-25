@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import re
+import struct
 import time
 from concurrent.futures import ThreadPoolExecutor
 
@@ -31,7 +32,15 @@ STT_MODEL = os.getenv("GEMINI_STT_MODEL", "gemini-3.1-flash-lite")
 
 _TTS_SAMPLE_RATE = 24000  # Gemini TTS luôn trả 24kHz mono 16-bit PCM
 _TTS_MP3_BITRATE = int(os.getenv("GEMINI_TTS_MP3_BITRATE", "64"))  # kbps, mono
-_MAX_TTS_CHARS = 1500  # trần nội dung đọc (tránh cost quá lớn cho câu dài bất thường)
+# Trần THỜI LƯỢNG audio trả về: NPC không được nói quá 3 phút 30. Chặn hai lớp —
+# (1) cắt bớt chữ theo tốc độ đọc đo được, (2) cắt lại chính audio nếu vẫn quá dài.
+_TTS_MAX_SECONDS = float(os.getenv("TTS_MAX_SECONDS", "210"))
+# FPT.AI-VITs đọc ~18 ký tự/s (≈255 từ/phút); để 16 cho dư an toàn.
+_TTS_CHARS_PER_SECOND = float(os.getenv("TTS_CHARS_PER_SECOND", "16"))
+_MAX_TTS_CHARS = min(
+    int(os.getenv("TTS_MAX_CHARS", "1500")),  # trần cost cho câu dài bất thường
+    int(_TTS_MAX_SECONDS * _TTS_CHARS_PER_SECOND),
+)
 # Cắt câu trả lời thành đoạn ngắn rồi TTS SONG SONG -> wall-clock ~ đoạn chậm nhất
 # thay vì tổng, giảm mạnh độ trễ (TTS cả câu dài mất >30s).
 _TTS_MAX_WORDS = int(os.getenv("GEMINI_TTS_MAX_WORDS", "28"))  # ~1-2 câu/đoạn
@@ -144,9 +153,61 @@ def _fpt_api_key() -> str:
     return (os.getenv("FPT_API_KEY") or "").strip()
 
 
+def _fit_text(text: str) -> str:
+    """Cắt bớt chữ cho vừa trần thời lượng, ưu tiên dừng ở hết câu."""
+    spoken = text.strip()
+    if len(spoken) <= _MAX_TTS_CHARS:
+        return spoken
+    cut = spoken[:_MAX_TTS_CHARS]
+    stop = max(cut.rfind(mark) for mark in ".!?…")
+    if stop > _MAX_TTS_CHARS // 2:  # có dấu kết câu đủ gần cuối thì dừng ở đó
+        cut = cut[: stop + 1]
+    _log.warning(
+        "Nội dung đọc dài %d ký tự, cắt còn %d để audio dưới %.0fs",
+        len(spoken),
+        len(cut),
+        _TTS_MAX_SECONDS,
+    )
+    return cut.strip()
+
+
+def _trim_wav(wav: bytes) -> bytes:
+    """Cắt WAV về đúng trần thời lượng (chỉ dùng tới khi TTS trả quá dài)."""
+    if len(wav) < 44 or wav[:4] != b"RIFF" or wav[8:12] != b"WAVE":
+        return wav
+    byte_rate = 0
+    offset = 12
+    while offset + 8 <= len(wav):
+        chunk_id = wav[offset : offset + 4]
+        declared = struct.unpack_from("<I", wav, offset + 4)[0]
+        body = offset + 8
+        if chunk_id == b"fmt ":
+            byte_rate = struct.unpack_from("<I", wav, body + 8)[0]
+        elif chunk_id == b"data":
+            # FPT khai size sai (gấp đôi) nên tính theo độ dài thật của file.
+            actual = len(wav) - body
+            if not byte_rate:
+                return wav
+            keep = int(byte_rate * _TTS_MAX_SECONDS)
+            keep -= keep % 4  # dừng đúng biên mẫu, không cắt giữa sample
+            if actual <= keep:
+                return wav
+            _log.warning(
+                "Audio FPT dài %.0fs, cắt còn %.0fs",
+                actual / byte_rate,
+                keep / byte_rate,
+            )
+            trimmed = bytearray(wav[: body + keep])
+            struct.pack_into("<I", trimmed, 4, len(trimmed) - 8)
+            struct.pack_into("<I", trimmed, offset + 4, keep)
+            return bytes(trimmed)
+        offset = body + declared + (declared % 2)
+    return wav
+
+
 def synthesize_fpt_wav(text: str) -> bytes:
     """Chữ -> WAV bằng FPT.AI-VITs (1 request cho cả câu trả lời)."""
-    spoken = text.strip()[:_MAX_TTS_CHARS]
+    spoken = _fit_text(text)
     if not spoken:
         raise VoiceError("Không có nội dung để đọc.")
     key = _fpt_api_key()
@@ -179,12 +240,12 @@ def synthesize_fpt_wav(text: str) -> bytes:
     # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON, không phải audio.
     if not audio.startswith(b"RIFF"):
         raise VoiceError(f"FPT TTS không trả về WAV: {audio[:160]!r}")
-    return audio
+    return _trim_wav(audio)
 
 
 def synthesize_mp3(text: str) -> bytes:
     """Chữ -> MP3 (TTS). Cắt đoạn ngắn, TTS song song, ghép PCM rồi encode 1 file MP3."""
-    spoken = text.strip()[:_MAX_TTS_CHARS]
+    spoken = _fit_text(text)
     chunks = _split_for_tts(spoken, _TTS_MAX_WORDS)
     if not chunks:
         raise VoiceError("Không có nội dung để đọc.")
@@ -197,7 +258,16 @@ def synthesize_mp3(text: str) -> bytes:
         with ThreadPoolExecutor(max_workers=workers) as pool:
             pcm_parts = list(pool.map(_tts_pcm, chunks))
 
-    return _pcm_to_mp3(b"".join(pcm_parts), _TTS_SAMPLE_RATE)
+    pcm = b"".join(pcm_parts)
+    max_bytes = int(_TTS_SAMPLE_RATE * 2 * _TTS_MAX_SECONDS)  # 16-bit mono
+    if len(pcm) > max_bytes:
+        _log.warning(
+            "Audio Gemini dài %.0fs, cắt còn %.0fs",
+            len(pcm) / (_TTS_SAMPLE_RATE * 2),
+            _TTS_MAX_SECONDS,
+        )
+        pcm = pcm[: max_bytes - max_bytes % 2]
+    return _pcm_to_mp3(pcm, _TTS_SAMPLE_RATE)
 
 
 def _tts_pcm(text: str) -> bytes:

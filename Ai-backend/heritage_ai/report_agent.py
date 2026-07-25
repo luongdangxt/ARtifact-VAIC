@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import logging
 import re
 
 from heritage_ai.gemini_client import GeminiClient
 from heritage_ai.models import QueryContext, ResearchResult
+
+_log = logging.getLogger(__name__)
+
+# Mã trích dẫn [1], [2]... trong lời kể. Vẫn yêu cầu Gemini gắn để bám sát tư liệu,
+# nhưng cắt trước khi trả về vì mục "Nguồn tham khảo" không còn hiển thị nữa.
+_CITATION_RE = re.compile(r"\s*\[\d+\]")
 
 
 class TextReportAgent:
@@ -21,49 +28,18 @@ class TextReportAgent:
             requested_length=context.requested_length,
         )
 
-        notes = ""
         if result.warnings:
-            notes = "\n\nLưu ý kiểm chứng: " + " ".join(result.warnings)
+            # Cảnh báo kiểm chứng chỉ để vận hành xem log, không đẩy ra giao diện/TTS.
+            _log.info(
+                "Cảnh báo kiểm chứng (%s): %s",
+                heritage.get("name", "?"),
+                " ".join(result.warnings),
+            )
 
-        cited_indexes = {
-            int(value)
-            for value in re.findall(r"\[(\d+)\]", body)
-            if 1 <= int(value) <= len(result.evidence)
-        }
-        source_items = (
-            [
-                (index, result.evidence[index - 1])
-                for index in sorted(cited_indexes)
-            ]
-            if cited_indexes
-            else list(enumerate(result.evidence, start=1))
-        )
-        sources = "\n".join(
-            self._format_source(index, evidence)
-            for index, evidence in source_items
-        )
+        answer = _CITATION_RE.sub("", body).strip()
         follow_ups = "\n".join(
             f"- {question}" for question in heritage.get("follow_up_questions", [])
         )
-
-        return (
-            f"{body}{notes}\n\n"
-            f"Nguồn tham khảo:\n{sources}\n\n"
-            f"Bạn có thể hỏi tiếp:\n{follow_ups}\n\n"
-            "Lưu ý: đây là nhân vật AI tổng hợp tư liệu, không phải lời nói trực tiếp "
-            "của một nghệ nhân cụ thể."
-        )
-
-    @staticmethod
-    def _format_source(index: int, evidence) -> str:
-        details = [evidence.source]
-        if evidence.document_name:
-            details.append(evidence.document_name)
-        if evidence.page:
-            details.append(f"trang {evidence.page}")
-        if evidence.title:
-            details.append(f"mục {evidence.title}")
-        label = ", ".join(details)
-        if evidence.source_url:
-            label += f" — {evidence.source_url}"
-        return f"[{index}] {label}"
+        if follow_ups:
+            answer += f"\n\nBạn có thể hỏi tiếp:\n{follow_ups}"
+        return answer

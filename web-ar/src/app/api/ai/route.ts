@@ -5,6 +5,7 @@ import {
   backendAuthHeaders,
   backendBaseUrl,
   personaFields,
+  splitSuggestions,
   toProxiedAudioUrl,
 } from '@/lib/server/backend';
 
@@ -47,10 +48,14 @@ export async function POST(req: Request) {
   }
 
   const data = (await res.json()) as { answer?: string; audio_url?: string | null };
+  const { content, suggestions } = splitSuggestions(
+    data.answer ?? 'Dạ, hiện mình chưa trả lời được câu này.',
+  );
   const reply: ChatMessage = {
     role: 'assistant',
-    content: data.answer ?? 'Dạ, hiện mình chưa trả lời được câu này.',
+    content,
     audioUrl: toProxiedAudioUrl(data.audio_url),
+    suggestions,
   };
   return NextResponse.json(reply);
 }

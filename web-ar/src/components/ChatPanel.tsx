@@ -70,6 +70,43 @@ function makeSilentWavUrl(): string {
 // đóng/mở lại panel (hoặc lia qua lại giữa 2 nghệ nhân) KHÔNG chào lại từ đầu.
 const introducedSlugs = new Set<string>();
 
+// Lời chào ĐANG bay theo slug. React Strict Mode (bật mặc định ở app router, chỉ trong
+// dev) mount -> unmount -> mount lại: nếu chỉ chặn bằng introducedSlugs thì lần mount
+// SỐNG SÓT bị coi là "đã chào" và bỏ qua -> panel không bao giờ có lời chào. Chia sẻ
+// promise ở đây để lần mount thứ hai bám vào ĐÚNG request đó, không gọi API lần nữa.
+const pendingIntros = new Map<string, Promise<ChatMessage>>();
+
+// Câu hỏi gợi ý kèm theo câu trả lời -> nút bấm là hỏi luôn, khỏi phải gõ.
+// `tone`: 'panel' nằm trong khung chat (nền tối sẵn), 'overlay' nổi trên camera.
+function SuggestionChips({
+  items,
+  tone,
+  onPick,
+}: {
+  items: string[];
+  tone: 'panel' | 'overlay';
+  onPick: (question: string) => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-wrap justify-center gap-2">
+      {items.map((q) => (
+        <button
+          key={q}
+          onClick={() => onPick(q)}
+          className={`pointer-events-auto rounded-full border px-3 py-1.5 text-left text-xs leading-snug transition active:scale-95 ${
+            tone === 'panel'
+              ? 'border-white/20 bg-white/10 text-white/90 hover:bg-white/20'
+              : 'border-white/25 bg-black/70 text-white/90 shadow-lg backdrop-blur hover:bg-black/85'
+          }`}
+        >
+          {q}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Khung trò chuyện với nghệ nhân. MẶC ĐỊNH là VOICE (bấm-giữ để nói); có nút tròn nhỏ
 // để bung khung chat CHỮ (gõ + xem lại lịch sử). Panel tồn tại xuyên suốt phiên, không
 // tắt khi camera lia khỏi model. Reset khi đổi nghệ nhân do ARScene remount qua key.
@@ -129,26 +166,36 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   // AudioContext shared đã unlock từ nút "Quét AR ngay" (bị chặn thì đã có nút 🔊).
   useEffect(() => {
     if (introducedSlugs.has(artisan.slug)) return;
-    introducedSlugs.add(artisan.slug);
     let cancelled = false;
     setBusy(true);
-    askAI(artisan.slug, [
-      {
-        role: 'user',
-        content:
-          `Hãy chào du khách vừa quét ảnh mốc và tự giới thiệu ngắn gọn (3-4 câu) ` +
-          `về bản thân cùng di sản ${artisan.craft}, rồi mời họ đặt câu hỏi.`,
-      },
-    ])
+    // Dùng lại request đang bay nếu có (Strict Mode mount lần 2), nếu chưa thì tạo mới.
+    let intro = pendingIntros.get(artisan.slug);
+    if (!intro) {
+      intro = askAI(artisan.slug, [
+        {
+          role: 'user',
+          content:
+            `Hãy chào du khách vừa quét ảnh mốc và tự giới thiệu ngắn gọn (3-4 câu) ` +
+            `về bản thân cùng di sản ${artisan.craft}, rồi mời họ đặt câu hỏi.`,
+        },
+      ]);
+      pendingIntros.set(artisan.slug, intro);
+    }
+    intro
       .then((reply) => {
-        if (!cancelled) pushAssistant(reply);
+        // Đánh dấu "đã chào" khi câu chào THẬT SỰ hiện ra, không phải lúc gửi request.
+        if (cancelled) return;
+        introducedSlugs.add(artisan.slug);
+        pushAssistant(reply);
       })
       .catch(() => {
         // lỗi mạng thì bỏ qua lời chào, cho phép chào lại nếu panel mở lần sau
-        introducedSlugs.delete(artisan.slug);
+        pendingIntros.delete(artisan.slug);
       })
       .finally(() => {
-        if (!cancelled) setBusy(false);
+        // LUÔN mở khoá panel: nếu chỉ gỡ khi !cancelled thì lần mount bị Strict Mode huỷ
+        // sẽ để busy=true vĩnh viễn -> khoá cứng ô nhập, nút gửi và nút thu âm.
+        setBusy(false);
       });
     return () => {
       cancelled = true;
@@ -341,11 +388,12 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   }
 
   // ── TEXT: gõ chữ ────────────────────────────────────────────────────────
-  async function sendText() {
-    const q = input.trim();
+  // `question` có giá trị khi du khách bấm NÚT gợi ý (gửi thẳng, không qua ô nhập).
+  async function sendText(question?: string) {
+    const q = (question ?? input).trim();
     if (!q || busy) return;
     unlockAudio();
-    setInput('');
+    if (question === undefined) setInput('');
     setError(null);
     const next = [...messages, { role: 'user', content: q } as ChatMessage];
     setMessages(next);
@@ -360,6 +408,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   }
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+  // Chỉ gợi ý theo câu trả lời MỚI NHẤT: hỏi xong là chip cũ biến mất, tránh
+  // chồng chất câu hỏi lỗi thời. Đang bận thì ẩn để không bấm chồng lượt.
+  const suggestions = !busy && !recording ? (lastAssistant?.suggestions ?? []) : [];
+
   const status = busy
     ? messages.length === 0
       ? 'Nghệ nhân đang chào bạn…' // đang tải lời tự giới thiệu lúc model vừa hiện
@@ -423,6 +475,11 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                 </div>
               </div>
             )}
+            <SuggestionChips
+              items={suggestions}
+              tone="panel"
+              onPick={(q) => void sendText(q)}
+            />
           </div>
 
           {error && <p className="px-4 pb-1 text-xs text-red-300">{error}</p>}
@@ -437,7 +494,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
               className="min-w-0 flex-1 rounded-full bg-white/10 px-4 py-2.5 text-sm outline-none placeholder:text-white/40 disabled:opacity-50"
             />
             <button
-              onClick={sendText}
+              // Bọc trong arrow: onClick truyền MouseEvent, mà sendText giờ nhận
+              // tham số câu hỏi -> gọi trực tiếp sẽ gửi nhầm event thành câu hỏi.
+              onClick={() => sendText()}
               disabled={busy || !input.trim()}
               className="shrink-0 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-black disabled:opacity-40"
             >
@@ -473,6 +532,15 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
             <span className="text-white/60">Đang tìm lại nghệ nhân… bạn vẫn có thể trò chuyện.</span>
           )}
         </div>
+      )}
+
+      {/* Nút gợi ý ở chế độ voice: bấm là hỏi luôn, khỏi gõ */}
+      {!expanded && (
+        <SuggestionChips
+          items={suggestions}
+          tone="overlay"
+          onPick={(q) => void sendText(q)}
+        />
       )}
 
       {error && !expanded && (

@@ -184,6 +184,7 @@ RAG_MIN_RELEVANCE=0.15
 | `FPT_API_KEY` | *(trống)* | Key FPT Cloud Marketplace; bỏ trống = tắt TTS dự phòng |
 | `FPT_TTS_MODEL` | `FPT.AI-VITs` | Model TTS dự phòng (trả WAV) |
 | `FPT_TTS_VOICE` | `std_leminh` | Giọng đọc FPT (nam); giọng nữ: `std_kimngan` |
+| `TTS_MAX_SECONDS` | `210` | Trần thời lượng audio (3 phút 30); vượt thì cắt chữ rồi cắt cả audio |
 
 TTS dự phòng: khi Gemini TTS lỗi hoặc hết quota (429), `heritage_ai/voice.py` tự
 gọi FPT.AI-VITs để NPC vẫn có tiếng — câu trả lời chữ không bao giờ bị chặn vì

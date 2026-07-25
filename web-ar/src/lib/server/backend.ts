@@ -32,6 +32,33 @@ export function personaFields(artisan: Artisan | undefined): {
   };
 }
 
+// Backend nối phần gợi ý vào cuối câu trả lời bằng chuỗi CỐ ĐỊNH (report_agent.py:
+// `answer += f"\n\nBạn có thể hỏi tiếp:\n{follow_ups}"`), mỗi câu 1 dòng "- ...".
+// Do code Python ghép chứ không phải Gemini sinh ra nên định dạng luôn ổn định.
+const FOLLOW_UP_RE = /\n+\s*Bạn có thể hỏi tiếp:\s*\n/i;
+
+/**
+ * Tách câu trả lời thành phần lời kể + danh sách câu hỏi gợi ý.
+ * Phần gợi ý bị BỎ khỏi content để bong bóng chat chỉ còn lời nghệ nhân nói —
+ * gợi ý được render thành nút bấm. (TTS phía backend vốn đã cắt đoạn này rồi.)
+ */
+export function splitSuggestions(answer: string): {
+  content: string;
+  suggestions: string[];
+} {
+  const [body, tail] = answer.split(FOLLOW_UP_RE, 2);
+  if (tail === undefined) return { content: answer.trim(), suggestions: [] };
+
+  const suggestions = tail
+    .split('\n')
+    .map((line) => line.replace(/^\s*[-*•]\s*/, '').trim())
+    .filter(Boolean);
+
+  // Không nhặt được câu nào -> giữ nguyên câu trả lời gốc, đừng nuốt mất chữ.
+  if (suggestions.length === 0) return { content: answer.trim(), suggestions: [] };
+  return { content: body.trim(), suggestions };
+}
+
 /** Đổi audio_url backend ('/v1/audio/files/abc.mp3') -> proxy Next để giấu token. */
 export function toProxiedAudioUrl(audioUrl: string | null | undefined): string | undefined {
   if (!audioUrl) return undefined;
