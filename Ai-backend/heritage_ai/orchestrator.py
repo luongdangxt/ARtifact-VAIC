@@ -30,17 +30,17 @@ class HeritageChatbot:
         cuối lời kể không mời hỏi lại điều vừa trả lời."""
         if query.strip():
             try:
-                heritage_names = self.retriever.candidate_heritage_names(query)
+                ranked = self.retriever.rank_heritage_names(query)
             except RagError as exc:
                 return f"Không thể nhận diện di sản từ kho RAG: {exc}"
             except GeminiError as exc:
                 return f"Không thể tạo embedding để nhận diện di sản: {exc}"
         else:
-            heritage_names = [item["name"] for item in self.repository.all()]
-        if query.strip() and not heritage_names:
+            ranked = [(item["name"], 0.0) for item in self.repository.all()]
+        if query.strip() and not ranked:
             return "Tôi chưa tìm thấy di sản phù hợp trong kho dữ liệu."
         try:
-            context = self.query_processor.process(query, heritage_names)
+            context = self.query_processor.process(query, ranked)
         except GeminiError as exc:
             return f"Không thể xử lý câu hỏi bằng Gemini: {exc}"
 

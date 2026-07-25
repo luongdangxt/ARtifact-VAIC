@@ -3,8 +3,9 @@
 - TTS chính: Gemini `gemini-2.5-flash-preview-tts` trả PCM 24kHz mono -> encode
   MP3 (lameenc). Câu dài được cắt đoạn ngắn, TTS SONG SONG rồi ghép PCM để giảm
   độ trễ.
-- TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI) trả WAV.
-  Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt.
+- TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI), mặc định trả
+  MP3 (FPT_TTS_FORMAT). Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt
+  — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần.
 - STT: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline -> transcript.
   Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client không cần convert.
 """
@@ -53,6 +54,10 @@ _TTS_MAX_CHUNKS = int(os.getenv("GEMINI_TTS_MAX_CHUNKS", "10"))
 FPT_TTS_URL = os.getenv("FPT_TTS_URL", "https://mkp-api.fptcloud.com/v1/audio/speech")
 FPT_TTS_MODEL = os.getenv("FPT_TTS_MODEL", "FPT.AI-VITs")
 FPT_TTS_VOICE = os.getenv("FPT_TTS_VOICE", "std_leminh")  # giọng NAM cho NPC nghệ nhân
+# mp3 mặc định: đo trên cùng bộ câu trả lời, mp3 ra 700-880KB còn WAV 1.3-2.1MB
+# (nhẹ hơn ~2.3 lần) nên du khách dùng 4G nghe được sớm hơn hẳn. WAV chỉ giữ lại để
+# gỡ lỗi hoặc phòng khi FPT đổi hành vi encode.
+FPT_TTS_FORMAT = os.getenv("FPT_TTS_FORMAT", "mp3").strip().lower()
 # auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower()
 
@@ -137,7 +142,7 @@ def synthesize(text: str) -> tuple[bytes, str]:
     đuôi này để đặt tên file + Content-Type.
     """
     if TTS_PROVIDER == "fpt":
-        return synthesize_fpt_wav(text), "wav"
+        return synthesize_fpt(text)
 
     try:
         return synthesize_mp3(text), "mp3"
@@ -146,7 +151,7 @@ def synthesize(text: str) -> tuple[bytes, str]:
             raise
         # Gemini hỏng (hết quota 429, model lỗi...) -> vẫn có tiếng nhờ FPT.
         _log.warning("Gemini TTS lỗi, chuyển sang FPT.AI-VITs: %s", exc)
-        return synthesize_fpt_wav(text), "wav"
+        return synthesize_fpt(text)
 
 
 def _fpt_api_key() -> str:
@@ -205,8 +210,18 @@ def _trim_wav(wav: bytes) -> bytes:
     return wav
 
 
-def synthesize_fpt_wav(text: str) -> bytes:
-    """Chữ -> WAV bằng FPT.AI-VITs (1 request cho cả câu trả lời)."""
+def _looks_like_audio(data: bytes, fmt: str) -> bool:
+    """Nhận diện audio thật qua magic bytes (lỗi ứng dụng của FPT vẫn trả HTTP 200)."""
+    if fmt == "wav":
+        return data.startswith(b"RIFF")
+    # MP3: hoặc có tag ID3, hoặc bắt đầu thẳng bằng frame sync 11 bit (0xFF 0xEx/0xFx).
+    return data.startswith(b"ID3") or (
+        len(data) > 1 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0
+    )
+
+
+def synthesize_fpt(text: str) -> tuple[bytes, str]:
+    """Chữ -> (audio bytes, đuôi file) bằng FPT.AI-VITs (1 request cho cả câu trả lời)."""
     spoken = _fit_text(text)
     if not spoken:
         raise VoiceError("Không có nội dung để đọc.")
@@ -214,10 +229,11 @@ def synthesize_fpt_wav(text: str) -> bytes:
     if not key:
         raise VoiceError("Chưa có FPT_API_KEY cho TTS dự phòng.")
 
+    fmt = FPT_TTS_FORMAT if FPT_TTS_FORMAT in {"mp3", "wav"} else "mp3"
     payload = {
         "model": FPT_TTS_MODEL,
         "input": spoken,
-        "response_format": "wav",
+        "response_format": fmt,
         "voice": FPT_TTS_VOICE,
     }
     try:
@@ -238,9 +254,11 @@ def synthesize_fpt_wav(text: str) -> bytes:
 
     audio = resp.content
     # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON, không phải audio.
-    if not audio.startswith(b"RIFF"):
-        raise VoiceError(f"FPT TTS không trả về WAV: {audio[:160]!r}")
-    return _trim_wav(audio)
+    if not _looks_like_audio(audio, fmt):
+        raise VoiceError(f"FPT TTS không trả về {fmt}: {audio[:160]!r}")
+    # MP3 không cắt được bằng cách xén byte như WAV; trần thời lượng đã được _fit_text
+    # bảo đảm từ phía chữ nên đây chỉ là lớp chặn thứ hai cho WAV.
+    return (_trim_wav(audio) if fmt == "wav" else audio), fmt
 
 
 def synthesize_mp3(text: str) -> bytes:

@@ -73,12 +73,18 @@ class RagRetriever:
         return evidence
 
     def candidate_heritage_names(self, query: str, limit: int = 8) -> list[str]:
+        return [name for name, _ in self.rank_heritage_names(query, limit=limit)]
+
+    def rank_heritage_names(
+        self, query: str, limit: int = 8
+    ) -> list[tuple[str, float]]:
+        """Tên di sản kèm score, xếp từ khớp nhất — đầu vào của router local."""
         try:
             query_embedding = self.embedder.embed_query(query)
         except LocalEmbeddingError as exc:
             raise RagError(str(exc)) from exc
-        names = self.vector_store.candidate_heritage_names(
+        ranked = self.vector_store.rank_heritage_names(
             query_embedding=query_embedding,
             top_k=max(20, limit * 3),
         )
-        return names[:limit]
+        return ranked[:limit]

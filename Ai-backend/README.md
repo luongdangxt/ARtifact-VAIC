@@ -180,15 +180,24 @@ RAG_MIN_RELEVANCE=0.15
 | `RAG_EMBEDDING_DEVICE` | `auto` | Tự chọn GPU hoặc CPU; có thể đặt `cuda`/`cpu` |
 | `RAG_TOP_K` | `5` | Số chunk tối đa đưa vào câu trả lời |
 | `RAG_MIN_RELEVANCE` | `0.15` | Ngưỡng liên quan tối thiểu |
+| `ROUTER_MODE` | `auto` | `local` = router chạy hoàn toàn offline; `auto` = local rồi Gemini phân giải khi mơ hồ; `gemini` = luôn gọi Gemini |
+| `ROUTER_MARGIN` | `0.03` | Score hạng nhất phải hơn hạng nhì chừng này thì router local mới dám tự quyết |
 | `TTS_PROVIDER` | `auto` | `auto` = Gemini trước, hỏng thì FPT; `gemini`/`fpt` = ép một nguồn |
 | `FPT_API_KEY` | *(trống)* | Key FPT Cloud Marketplace; bỏ trống = tắt TTS dự phòng |
-| `FPT_TTS_MODEL` | `FPT.AI-VITs` | Model TTS dự phòng (trả WAV) |
+| `FPT_TTS_MODEL` | `FPT.AI-VITs` | Model TTS dự phòng |
 | `FPT_TTS_VOICE` | `std_leminh` | Giọng đọc FPT (nam); giọng nữ: `std_kimngan` |
+| `FPT_TTS_FORMAT` | `mp3` | Định dạng FPT trả về; đổi sang `wav` chỉ khi cần gỡ lỗi vì file nặng hơn ~2 lần |
 | `TTS_MAX_SECONDS` | `210` | Trần thời lượng audio (3 phút 30); vượt thì cắt chữ rồi cắt cả audio |
+
+Semantic Router chạy local (`heritage_ai/local_router.py`): vector search đã xếp
+hạng di sản sẵn và intent tiếng Việt nhận ra được bằng từ khoá, nên câu hỏi rõ
+ràng không cần gọi Gemini để phân tích — tiết kiệm ~2.1s mỗi câu. Chỉ khi hai di
+sản đầu bảng bám sát nhau (câu mơ hồ kiểu "kể tôi nghe") mới nhờ tới Gemini.
 
 TTS dự phòng: khi Gemini TTS lỗi hoặc hết quota (429), `heritage_ai/voice.py` tự
 gọi FPT.AI-VITs để NPC vẫn có tiếng — câu trả lời chữ không bao giờ bị chặn vì
-TTS. File audio trả về là `.wav` thay vì `.mp3`; proxy `web-ar` đã hỗ trợ cả hai.
+TTS. Mặc định FPT cũng trả `.mp3`; đặt `FPT_TTS_FORMAT=wav` thì thành `.wav` —
+proxy `web-ar` hỗ trợ cả hai đuôi.
 
 File `.env` đã được khai báo trong `.gitignore`. Không đưa API key vào code,
 ảnh chụp màn hình hoặc GitHub.
