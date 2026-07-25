@@ -113,7 +113,9 @@ function SuggestionChips({
 export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
+  // Khởi tạo THẲNG bằng true khi phiên này sắp chào (xem effect tự giới thiệu bên dưới):
+  // gọi setBusy(true) trong thân effect sẽ tạo render thừa và bị lint chặn.
+  const [busy, setBusy] = useState(() => !introducedSlugs.has(artisan.slug));
   const [error, setError] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [expanded, setExpanded] = useState(false); // khung chat chữ đang mở?
@@ -158,50 +160,6 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       // đóng rồi thì phiên chat sau mở lại sẽ mất trạng thái unlock trên iOS.
       if (silentUrlRef.current) URL.revokeObjectURL(silentUrlRef.current);
     };
-  }, []);
-
-  // TỰ GIỚI THIỆU: panel mount đúng lúc model vừa hiện lên (ARScene mở session khi
-  // track được), nên nghệ nhân chủ động chào + kể ngắn về di sản luôn, không đợi hỏi.
-  // Câu mồi KHÔNG đưa vào messages (chỉ hiện câu trả lời); giọng nói tự phát trên
-  // AudioContext shared đã unlock từ nút "Quét AR ngay" (bị chặn thì đã có nút 🔊).
-  useEffect(() => {
-    if (introducedSlugs.has(artisan.slug)) return;
-    let cancelled = false;
-    setBusy(true);
-    // Dùng lại request đang bay nếu có (Strict Mode mount lần 2), nếu chưa thì tạo mới.
-    let intro = pendingIntros.get(artisan.slug);
-    if (!intro) {
-      intro = askAI(artisan.slug, [
-        {
-          role: 'user',
-          content:
-            `Hãy chào du khách vừa quét ảnh mốc và tự giới thiệu ngắn gọn (3-4 câu) ` +
-            `về bản thân cùng di sản ${artisan.craft}, rồi mời họ đặt câu hỏi.`,
-        },
-      ]);
-      pendingIntros.set(artisan.slug, intro);
-    }
-    intro
-      .then((reply) => {
-        // Đánh dấu "đã chào" khi câu chào THẬT SỰ hiện ra, không phải lúc gửi request.
-        if (cancelled) return;
-        introducedSlugs.add(artisan.slug);
-        pushAssistant(reply);
-      })
-      .catch(() => {
-        // lỗi mạng thì bỏ qua lời chào, cho phép chào lại nếu panel mở lần sau
-        pendingIntros.delete(artisan.slug);
-      })
-      .finally(() => {
-        // LUÔN mở khoá panel: nếu chỉ gỡ khi !cancelled thì lần mount bị Strict Mode huỷ
-        // sẽ để busy=true vĩnh viễn -> khoá cứng ô nhập, nút gửi và nút thu âm.
-        setBusy(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    // chỉ chạy 1 lần khi mount; đổi nghệ nhân thì ARScene remount panel qua key
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Tự cuộn xuống cuối khi có tin mới (lúc mở khung chat chữ).
@@ -407,10 +365,61 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     }
   }
 
+  // TỰ GIỚI THIỆU: panel mount đúng lúc model vừa hiện lên (ARScene mở session khi
+  // track được), nên nghệ nhân chủ động chào + kể ngắn về di sản luôn, không đợi hỏi.
+  // Câu mồi KHÔNG đưa vào messages (chỉ hiện câu trả lời); giọng nói tự phát trên
+  // AudioContext shared đã unlock từ nút "Quét AR ngay" (bị chặn thì đã có nút 🔊).
+  // Đặt SAU pushAssistant để không tham chiếu hàm khai báo phía dưới (lint chặn).
+  useEffect(() => {
+    if (introducedSlugs.has(artisan.slug)) return;
+    let cancelled = false;
+    // Dùng lại request đang bay nếu có (Strict Mode mount lần 2), nếu chưa thì tạo mới.
+    let intro = pendingIntros.get(artisan.slug);
+    if (!intro) {
+      intro = askAI(artisan.slug, [
+        {
+          role: 'user',
+          content:
+            `Hãy chào du khách vừa quét ảnh mốc và tự giới thiệu ngắn gọn (3-4 câu) ` +
+            `về bản thân cùng di sản ${artisan.craft}, rồi mời họ đặt câu hỏi.`,
+        },
+      ]);
+      pendingIntros.set(artisan.slug, intro);
+    }
+    intro
+      .then((reply) => {
+        // Đánh dấu "đã chào" khi câu chào THẬT SỰ hiện ra, không phải lúc gửi request.
+        if (cancelled) return;
+        introducedSlugs.add(artisan.slug);
+        pushAssistant(reply);
+      })
+      .catch(() => {
+        // lỗi mạng thì bỏ qua lời chào, cho phép chào lại nếu panel mở lần sau
+        pendingIntros.delete(artisan.slug);
+      })
+      .finally(() => {
+        // LUÔN mở khoá panel: nếu chỉ gỡ khi !cancelled thì lần mount bị Strict Mode huỷ
+        // sẽ để busy=true vĩnh viễn -> khoá cứng ô nhập, nút gửi và nút thu âm.
+        setBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // chỉ chạy 1 lần khi mount; đổi nghệ nhân thì ARScene remount panel qua key
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
   // Chỉ gợi ý theo câu trả lời MỚI NHẤT: hỏi xong là chip cũ biến mất, tránh
   // chồng chất câu hỏi lỗi thời. Đang bận thì ẩn để không bấm chồng lượt.
-  const suggestions = !busy && !recording ? (lastAssistant?.suggestions ?? []) : [];
+  // Lọc thêm câu du khách ĐÃ hỏi (kể cả gõ tay trùng chữ) để không mời hỏi lại.
+  const asked = new Set(
+    messages.filter((m) => m.role === 'user').map((m) => m.content.trim().toLowerCase()),
+  );
+  const suggestions =
+    !busy && !recording
+      ? (lastAssistant?.suggestions ?? []).filter((q) => !asked.has(q.trim().toLowerCase()))
+      : [];
 
   const status = busy
     ? messages.length === 0

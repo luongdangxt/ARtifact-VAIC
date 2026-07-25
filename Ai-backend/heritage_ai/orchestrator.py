@@ -25,7 +25,9 @@ class HeritageChatbot:
         self.supervisor = ResearchSupervisor(self.retriever)
         self.report_agent = TextReportAgent(self.gemini)
 
-    def ask(self, query: str) -> str:
+    def ask(self, query: str, asked: list[str] | None = None) -> str:
+        """`asked`: các câu du khách đã hỏi trước đó — chỉ dùng để câu hỏi gợi ý
+        cuối lời kể không mời hỏi lại điều vừa trả lời."""
         if query.strip():
             try:
                 heritage_names = self.retriever.candidate_heritage_names(query)
@@ -57,7 +59,7 @@ class HeritageChatbot:
 
         try:
             research_result = self.supervisor.run(context, heritage)
-            return self.report_agent.compose(context, research_result)
+            return self.report_agent.compose(context, research_result, asked or [])
         except RagError as exc:
             return f"Không thể truy xuất kho RAG: {exc}"
         except GeminiError as exc:

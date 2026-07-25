@@ -11,6 +11,7 @@ Chạy:  uvicorn heritage_ai.api:app --host 0.0.0.0 --port 8000
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -137,6 +138,26 @@ def _wants_tts(value: str) -> bool:
     return value.strip().casefold() in {"1", "true", "yes", "on"}
 
 
+def _asked_from_json(history_json: str) -> list[str]:
+    """Rút các câu du khách đã hỏi từ history dạng JSON của form multipart.
+
+    History hỏng không được làm chết request — cùng lắm mất phần lọc gợi ý trùng.
+    """
+    try:
+        turns = json.loads(history_json or "[]")
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(turns, list):
+        return []
+    return [
+        turn["content"]
+        for turn in turns
+        if isinstance(turn, dict)
+        and turn.get("role") == "user"
+        and isinstance(turn.get("content"), str)
+    ]
+
+
 class HistoryTurn(BaseModel):
     role: str
     content: str
@@ -173,7 +194,8 @@ def ask(req: AskRequest) -> AskResponse:
     if not question:
         raise HTTPException(status_code=400, detail="Thiếu câu hỏi.")
 
-    answer = _get_chatbot().ask(_build_query(question, req.persona_craft))
+    asked = [turn.content for turn in req.history if turn.role == "user"]
+    answer = _get_chatbot().ask(_build_query(question, req.persona_craft), asked=asked)
     audio_url = _synthesize_url(answer) if req.synthesize else None
     return AskResponse(answer=answer, audio_url=audio_url)
 
@@ -196,7 +218,9 @@ async def audio_ask(
     except voice_mod.VoiceError as exc:
         raise HTTPException(status_code=502, detail=f"STT lỗi: {exc}") from exc
 
-    answer = _get_chatbot().ask(_build_query(transcript, persona_craft))
+    answer = _get_chatbot().ask(
+        _build_query(transcript, persona_craft), asked=_asked_from_json(history_json)
+    )
     audio_url = _synthesize_url(answer) if _wants_tts(synthesize) else None
     return AudioAskResponse(answer=answer, transcript=transcript, audio_url=audio_url)
 
