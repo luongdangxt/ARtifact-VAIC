@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { Artisan, ChatMessage } from '@/lib/types';
 import { askAI, askAIVoice } from '@/lib/api-client';
 import { getSharedAudioContext, unlockSharedAudio } from '@/lib/audioUnlock';
@@ -70,6 +70,11 @@ function makeSilentWavUrl(): string {
 // 90 ký tự là khoảng 3 dòng. Ô phụ đề nở theo nội dung và KHÔNG cắt cụt bằng "…" nữa —
 // chữ bị nuốt mất thì du khách đọc hụt câu, mà giọng nói vẫn đọc tiếp phần không thấy.
 const MAX_CAPTION_CHARS = 90;
+
+// Phụ đề chạy TRƯỚC tiếng nói bao nhiêu chữ. Khớp đúng từng chữ nghe thì đúng nhưng
+// đọc lại thấy đuối: mắt luôn đợi chữ hiện ra. Đi trước 2 chữ là vừa đủ để mắt lướt
+// tới đâu tai nghe tới đó. Tăng/giảm ở đây nếu muốn chữ chạy xa hơn hoặc bám sát hơn.
+const CAPTION_LEAD_WORDS = 2;
 
 // Cắt câu trả lời thành từng câu để chạy phụ đề. Không dùng lookbehind (iOS < 16.4
 // chưa hỗ trợ) — quét thủ công: ngắt ở dấu kết câu KHI theo sau là khoảng trắng, nên
@@ -161,8 +166,7 @@ function wallClock(): () => number {
 }
 
 interface Caption {
-  shown: string; // phần chữ đã "gõ" ra
-  full: string; // trọn câu hiện tại
+  shown: string; // phần chữ đã hiện ra của mẩu hiện tại
   index: number;
   total: number;
 }
@@ -350,18 +354,31 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       while (i + 1 < parts.length && target >= starts[i + 1]) i++;
       const chunk = parts[i];
       const frac = weights[i] > 0 ? (target - starts[i]) / weights[i] : 1;
-      // +1 ký tự: chữ nhỉnh hơn tiếng nửa nhịp, đọc theo dễ chịu hơn là chạy sau.
-      const n = Math.min(chunk.length, Math.max(1, Math.ceil(frac * chunk.length) + 1));
-      const shown = chunk.slice(0, n);
+      const n = Math.min(chunk.length, Math.max(1, Math.ceil(frac * chunk.length)));
+      // Hiện TRỌN TỪ chứ không nhỏ giọt từng ký tự: vừa giống cách người ta đọc theo
+      // lời hát, vừa cắt số lần re-render của React xuống ~4 lần/giây thay vì ~15
+      // (một chữ cái mỗi 60-80ms) — điện thoại đang phải gánh cả vòng nhận diện AR.
+      // Vòng lặp đầu đóng nốt chữ ĐANG được đọc, mỗi vòng sau đẩy thêm một chữ nữa
+      // lên trước tiếng nói (xem CAPTION_LEAD_WORDS).
+      let end = n;
+      for (let k = 0; k <= CAPTION_LEAD_WORDS; k++) {
+        const space = chunk.indexOf(' ', end);
+        if (space === -1) {
+          end = chunk.length;
+          break;
+        }
+        end = space + 1;
+      }
+      const shown = chunk.slice(0, end).trimEnd();
       // Chỉ setState khi chuỗi hiển thị đổi -> không render lại 60 lần/giây.
       if (shown !== lastShown) {
         lastShown = shown;
-        setCaption({ shown, full: chunk, index: i, total: parts.length });
+        setCaption({ shown, index: i, total: parts.length });
       }
       if (t < duration) captionRafRef.current = requestAnimationFrame(tick);
       else {
         captionRafRef.current = null;
-        setCaption({ shown: chunk, full: chunk, index: i, total: parts.length });
+        setCaption({ shown: chunk, index: i, total: parts.length });
       }
     };
     tick();
@@ -405,7 +422,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
     // bản xem trước của câu trả lời rồi mới nhảy sang phụ đề — giật một nhịp khó chịu.
     if (text) {
       const first = splitCaptionChunks(text)[0];
-      if (first) setCaption({ shown: '', full: first, index: 0, total: 1 });
+      if (first) setCaption({ shown: '', index: 0, total: 1 });
     }
 
     try {
@@ -740,10 +757,15 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
                 {/* Không cắt cụt: mẩu phụ đề đã được xẻ sẵn ≤ MAX_CAPTION_CHARS nên
                     luôn vừa ~3 dòng, ô nở theo chữ mà không lấn lên model */}
                 <span className="text-sm leading-snug text-white">
-                  {caption.shown}
-                  {speaking && caption.shown.length < caption.full.length && (
-                    <span className="animate-pulse text-white/70">▍</span>
-                  )}
+                  {/* Mỗi chữ một span để chữ MỚI hiện ra tự chạy animation lúc mount.
+                      Key gắn kèm số thứ tự mẩu: sang câu mới thì span cũ bị thay hẳn
+                      (mount lại) chứ không lặng lẽ đổi chữ tại chỗ. */}
+                  {caption.shown.split(' ').map((w, i) => (
+                    <Fragment key={`${caption.index}:${i}`}>
+                      {i > 0 && ' '}
+                      <span className="caption-word">{w}</span>
+                    </Fragment>
+                  ))}
                 </span>
               </span>
               {/* Thanh tiến độ: du khách biết còn bao nhiêu câu nữa mới hết lượt nói */}

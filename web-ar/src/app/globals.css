@@ -32,6 +32,33 @@
   }
 }
 
+/* Phụ đề AR: chữ được "viết" ra từ chỗ con trỏ — quét dần từ TRÁI SANG PHẢI đúng
+   hướng đọc, mà mép trái của chữ mới chính là chỗ con trỏ vừa đứng. Chỉ đụng
+   clip-path + opacity, không chạm layout, vì máy còn đang gánh vòng nhận diện AR. */
+@keyframes captionWordIn {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+  to {
+    clip-path: inset(0 -6% 0 0); /* chừa mép phải kẻo cắt cụt dấu thanh/nét thò ra */
+    opacity: 1;
+  }
+}
+
+.caption-word {
+  /* Dấu cách được render thành text node RIÊNG giữa các span (xem ChatPanel); nếu
+     nhét vào trong span thì mất chỗ ngắt dòng và cả câu thành một dòng dài. */
+  display: inline-block;
+  animation: captionWordIn 240ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caption-word {
+    animation: none;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

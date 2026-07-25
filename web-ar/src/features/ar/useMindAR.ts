@@ -120,15 +120,26 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
 
         const { renderer, scene, camera } = mindar;
 
+        // MindAR đặt cứng pixelRatio = devicePixelRatio (iPhone = 3) và bật MSAA. Màn
+        // 375×812 hoá ra 1125×2436 = 2,7 triệu điểm ảnh MỖI KHUNG, 60 khung/giây, chạy
+        // song song với vòng nhận diện ảnh của TF.js -> máy nóng ran sau vài phút. Hạ
+        // trần xuống 2 là bớt ~55% việc cho GPU. KHÔNG ảnh hưởng độ nét hình camera:
+        // <video> là thẻ riêng do trình duyệt vẽ ở độ phân giải gốc, pixelRatio này chỉ
+        // áp cho lớp 3D. resize() của MindAR chỉ gọi setSize (không đụng setPixelRatio)
+        // nên trần này giữ nguyên qua mọi lần xoay/đổi kích thước sau đó.
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
         // ánh sáng để model glb hiển thị đúng
         const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
         const dir = new THREE.DirectionalLight(0xffffff, 1.0);
         dir.position.set(0.5, 1, 1);
         scene.add(hemi, dir);
 
-        // AnimationMixer cho model có rig (vd Mixamo). Cập nhật mỗi frame trong render
-        // loop bằng delta của clock. Model tĩnh (không clip) không tạo mixer.
-        const mixers: THREE.AnimationMixer[] = [];
+        // AnimationMixer cho model có rig (vd Mixamo). Ghép mixer với ĐÚNG anchor của
+        // nó: render loop chỉ cập nhật nhân vật đang hiện, chứ tính lại xương cho cả 3
+        // nghệ nhân trong khi 2 người kia vô hình thì phí (mỗi rig 33-41 xương, ~100
+        // kênh animation, chạy 60 lần/giây).
+        const rigs: { group: THREE.Object3D; mixer: THREE.AnimationMixer | null }[] = [];
         const clock = new THREE.Clock();
 
         // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
@@ -144,13 +155,13 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
           // theo POSE THẬT của frame đầu — nếu đo bind-pose thì tâm lệch, sau khi phóng
           // to nhân vật văng khỏi khung -> không thấy gì.
           const clips = rawModels[i].userData.clips as THREE.AnimationClip[] | undefined;
+          let mixer: THREE.AnimationMixer | null = null;
           if (clips && clips.length) {
             const idx = artisan.ar.animationIndex ?? 0;
             const clip = clips[idx] ?? clips[0];
-            const mixer = new THREE.AnimationMixer(clone);
+            mixer = new THREE.AnimationMixer(clone);
             mixer.clipAction(clip).play(); // loop mặc định = vô hạn
             mixer.update(0); // đặt skeleton về frame 0 để normalizeModel đo đúng pose
-            mixers.push(mixer);
           }
 
           const model = normalizeModel(clone, artisan.ar.scale, artisan.ar.offset, {
@@ -160,6 +171,9 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
 
           const anchor = mindar.addAnchor(artisan.targetIndex);
           anchor.group.add(model);
+          // MindAR bật/tắt group.visible theo kết quả nhận diện -> dùng luôn nó làm cờ
+          // "nhân vật này có đang trên màn hình không" cho render loop.
+          rigs.push({ group: anchor.group, mixer });
           anchor.onTargetFound = () => {
             if (cancelled) return;
             setActiveIndex(artisan.targetIndex);
@@ -179,9 +193,22 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         if (cancelled) return;
 
         setStatus('scanning');
+        // Render loop "chỉ vẽ khi có gì để vẽ". Phần lớn thời gian một phiên là đang
+        // QUÉT (chưa thấy ảnh mốc): cảnh 3D rỗng tuếch mà vẫn xoá + vẽ lại toàn màn
+        // 60 lần/giây thì tốn GPU vô ích — hình camera nằm ở thẻ <video> phía dưới,
+        // không phụ thuộc canvas này. `drewLastFrame` để khi vừa mất target thì còn
+        // vẽ THÊM một khung rỗng nhằm xoá nhân vật cũ, rồi mới nghỉ hẳn.
+        let drewLastFrame = false;
         renderer.setAnimationLoop(() => {
           const delta = clock.getDelta();
-          for (const mx of mixers) mx.update(delta);
+          let anyVisible = false;
+          for (const r of rigs) {
+            if (!r.group.visible) continue;
+            anyVisible = true;
+            r.mixer?.update(delta);
+          }
+          if (!anyVisible && !drewLastFrame) return;
+          drewLastFrame = anyVisible;
           renderer.render(scene, camera);
         });
 
@@ -191,12 +218,31 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         // Dùng ResizeObserver + visualViewport thay vì setTimeout cứng: trên iOS
         // Safari container nở ra MUỘN (thanh địa chỉ thu lại) -> phải resize đúng
         // lúc đó, không đoán mốc thời gian được.
-        const forceResize = () => {
-          if (cancelled) return;
-          try { mindar.resize?.(); } catch { /* noop */ }
+        // resize() của MindAR gọi renderer.setSize -> CẤP PHÁT LẠI framebuffer WebGL,
+        // rất đắt. Mà trên iOS Safari visualViewport bắn 'scroll'/'resize' liên tục mỗi
+        // khi thanh địa chỉ nhúc nhích hay trang nảy rubber-band -> cấp phát lại hàng
+        // chục lần/giây cho vui. Vì vậy: gộp về 1 lần/khung hình VÀ bỏ qua nếu kích
+        // thước container không đổi thật. `force` cho 2 lần gọi lúc khởi tạo, khi đó
+        // <video> chưa có metadata nên resize() thoát sớm và phải chạy lại.
+        let lastW = 0;
+        let lastH = 0;
+        let resizePending = false;
+        const forceResize = (force = false) => {
+          if (cancelled || resizePending) return;
+          resizePending = true;
+          requestAnimationFrame(() => {
+            resizePending = false;
+            if (cancelled) return;
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            if (!force && w === lastW && h === lastH) return;
+            lastW = w;
+            lastH = h;
+            try { mindar.resize?.(); } catch { /* noop */ }
+          });
         };
-        requestAnimationFrame(forceResize);
-        setTimeout(forceResize, 300);
+        forceResize(true);
+        setTimeout(() => forceResize(true), 300);
 
         const ro = new ResizeObserver(() => forceResize());
         ro.observe(container);
@@ -206,7 +252,7 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         vv?.addEventListener('resize', onVV);
         vv?.addEventListener('scroll', onVV);
 
-        const onOrient = () => setTimeout(forceResize, 300);
+        const onOrient = () => setTimeout(() => forceResize(true), 300);
         window.addEventListener('orientationchange', onOrient);
 
         orientCleanup = () => {
