@@ -1,0 +1,28 @@
+{
+  "id": "dan-ca-vi-giam-nghe-tinh",
+  "name": "Dân ca Ví, Giặm Nghệ Tĩnh",
+  "aliases": [
+    "ví giặm",
+    "dân ca ví dặm",
+    "hát ví",
+    "hát giặm"
+  ],
+  "unesco_year": 2014,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Dân-ca-ví-giặm-Nghệ-Tĩnh.txt",
+      "source": "Wikipedia tiếng Việt – Dân ca ví, giặm Nghệ Tĩnh",
+      "source_url": "https://vi.wikipedia.org/wiki/D%C3%A2n_ca_v%C3%AD,_gi%E1%BA%B7m_Ngh%E1%BB%87_T%C4%A9nh",
+      "fetched_at": "2026-07-25",
+      "chars": 5068
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2014)",
+      "source_url": "https://ich.unesco.org/en/RL/vi-and-gim-folk-songs-of-ngh-tnh-01008",
+      "fetched_at": "2026-07-25",
+      "chars": 2421
+    }
+  ]
+}

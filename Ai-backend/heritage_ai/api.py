@@ -11,10 +11,14 @@ Chạy:  uvicorn heritage_ai.api:app --host 0.0.0.0 --port 8000
 
 from __future__ import annotations
 
+import json
 import logging
+import threading
+import time
 import os
 import uuid
 from collections import OrderedDict
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +27,7 @@ from pydantic import BaseModel
 from heritage_ai import voice as voice_mod
 from heritage_ai.orchestrator import HeritageChatbot
 
+_log = logging.getLogger("heritage_ai.api")
 app = FastAPI(title="Heritage AI API", version="0.2.0")
 
 # Cấu hình CORS để cho phép gọi từ Frontend khác domain (có thể cấu hình qua biến môi trường CORS_ORIGINS)
@@ -37,8 +42,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Khởi tạo lười: model embedding + ChromaDB mở lúc request đầu, không chặn startup.
+# Khởi tạo lười: model embedding + ChromaDB mở lúc dùng lần đầu. Nạp mất ~15s nên
+# _warmup() chạy sẵn lúc startup để người hỏi đầu tiên không phải chờ.
 _chatbot: HeritageChatbot | None = None
+_chatbot_lock = threading.Lock()
+
+
+def _warmup() -> None:
+    """Nạp sẵn chatbot + model embedding (chạy nền, không chặn server nhận request)."""
+    started = time.perf_counter()
+    try:
+        # Một truy vấn vector rỗng nghĩa là đủ để sentence-transformers nạp weight;
+        # chỉ chạy local, không tốn quota Gemini.
+        _get_chatbot().retriever.candidate_heritage_names("khởi động")
+    except Exception as exc:  # noqa: BLE001 - hỏng warmup không được làm chết server
+        _log.warning("Nạp sẵn thất bại, request đầu sẽ chậm: %s", exc)
+    else:
+        _log.info("Đã nạp sẵn chatbot trong %.1fs", time.perf_counter() - started)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.basicConfig(level=logging.INFO)
+    threading.Thread(target=_warmup, name="heritage-warmup", daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Heritage AI API", version="0.2.0", lifespan=lifespan)
 
 # Kho WAV tạm (TTS) trong RAM: proxy web-ar lấy ngay sau khi hỏi nên không cần đĩa.
 _AUDIO_STORE: "OrderedDict[str, bytes]" = OrderedDict()
@@ -47,9 +77,11 @@ _AUDIO_STORE_CAP = 64
 
 def _get_chatbot() -> HeritageChatbot:
     global _chatbot
-    if _chatbot is None:
-        _chatbot = HeritageChatbot()
-    return _chatbot
+    # Khoá để request đến trong lúc warmup chưa xong không nạp model lần thứ hai.
+    with _chatbot_lock:
+        if _chatbot is None:
+            _chatbot = HeritageChatbot()
+        return _chatbot
 
 
 def _build_query(question: str, persona_craft: str | None) -> str:
@@ -69,14 +101,17 @@ def _store_audio(data: bytes, ext: str) -> str:
 
 
 def _synthesize_url(answer: str) -> str | None:
-    """TTS câu trả lời -> URL file MP3 (proxy sẽ stream). None nếu TTS lỗi."""
+    """TTS câu trả lời -> URL file audio (proxy sẽ stream). None nếu TTS lỗi.
+
+    voice.synthesize tự chọn nguồn: Gemini (mp3) và dự phòng FPT.AI-VITs (wav).
+    """
     try:
-        mp3 = voice_mod.synthesize_mp3(voice_mod.spoken_text(answer))
+        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer))
     except voice_mod.VoiceError as exc:
-        # Hỏng TTS (vd 429 hết quota) -> vẫn giữ câu trả lời chữ, chỉ log để biết.
-        logging.getLogger("heritage_ai.api").warning("TTS thất bại: %s", exc)
+        # Cả hai nguồn TTS đều hỏng -> vẫn giữ câu trả lời chữ, chỉ log để biết.
+        _log.warning("TTS thất bại: %s", exc)
         return None
-    return f"/v1/audio/files/{_store_audio(mp3, 'mp3')}"
+    return f"/v1/audio/files/{_store_audio(audio, ext)}"
 
 
 # MIME phát nhạc theo đuôi file (dùng khi serve /v1/audio/files).
@@ -118,6 +153,26 @@ def _wants_tts(value: str) -> bool:
     return value.strip().casefold() in {"1", "true", "yes", "on"}
 
 
+def _asked_from_json(history_json: str) -> list[str]:
+    """Rút các câu du khách đã hỏi từ history dạng JSON của form multipart.
+
+    History hỏng không được làm chết request — cùng lắm mất phần lọc gợi ý trùng.
+    """
+    try:
+        turns = json.loads(history_json or "[]")
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(turns, list):
+        return []
+    return [
+        turn["content"]
+        for turn in turns
+        if isinstance(turn, dict)
+        and turn.get("role") == "user"
+        and isinstance(turn.get("content"), str)
+    ]
+
+
 class HistoryTurn(BaseModel):
     role: str
     content: str
@@ -154,7 +209,8 @@ def ask(req: AskRequest) -> AskResponse:
     if not question:
         raise HTTPException(status_code=400, detail="Thiếu câu hỏi.")
 
-    answer = _get_chatbot().ask(_build_query(question, req.persona_craft))
+    asked = [turn.content for turn in req.history if turn.role == "user"]
+    answer = _get_chatbot().ask(_build_query(question, req.persona_craft), asked=asked)
     audio_url = _synthesize_url(answer) if req.synthesize else None
     return AskResponse(answer=answer, audio_url=audio_url)
 
@@ -177,7 +233,9 @@ async def audio_ask(
     except voice_mod.VoiceError as exc:
         raise HTTPException(status_code=502, detail=f"STT lỗi: {exc}") from exc
 
-    answer = _get_chatbot().ask(_build_query(transcript, persona_craft))
+    answer = _get_chatbot().ask(
+        _build_query(transcript, persona_craft), asked=_asked_from_json(history_json)
+    )
     audio_url = _synthesize_url(answer) if _wants_tts(synthesize) else None
     return AudioAskResponse(answer=answer, transcript=transcript, audio_url=audio_url)
 

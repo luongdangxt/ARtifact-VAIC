@@ -2,71 +2,552 @@
   {
     "id": "nha-nhac-cung-dinh-hue",
     "name": "Nhã nhạc cung đình Huế",
-    "aliases": ["Nhã nhạc", "nhạc cung đình Huế"],
-    "overview": "Nhã nhạc là loại hình âm nhạc cung đình từng được trình diễn trong những dịp trọng đại của triều đình, đặc biệt phát triển dưới triều Nguyễn tại Huế.",
-    "history": "Âm nhạc cung đình Việt Nam hình thành qua nhiều thế kỷ và đạt mức phát triển hoàn chỉnh trong thời Nguyễn. Không gian lịch sử quan trọng của di sản gắn với kinh đô Huế.",
-    "practice": "Một buổi trình diễn có thể kết hợp dàn nhạc, ca và múa với hệ thống bài bản, nhạc khí và nghi thức phù hợp từng hoàn cảnh. Quy mô dàn nhạc thay đổi tùy nghi lễ và chương trình.",
-    "meaning": "Di sản phản ánh đời sống nghi lễ, thẩm mỹ âm nhạc và kỹ năng trình diễn của văn hóa cung đình Việt Nam, đồng thời lưu giữ một kho bài bản và kỹ thuật truyền nghề phong phú.",
-    "location": "Không gian văn hóa tiêu biểu của Nhã nhạc nằm tại Huế, gắn với các thiết chế và sinh hoạt văn hóa của cố đô.",
-    "etiquette": "Khi xem biểu diễn, du khách nên giữ trật tự, tuân theo hướng dẫn của không gian tổ chức và tránh dùng đèn flash nếu có quy định hạn chế.",
-    "visitor_tip": "Hãy tìm hiểu bối cảnh của từng tiết mục trước khi nghe; điều đó giúp bạn nhận ra mối liên hệ giữa âm nhạc, nghi lễ, trang phục và không gian cung đình.",
-    "sources": ["Hồ sơ và giới thiệu của UNESCO về Nhã nhạc", "Tư liệu của Trung tâm Bảo tồn Di tích Cố đô Huế"],
-    "follow_up_questions": ["Nhã nhạc sử dụng những nhạc cụ nào?", "Nhã nhạc gắn với các nghi lễ nào?", "Tôi nên lưu ý gì khi xem biểu diễn?"]
-  },
-  {
-    "id": "dan-ca-quan-ho-bac-ninh",
-    "name": "Dân ca Quan họ Bắc Ninh",
-    "aliases": ["Quan họ", "dân ca Quan họ", "Quan họ Bắc Ninh"],
-    "overview": "Quan họ là hình thức hát giao duyên nổi tiếng của vùng Kinh Bắc, trong đó các nhóm liền anh và liền chị trao đổi những câu hát giàu chất trữ tình.",
-    "history": "Quan họ được nuôi dưỡng qua nhiều thế hệ trong đời sống cộng đồng và lễ hội của các làng vùng Bắc Ninh, Bắc Giang. Việc truyền dạy truyền thống chủ yếu dựa trên thực hành và quan hệ giữa các thế hệ.",
-    "practice": "Người hát thực hiện các làn điệu theo lối đối đáp. Một bên cất câu ra, bên kia dùng câu đối phù hợp về làn điệu và ý nghĩa; kỹ thuật hát, lời ca và phép ứng xử đều được coi trọng.",
-    "meaning": "Quan họ thể hiện tình cảm, sự thanh lịch, lòng hiếu khách và mối gắn kết giữa cộng đồng. Giá trị của di sản nằm cả trong tiếng hát lẫn tập quán xã hội bao quanh việc hát.",
-    "location": "Không gian Quan họ tập trung tại các làng thuộc vùng văn hóa Kinh Bắc, ngày nay chủ yếu nằm ở Bắc Ninh và Bắc Giang.",
-    "etiquette": "Du khách nên lắng nghe trọn câu hát, tôn trọng không gian giao duyên và xin phép trước khi ghi hình cận cảnh người thực hành.",
-    "visitor_tip": "Nếu có cơ hội, hãy nghe Quan họ trong không gian cộng đồng và tìm hiểu cả cách mời trầu, xưng hô, trang phục thay vì chỉ nghe một bài hát trên sân khấu.",
-    "sources": ["Hồ sơ và giới thiệu của UNESCO về Dân ca Quan họ Bắc Ninh", "Tư liệu của cơ quan văn hóa tỉnh Bắc Ninh"],
-    "follow_up_questions": ["Liền anh và liền chị là ai?", "Hát đối đáp trong Quan họ diễn ra thế nào?", "Trang phục Quan họ có đặc điểm gì?"]
-  },
-  {
-    "id": "nghe-thuat-bai-choi-trung-bo",
-    "name": "Nghệ thuật Bài Chòi Trung Bộ Việt Nam",
-    "aliases": ["Bài Chòi", "nghệ thuật Bài Chòi", "hát Bài Chòi"],
-    "overview": "Bài Chòi kết hợp âm nhạc, thơ ca, diễn xuất, hội họa và trò chơi dân gian, được cộng đồng nhiều tỉnh miền Trung thực hành trong sinh hoạt văn hóa và dịp lễ hội.",
-    "history": "Bài Chòi được lưu truyền trong cộng đồng miền Trung qua nhiều thế hệ. Hình thức và cách thể hiện có sự đa dạng giữa các địa phương, phản ánh lịch sử và đời sống của từng vùng.",
-    "practice": "Trong hội chơi, người tham gia ngồi tại các chòi và nhận thẻ bài. Anh hiệu hoặc chị hiệu rút thẻ, hô hát những câu gợi tên quân bài; người có đủ thẻ theo luật chơi sẽ thắng. Bài Chòi còn có hình thức trình diễn sân khấu.",
-    "meaning": "Bài Chòi tạo không gian vui chơi chung, truyền tải kinh nghiệm sống, đạo lý và sự dí dỏm của người dân miền Trung. Khả năng ứng tác làm cho mỗi cuộc chơi có sức sống riêng.",
-    "location": "Di sản được thực hành tại nhiều cộng đồng thuộc khu vực Trung Bộ Việt Nam, với sắc thái địa phương khác nhau.",
-    "etiquette": "Du khách nên làm theo hướng dẫn của người điều khiển cuộc chơi, không tự ý cầm hoặc đổi thẻ bài và tôn trọng cách diễn xướng của địa phương.",
-    "visitor_tip": "Hãy tham gia một hội chơi cộng đồng nếu có điều kiện; việc trực tiếp chờ câu hô và nhận biết thẻ bài giúp bạn hiểu Bài Chòi rõ hơn xem biểu diễn đơn thuần.",
-    "sources": ["Hồ sơ và giới thiệu của UNESCO về Nghệ thuật Bài Chòi Trung Bộ Việt Nam", "Tư liệu của Viện Văn hóa Nghệ thuật quốc gia Việt Nam"],
-    "follow_up_questions": ["Một hội Bài Chòi diễn ra như thế nào?", "Anh hiệu và chị hiệu làm nhiệm vụ gì?", "Giá trị cộng đồng của Bài Chòi là gì?"]
-  },
-  {
-    "id": "don-ca-tai-tu-nam-bo",
-    "name": "Đờn ca tài tử Nam Bộ",
-    "aliases": ["Đờn ca tài tử", "đàn ca tài tử", "tài tử Nam Bộ"],
-    "overview": "Đờn ca tài tử là nghệ thuật âm nhạc của cộng đồng Nam Bộ, kết hợp tiếng đờn và lời ca trong không gian sinh hoạt gần gũi, giàu tính ngẫu hứng.",
-    "history": "Loại hình này hình thành và phát triển tại Nam Bộ trên cơ sở tiếp nhận, biến đổi nhiều nguồn âm nhạc truyền thống. Kiến thức thường được truyền trực tiếp giữa thầy, bạn đờn và các thế hệ trong cộng đồng.",
-    "practice": "Người thực hành sử dụng hệ thống bài bản và nhiều nhạc cụ như đàn kìm, đàn tranh, đàn cò, đàn bầu, sáo; guitar phím lõm cũng giữ vai trò quen thuộc. Người đờn và người ca phối hợp, biến hóa theo lòng bản.",
-    "meaning": "Đờn ca tài tử là phương tiện giao lưu, bày tỏ cảm xúc và gắn kết cộng đồng. Chữ 'tài tử' nhấn mạnh người có tài và niềm say mê nghệ thuật, không đơn giản mang nghĩa nghiệp dư.",
-    "location": "Di sản hiện diện rộng rãi tại các tỉnh, thành Nam Bộ trong gia đình, câu lạc bộ, lễ hội và những cuộc gặp gỡ cộng đồng.",
-    "etiquette": "Khi nghe trong không gian nhỏ, du khách nên hạn chế nói chuyện, chờ hết bài mới trao đổi và xin phép trước khi ghi âm hoặc ghi hình.",
-    "visitor_tip": "Hãy ngồi gần nhóm trình diễn để quan sát cách các nhạc công lắng nghe và đối thoại bằng âm thanh; đây là nét hấp dẫn khó cảm nhận nếu chỉ đọc mô tả.",
-    "sources": ["Hồ sơ và giới thiệu của UNESCO về Đờn ca tài tử Nam Bộ", "Tư liệu của Viện Âm nhạc Việt Nam"],
-    "follow_up_questions": ["Đờn ca tài tử có những nhạc cụ nào?", "Guitar phím lõm có gì đặc biệt?", "Từ tài tử trong tên gọi có nghĩa gì?"]
+    "aliases": [
+      "Nhã nhạc",
+      "nhạc cung đình Huế",
+      "Nhã nhạc - Âm nhạc Cung đình Việt Nam"
+    ],
+    "overview": "Nhã nhạc cung đình Huế là thể loại âm nhạc bác học đỉnh cao của triều đại phong kiến, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại.",
+    "history": "Phát triển từ thời Lý và đạt đỉnh cao vào thời nhà Nguyễn, Nhã nhạc trải qua nhiều giai đoạn biến đổi trước khi tạm tan rã năm 1945 và tiếp tục được giữ gìn đến nay.",
+    "practice": "Nhã nhạc kết hợp ca múa và dàn nhạc quy mô gồm phe văn, phe võ với nhiều khí nhạc gõ, hơi, dây được trình diễn chặt chẽ theo nghi lễ.",
+    "meaning": "Nhã nhạc đại diện cho uy quyền triều đại, là phương tiện giao tiếp với thần linh, truyền tải tri thức vũ trụ và truyền cảm hứng cho âm nhạc hiện đại.",
+    "location": "Nhã nhạc diễn ra tại cố đô Huế trong các không gian cung đình như Duyệt thị đường, Minh Khiêm đường vào các dịp đại lễ và Tế Nam giao.",
+    "etiquette": "",
+    "visitor_tip": "",
+    "unesco_year": 2008,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Nhã nhạc cung đình Huế",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2008)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Nh%C3%A3_nh%E1%BA%A1c_cung_%C4%91%C3%ACnh_Hu%E1%BA%BF",
+      "https://ich.unesco.org/en/RL/nha-nhac-vietnamese-court-music-00074"
+    ],
+    "follow_up_questions": [
+      "Nhã nhạc cung đình Huế được UNESCO chính thức ghi danh vào những năm nào?",
+      "Dàn nhạc cung đình thời Tây Sơn sang biểu diễn chúc thọ vua Càn Long sử dụng những loại nhạc khí nào?",
+      "Nhà hát Duyệt thị đường và Minh Khiêm đường được xây dựng dưới thời các vị vua nào của triều Nguyễn?"
+    ]
   },
   {
     "id": "khong-gian-van-hoa-cong-chieng-tay-nguyen",
     "name": "Không gian văn hóa Cồng chiêng Tây Nguyên",
-    "aliases": ["Cồng chiêng Tây Nguyên", "cồng chiêng", "văn hóa cồng chiêng"],
-    "overview": "Không gian văn hóa Cồng chiêng Tây Nguyên bao gồm tiếng cồng chiêng, người thực hành, nghi lễ, lễ hội và môi trường cộng đồng của nhiều dân tộc tại Tây Nguyên.",
-    "history": "Cồng chiêng được trao truyền qua nhiều thế hệ trong các cộng đồng Tây Nguyên. Mỗi cộng đồng có hệ thống bài chiêng, cách sử dụng và quan niệm riêng nên không thể xem mọi truyền thống cồng chiêng là giống nhau.",
-    "practice": "Cồng và chiêng được diễn tấu theo dàn trong những bối cảnh cộng đồng khác nhau. Người chơi phối hợp tiết tấu và cao độ; cách tổ chức dàn, kỹ thuật và ý nghĩa nghi lễ thay đổi theo từng dân tộc và địa phương.",
-    "meaning": "Cồng chiêng gắn với bản sắc, ký ức, tín ngưỡng và sự cố kết cộng đồng. Giá trị di sản không chỉ nằm ở nhạc cụ mà còn ở toàn bộ không gian văn hóa nơi âm nhạc được thực hành.",
-    "location": "Không gian di sản trải rộng tại khu vực Tây Nguyên, trong các cộng đồng thuộc nhiều tỉnh và nhiều dân tộc khác nhau.",
-    "etiquette": "Du khách cần tôn trọng quy định của chủ thể cộng đồng, không tự ý chạm vào nhạc cụ hoặc đi vào không gian nghi lễ, và luôn xin phép trước khi chụp ảnh, quay phim.",
-    "visitor_tip": "Hãy tìm một chương trình do chính cộng đồng giới thiệu và lắng nghe phần giải thích về bối cảnh của bài chiêng; tránh coi đây chỉ là một tiết mục giải trí tách khỏi đời sống văn hóa.",
-    "sources": ["Hồ sơ và giới thiệu của UNESCO về Không gian văn hóa Cồng chiêng Tây Nguyên", "Tư liệu của cơ quan quản lý văn hóa các tỉnh Tây Nguyên"],
-    "follow_up_questions": ["Cồng và chiêng khác nhau như thế nào?", "Vì sao gọi là không gian văn hóa?", "Du khách cần lưu ý gì khi tham dự nghi lễ?"]
+    "aliases": [
+      "Cồng chiêng Tây Nguyên",
+      "văn hóa cồng chiêng"
+    ],
+    "overview": "Không gian văn hóa Cồng chiêng Tây Nguyên là di sản đại diện của nhân loại do UNESCO ghi danh, bao gồm cồng chiêng, bản nhạc, người trình diễn, lễ hội và địa điểm diễn xướng.",
+    "history": "Cồng chiêng Tây Nguyên có nguồn gốc từ văn hóa Đông Sơn và nhạc khí đá cổ truyền, phản ánh xã hội nguyên sơ trước khi được UNESCO công nhận năm 2005 và ghi danh năm 2008.",
+    "practice": "Cồng chiêng được gõ bằng dùi quấn vải, dùi trần hoặc nắm tay, biểu diễn theo các hàng âm riêng biệt và được thẩm âm, căn chỉnh bởi các nghệ nhân chỉnh chiêng.",
+    "meaning": "Cồng chiêng là khí cụ thiêng kết nối con người với thần linh Yàng, thể hiện sự giàu có, quyền lực và tinh thần đoàn kết cộng đồng qua các nghi lễ đời người.",
+    "location": "Di sản trải dài trên 4 tỉnh Quảng Ngãi, Gia Lai, Đắc Lắk, Lâm Đồng với 17 cộng đồng dân tộc, thực hành tại nhà rông, nhà dài, bến nước vào mùa khô hoặc kỳ Festival.",
+    "etiquette": "Du khách cần tôn trọng tính linh thiêng của cồng chiêng và tuân thủ các quy tắc cấm kị nghi lễ của đồng bào các dân tộc Tây Nguyên.",
+    "visitor_tip": "Du khách cần tôn trọng tính linh thiêng của cồng chiêng và tuân thủ các quy tắc cấm kị nghi lễ của đồng bào các dân tộc Tây Nguyên.",
+    "unesco_year": 2008,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Không gian văn hóa cồng chiêng Tây Nguyên",
+      "Wikipedia tiếng Việt – Cồng chiêng",
+      "Wikipedia tiếng Việt – Lễ hội Cồng chiêng",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2008)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Kh%C3%B4ng_gian_v%C4%83n_h%C3%B3a_c%E1%BB%93ng_chi%C3%AAng_T%C3%A2y_Nguy%C3%AAn",
+      "https://vi.wikipedia.org/wiki/C%E1%BB%93ng_chi%C3%AAng",
+      "https://vi.wikipedia.org/wiki/L%E1%BB%85_h%E1%BB%99i_C%E1%BB%93ng_chi%C3%AAng",
+      "https://ich.unesco.org/en/RL/space-of-gong-culture-00120"
+    ],
+    "follow_up_questions": [
+      "Dàn cồng chiêng của người Gia Rai và người Ba Na sử dụng những hàng âm cơ bản nào?",
+      "Đội cồng chiêng nữ đầu tiên ở Tây Nguyên ra đời vào năm nào và tại địa phương nào?",
+      "Nghệ nhân chỉnh chiêng đóng vai trò gì trong việc bảo tồn và duy trì dàn cồng chiêng Tây Nguyên?"
+    ]
+  },
+  {
+    "id": "dan-ca-quan-ho-bac-ninh",
+    "name": "Dân ca Quan họ Bắc Ninh",
+    "aliases": [
+      "Quan họ",
+      "hát Quan họ",
+      "liền anh liền chị"
+    ],
+    "overview": "Dân ca Quan họ Bắc Ninh là thể loại dân ca đối đáp đặc sắc của vùng Kinh Bắc, nổi bật với hình thức hát giao duyên giữa các cặp liền anh và liền chị.",
+    "history": "Quan họ hình thành tại vùng Kinh Bắc ven dòng sông Cầu với nhiều thuyết về nguồn gốc tên gọi và chính thức được UNESCO ghi danh vào năm 2009.",
+    "practice": "Di sản được thực hành qua các canh hát đối đáp truyền thống hoặc biểu diễn sân khấu, kết hợp với bộ trang phục độc đáo như áo mớ ba mớ bảy, khăn xếp và nón quai thao.",
+    "meaning": "Quan họ gắn kết mối quan hệ xã hội giữa các làng kết họ, thể hiện triết lý sống và văn hóa ứng xử lịch thiệp, mến khách của người Kinh Bắc.",
+    "location": "Không gian thực hành chính nằm ở tỉnh Bắc Ninh và Bắc Giang ven sông Cầu, diễn ra tại lễ hội xuân thu nhị kỳ cũng như các sự kiện cộng đồng quanh năm.",
+    "etiquette": "Du khách nên thể hiện sự trân trọng trước văn hóa hiếu khách của người dân khi được mời trà trầu và tôn trọng các tập tục truyền thống của làng quan họ.",
+    "visitor_tip": "Du khách nên thể hiện sự trân trọng trước văn hóa hiếu khách của người dân khi được mời trà trầu và tôn trọng các tập tục truyền thống của làng quan họ.",
+    "unesco_year": 2009,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Quan họ",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2009)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Quan_h%E1%BB%8D",
+      "https://ich.unesco.org/en/RL/quan-h-bc-ninh-folk-songs-00183"
+    ],
+    "follow_up_questions": [
+      "Bốn kỹ thuật hát đặc trưng mà các người hát quan họ rèn luyện là gì?",
+      "Trang phục áo mớ ba mớ bảy của các liền chị quan họ gồm những thành phần cơ bản nào?",
+      "UNESCO đã công nhận bao nhiêu làng Quan họ cổ trong phạm vi ban đầu?"
+    ]
+  },
+  {
+    "id": "nghe-thuat-ca-tru",
+    "name": "Nghệ thuật Ca trù",
+    "aliases": [
+      "Ca trù",
+      "hát ca trù",
+      "hát ả đào",
+      "hát cô đầu"
+    ],
+    "overview": "Ca trù là loại hình nghệ thuật diễn xướng thính phòng độc đáo kết hợp thi ca và âm nhạc ở Bắc Bộ và Bắc Trung Bộ, được UNESCO ghi danh năm 2009.",
+    "history": "Khởi nguồn từ truyền thuyết Đinh Dự, ca trù thịnh hành từ thế kỷ 15, trải qua giai đoạn trầm lắng trong thế kỷ 20 trước khi được phục hồi và bảo tồn.",
+    "practice": "Trình diễn ca trù gồm ca nương gõ phách hát, kép đàn chơi đàn đáy và quan viên cầm trống chầu khen chê trong không gian thính phòng.",
+    "meaning": "Ca trù phục vụ nhiều mục đích từ hát thờ, hát cung đình đến giải trí, thể hiện tư tưởng phóng khoáng và sự kết hợp đa dạng các thể loại văn học.",
+    "location": "Ca trù được thực hành tại 10 tỉnh thành phía Bắc Việt Nam với nhiều câu lạc bộ duy trì sinh hoạt và các kỳ liên hoan định kỳ.",
+    "etiquette": "",
+    "visitor_tip": "",
+    "unesco_year": 2009,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp",
+    "sources": [
+      "Wikipedia tiếng Việt – Ca trù",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2009)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Ca_tr%C3%B9",
+      "https://ich.unesco.org/en/USL/ca-tru-singing-00309"
+    ],
+    "follow_up_questions": [
+      "Ca trù có những thành phần trình diễn chính nào và vai trò của từng người ra sao?",
+      "Tên gọi ca trù có nguồn gốc từ đâu?",
+      "Mười tỉnh thành nào ở Việt Nam hiện nay là địa bàn thực hành ca trù theo hồ sơ di sản?"
+    ]
+  },
+  {
+    "id": "hoi-giong-den-phu-dong-va-den-soc",
+    "name": "Hội Gióng ở đền Phù Đổng và đền Sóc",
+    "aliases": [
+      "Hội Gióng",
+      "hội Gióng Phù Đổng",
+      "Thánh Gióng"
+    ],
+    "overview": "Hội Gióng ở đền Phù Đổng và đền Sóc là lễ hội truyền thống tôn vinh anh hùng Thánh Gióng, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại vào năm 2010.",
+    "history": "Khởi nguồn từ truyền thuyết Thánh Gióng đánh giặc Ân cứu nước và bay về trời, lễ hội được tổ chức từ thế kỷ 11 dưới thời vua Lý Thái Tổ và bảo tồn qua nhiều triều đại.",
+    "practice": "Lễ hội bao gồm hệ thống quy trình nghi lễ nghiêm cẩn như rước nước, múa cờ Lệnh, dâng giò hoa tre, chém tướng giặc cùng các vai diễn tái hiện trận đánh tại Phù Đổng và Sóc Sơn.",
+    "meaning": "Lễ hội thể hiện tinh thần chống ngoại xâm, sức mạnh liên minh cộng đồng và triết lý nhân sinh, đồng thời mang ý nghĩa cầu mong mùa màng bội thu và quốc thái dân an.",
+    "location": "Lễ hội diễn ra chính tại đền Sóc (tháng Giêng âm lịch) và đền Phù Đổng (tháng 4 âm lịch), cùng hơn 10 điểm lan tỏa khác trên địa bàn thành phố Hà Nội.",
+    "etiquette": "Du khách cần tôn trọng tính chất linh thiêng của nghi lễ và không chen lấn xô đẩy hay gây mất trật tự khi tham gia tục lệ cướp lộc cầu may.",
+    "visitor_tip": "Du khách cần tôn trọng tính chất linh thiêng của nghi lễ và không chen lấn xô đẩy hay gây mất trật tự khi tham gia tục lệ cướp lộc cầu may.",
+    "unesco_year": 2010,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Hội Gióng",
+      "Wikipedia tiếng Việt – Thánh Gióng",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2010)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/H%E1%BB%99i_Gi%C3%B3ng",
+      "https://vi.wikipedia.org/wiki/Th%C3%A1nh_Gi%C3%B3ng",
+      "https://ich.unesco.org/en/RL/giong-festival-of-phu-djong-and-soc-temples-00443"
+    ],
+    "follow_up_questions": [
+      "Các thôn làng tham gia Hội Gióng ở đền Sóc được phân công chuẩn bị những lễ vật truyền thống nào?",
+      "Màn múa cờ Lệnh và trang phục của đội Phù Giá trong Hội Gióng Phù Đổng mang ý nghĩa biểu tượng ra sao?",
+      "Những địa điểm nào ngoài đền Phù Đổng và đền Sóc cũng tổ chức hội Gióng tái hiện các truyền thuyết về ông?"
+    ]
+  },
+  {
+    "id": "tin-nguong-tho-cung-hung-vuong",
+    "name": "Tín ngưỡng thờ cúng Hùng Vương ở Phú Thọ",
+    "aliases": [
+      "thờ cúng Hùng Vương",
+      "giỗ Tổ Hùng Vương",
+      "đền Hùng"
+    ],
+    "overview": "Tín ngưỡng thờ cúng Hùng Vương là di sản văn hóa phi vật thể đại diện của nhân loại, thể hiện lòng biết ơn các Vua Hùng có công dựng nước Văn Lang và nét văn hóa thờ Quốc tổ độc đáo.",
+    "history": "Nghi lễ thờ cúng Vua Hùng có lịch sử lâu đời từ thời phong kiến, chính thức được định ngày Quốc tế vào mồng 10 tháng 3 âm lịch từ năm 1917 và trở thành ngày Quốc giỗ của Việt Nam.",
+    "practice": "Thực hành tín ngưỡng gồm lễ rước kiệu rực rỡ, lễ dâng hương trang nghiêm tại Đền Thượng với bánh chưng, bánh giầy, cùng các hoạt động hội như hát xoan, kéo co, bơi trải và đánh trống đồng.",
+    "meaning": "Tín ngưỡng mang ý nghĩa tâm linh sâu sắc, là biểu tượng của tinh thần đại đoàn kết dân tộc, nhắc nhở đạo lý uống nước nhớ nguồn và gắn kết cộng đồng người Việt.",
+    "location": "Trung tâm thực hành chính là Khu di tích lịch sử Đền Hùng trên núi Nghĩa Lĩnh, xã Hy Cương, tỉnh Phú Thọ, cùng 326 di tích liên quan trên toàn tỉnh và các điểm thờ tự khắp cả nước.",
+    "etiquette": "Du khách đến hành hương cần tuân theo hướng dẫn của Ban tổ chức và người coi đền, giữ gìn sự tôn nghiêm và thực hành dâng hương, lễ vật đúng phong tục truyền thống.",
+    "visitor_tip": "Du khách đến hành hương cần tuân theo hướng dẫn của Ban tổ chức và người coi đền, giữ gìn sự tôn nghiêm và thực hành dâng hương, lễ vật đúng phong tục truyền thống.",
+    "unesco_year": 2012,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Tín ngưỡng thờ cúng Hùng Vương",
+      "Wikipedia tiếng Việt – Đền Hùng",
+      "Wikipedia tiếng Việt – Giỗ Tổ Hùng Vương",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2012)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/T%C3%ADn_ng%C6%B0%E1%BB%A1ng_th%E1%BB%9D_c%C3%BAng_H%C3%B9ng_V%C6%B0%C6%A1ng",
+      "https://vi.wikipedia.org/wiki/%C4%90%E1%BB%81n_H%C3%B9ng",
+      "https://vi.wikipedia.org/wiki/Gi%E1%BB%97_T%E1%BB%95_H%C3%B9ng_V%C6%B0%C6%A1ng",
+      "https://ich.unesco.org/en/RL/worship-of-hung-kings-in-phu-th-00735"
+    ],
+    "follow_up_questions": [
+      "Trống đồng Hy Cương được phát hiện trong hoàn cảnh nào và có kích thước cùng hoa văn ra sao?",
+      "Chủ tịch Hồ Chí Minh đã nhắn nhủ câu nói lịch sử nào tại Đền Hùng vào ngày 19 tháng 9 năm 1954?",
+      "Nghi lễ dâng hương trong ngày chính hội Đền Hùng sử dụng những loại lễ vật truyền thống nào?"
+    ]
+  },
+  {
+    "id": "don-ca-tai-tu-nam-bo",
+    "name": "Đờn ca tài tử Nam Bộ",
+    "aliases": [
+      "đờn ca tài tử",
+      "tài tử Nam Bộ"
+    ],
+    "overview": "Đờn ca tài tử Nam Bộ là loại hình nghệ thuật dân gian kết hợp giữa đàn và ca đặc trưng của vùng đồng bằng sông Cửu Long, nổi bật với tính ngẫu hứng và sự bình đẳng giữa người ca và nhạc công.",
+    "history": "Nghệ thuật này hình thành từ cuối thế kỷ 19 dựa trên nhạc lễ, Nhã nhạc cung đình Huế và ca Huế, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại vào năm 2013.",
+    "practice": "Trình diễn trong không gian thính phòng nhỏ bằng ban ngũ tuyệt, tứ tuyệt hoặc guitar phím lõm, truyền dạy theo phương pháp truyền miệng mất ít nhất 3 năm luyện tập.",
+    "meaning": "Di sản gắn bó sâu sắc với đời sống tinh thần của người dân Nam Bộ, giúp chia sẻ tâm tư sau giờ lao động và thắt chặt tình cảm cộng đồng.",
+    "location": "Được thực hành phổ biến tại 8 tỉnh Nam Bộ và 2 tỉnh ven biển miền Trung, tiêu biểu tại Cà Mau, Đồng Tháp và Thành phố Hồ Chí Minh.",
+    "etiquette": "Du khách nên thể hiện sự gần gũi, thoải mái khi thưởng thức tại xóm làng và chú ý ăn mặc lịch sự khi tham dự biểu diễn ở đình, miếu hoặc sân khấu.",
+    "visitor_tip": "Du khách nên thể hiện sự gần gũi, thoải mái khi thưởng thức tại xóm làng và chú ý ăn mặc lịch sự khi tham dự biểu diễn ở đình, miếu hoặc sân khấu.",
+    "unesco_year": 2013,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Đờn ca tài tử Nam Bộ",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2013)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/%C4%90%E1%BB%9Dn_ca_t%C3%A0i_t%E1%BB%AD_Nam_B%E1%BB%99",
+      "https://ich.unesco.org/en/RL/art-of-n-ca-tai-t-music-and-song-in-southern-viet-nam-00733"
+    ],
+    "follow_up_questions": [
+      "Ban ngũ tuyệt và bộ tứ tuyệt trong Đờn ca tài tử bao gồm những loại nhạc cụ nào?",
+      "20 bài bản tổ của Đờn ca tài tử Nam Bộ được chia thành mấy nhóm bài tương ứng với các mùa trong năm?",
+      "Âm nhạc Đờn ca tài tử được ứng dụng như thế nào trong các tình huống tâm trạng của sân khấu Cải lương?"
+    ]
+  },
+  {
+    "id": "dan-ca-vi-giam-nghe-tinh",
+    "name": "Dân ca Ví, Giặm Nghệ Tĩnh",
+    "aliases": [
+      "ví giặm",
+      "dân ca ví dặm",
+      "hát ví",
+      "hát giặm"
+    ],
+    "overview": "Dân ca Ví, Giặm Nghệ Tĩnh là loại hình nghệ thuật trình diễn dân ca nổi tiếng của tỉnh Nghệ An và Hà Tĩnh, gắn liền với mọi hoạt động lao động đời thường và sinh hoạt cộng đồng.",
+    "history": "Di sản được UNESCO ghi danh vào Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại vào ngày 27 tháng 11 năm 2014 tại Paris.",
+    "practice": "Nghệ thuật bao gồm thể hát ví ngẫu hứng tự do không nhạc đệm và thể hát giặm có tiết tấu phách nhịp rõ ràng theo thể thơ năm chữ đối đáp.",
+    "meaning": "Lời ca tôn vinh các giá trị đạo đức như hiếu thảo, chung thủy, thật thà, đồng thời giúp xua tan mệt mỏi lao động và gửi gắm tình cảm giao duyên.",
+    "location": "Dân ca được thực hành rộng rãi ở hai tỉnh Nghệ An và Hà Tĩnh trên đồng ruộng, sông nước, các làng xã, trường học và sân khấu nhà hát.",
+    "etiquette": "Du khách nên thể hiện sự trân trọng đối với không gian diễn xướng dân gian và tôn trọng nét đặc trưng phương ngữ vùng Nghệ Tĩnh.",
+    "visitor_tip": "Du khách nên thể hiện sự trân trọng đối với không gian diễn xướng dân gian và tôn trọng nét đặc trưng phương ngữ vùng Nghệ Tĩnh.",
+    "unesco_year": 2014,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Dân ca ví, giặm Nghệ Tĩnh",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2014)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/D%C3%A2n_ca_v%C3%AD,_gi%E1%BA%B7m_Ngh%E1%BB%87_T%C4%A9nh",
+      "https://ich.unesco.org/en/RL/vi-and-gim-folk-songs-of-ngh-tnh-01008"
+    ],
+    "follow_up_questions": [
+      "Dân ca Ví, Giặm Nghệ Tĩnh được UNESCO ghi danh vào thời gian nào và ở đâu?",
+      "Hát ví và hát giặm khác nhau như thế nào về tiết tấu và nhạc cụ đi kèm?",
+      "Từ giặm trong ngôn ngữ địa phương Nghệ Tĩnh có nguồn gốc và ý nghĩa như thế nào?"
+    ]
+  },
+  {
+    "id": "nghi-le-va-tro-choi-keo-co",
+    "name": "Nghi lễ và trò chơi Kéo co",
+    "aliases": [
+      "kéo co",
+      "kéo mỏ",
+      "kéo song",
+      "kéo co ngồi"
+    ],
+    "overview": "Kéo co là trò chơi dân gian và nghi lễ truyền thống mang tính đồng đội gắn với văn hóa lúa nước, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại vào năm 2015.",
+    "history": "Trò chơi có lịch sử từ thời Ai Cập cổ đại năm 2500 TCN, trải qua nhiều giai đoạn phát triển tại Hy Lạp, Trung Quốc, Châu Âu trước khi được ghi danh di sản đa quốc gia năm 2015.",
+    "practice": "Trò chơi sử dụng dây thừng, dây song hoặc cây tre dài 20m chia làm hai phe kéo qua vạch ranh giới, thường diễn ra ba keo và có các nghi lễ dâng hương thần linh trước khi thi đấu.",
+    "meaning": "Nghi lễ kéo co mang ý nghĩa cầu mong mùa màng bội thu, thể hiện sức mạnh thiên nhiên, nâng cao tinh thần đoàn kết và sự hợp tác trong cộng đồng thay vì thắng thua.",
+    "location": "Di sản được thực hành tại Campuchia, Philippines, Hàn Quốc và Việt Nam, thường tổ chức ở sân đình, miếu hoặc các vùng sông nước vào dịp lễ tết và đầu mùa vụ.",
+    "etiquette": "Người tham dự cần tôn trọng không gian linh thiêng của nghi lễ cúng tế thần linh, lắng nghe sự hướng dẫn của bô lão và giữ tinh thần hòa nhã, gắn kết.",
+    "visitor_tip": "Người tham dự cần tôn trọng không gian linh thiêng của nghi lễ cúng tế thần linh, lắng nghe sự hướng dẫn của bô lão và giữ tinh thần hòa nhã, gắn kết.",
+    "unesco_year": 2015,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Kéo co",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2015)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/K%C3%A9o_co",
+      "https://ich.unesco.org/en/RL/tugging-rituals-and-games-01080"
+    ],
+    "follow_up_questions": [
+      "Kéo co đã từng xuất hiện như thế nào trong lịch sử cổ đại tại Ai Cập và Tây Âu?",
+      "Những loại dây hoặc hình thức kéo co đặc biệt nào được sử dụng trong trò chơi truyền thống?",
+      "Địa điểm diễn ra nghi lễ kéo co ở Campuchia, Philippines và Hàn Quốc cụ thể là ở đâu?"
+    ]
+  },
+  {
+    "id": "tin-nguong-tho-mau-tam-phu",
+    "name": "Thực hành Tín ngưỡng thờ Mẫu Tam phủ của người Việt",
+    "aliases": [
+      "thờ Mẫu",
+      "đạo Mẫu",
+      "hầu đồng",
+      "lên đồng",
+      "hát chầu văn"
+    ],
+    "overview": "Thực hành Tín ngưỡng thờ Mẫu Tam phủ của người Việt là tín ngưỡng bản địa tôn thờ người Mẹ và các vị thần linh che chở cho con người, đã được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại vào năm 2016.",
+    "history": "Tín ngưỡng có cội nguồn từ tục thờ Nữ thần tiền sử, trải qua quá trình phong thần thời phong kiến và phát triển thành hệ thống Tam phủ, Tứ phủ từ thế kỷ 15 với sự xuất hiện của Mẫu Liễu Hạnh cùng các vị thần linh khác.",
+    "practice": "Thực hành tín ngưỡng bao gồm cúng lễ, lễ hội và trọng tâm là nghi lễ hầu đồng mượn giá gương để thể hiện sự hiện diện của thần linh, kết hợp với trang phục, khăn choàng đỏ và lời hát chầu văn của cung văn.",
+    "meaning": "Tín ngưỡng đáp ứng mong ước tâm linh về sức khỏe, may mắn, tôn vinh vai trò của người phụ nữ, ghi nhớ công ơn các anh hùng dân tộc và thắt chặt mối liên kết cộng đồng.",
+    "location": "Di sản được thực hành tại 14 tỉnh thành phía Bắc, miền Trung và Thành phố Hồ Chí Minh với nhiều trung tâm lớn như Phủ Dầy ở Nam Định - Ninh Bình, Phủ Tây Hồ ở Hà Nội hay điện Hòn Chén ở Huế.",
+    "etiquette": "Du khách tới xem nghi lễ hầu đồng cần giữ thái độ trang nghiêm, hiểu đúng bản chất ứng bóng nghệ thuật qua giá gương và tôn trọng các vật phẩm nghi lễ linh thiêng.",
+    "visitor_tip": "Du khách tới xem nghi lễ hầu đồng cần giữ thái độ trang nghiêm, hiểu đúng bản chất ứng bóng nghệ thuật qua giá gương và tôn trọng các vật phẩm nghi lễ linh thiêng.",
+    "unesco_year": 2016,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Tín ngưỡng thờ Mẫu Việt Nam",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2016)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/T%C3%ADn_ng%C6%B0%E1%BB%A1ng_th%E1%BB%9D_M%E1%BA%ABu_Vi%E1%BB%87t_Nam",
+      "https://ich.unesco.org/en/RL/practices-related-to-the-viet-beliefs-in-the-mother-goddesses-of-three-realms-01064"
+    ],
+    "follow_up_questions": [
+      "Di sản Thực hành Tín ngưỡng thờ Mẫu Tam phủ của người Việt được UNESCO ghi danh vào thời gian nào và ở đâu?",
+      "Hệ thống Tam Tòa Thánh Mẫu gồm những vị nào và cai quản các miền nào?",
+      "Nghi lễ hầu đồng sử dụng những thành tố và trang vật nghi lễ tiêu biểu nào?"
+    ]
+  },
+  {
+    "id": "nghe-thuat-bai-choi-trung-bo",
+    "name": "Nghệ thuật Bài Chòi Trung Bộ Việt Nam",
+    "aliases": [
+      "Bài Chòi",
+      "hô bài chòi",
+      "hội bài chòi"
+    ],
+    "overview": "Nghệ thuật Bài Chòi Trung Bộ là sự kết hợp đa dạng giữa âm nhạc, thơ ca, diễn xuất, hội họa và văn học, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại vào năm 2017.",
+    "history": "Bài Chòi có nguồn gốc từ cuối thế kỷ XVI đầu thế kỷ XVII, xuất phát từ việc dựng chòi canh thú dữ ven rừng và hát hô đối đáp giải trí của người dân làng quê.",
+    "practice": "Bài Chòi được thực hành qua trò chơi dựng chòi tre đánh bài tam cúc cải tiến 33 lá kết hợp anh hiệu hô câu thai và ban nhạc cổ, hoặc qua hình thức trình diễn trên chiếu cói.",
+    "meaning": "Bài Chòi là hình thức sinh hoạt văn hóa giải trí cộng đồng sâu sắc, được bảo tồn chủ yếu bằng phương thức truyền miệng trong gia đình, câu lạc bộ và trường học.",
+    "location": "Nghệ thuật Bài Chòi được thực hành tại 8 tỉnh thành miền Trung từ Quảng Trị đến Lâm Đồng và thường diễn ra vào dịp tết Nguyên đán.",
+    "etiquette": "",
+    "visitor_tip": "",
+    "unesco_year": 2017,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Bài chòi",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2017)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/B%C3%A0i_ch%C3%B2i",
+      "https://ich.unesco.org/en/RL/the-art-of-bai-choi-in-central-viet-nam-01222"
+    ],
+    "follow_up_questions": [
+      "Bộ bài dùng trong trò chơi Bài Chòi gồm bao nhiêu lá và chia thành những pho nào?",
+      "Nghệ thuật Bài Chòi Trung Bộ được thực hành tại 8 tỉnh thành nào ở miền Trung Việt Nam?",
+      "Anh hiệu trong trò chơi Bài Chòi thực hiện những công việc gì và trao thưởng ra sao?"
+    ]
+  },
+  {
+    "id": "hat-xoan-phu-tho",
+    "name": "Hát Xoan Phú Thọ",
+    "aliases": [
+      "hát Xoan",
+      "Xoan Phú Thọ",
+      "hát cửa đình"
+    ],
+    "overview": "Hát Xoan Phú Thọ là loại hình dân ca lễ nghi phong tục kết hợp hát, múa, đánh trống và gõ phách, gắn liền với tín ngưỡng thờ cúng Hùng Vương.",
+    "history": "Hát Xoan Phú Thọ được UNESCO ghi danh vào Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp năm 2011 và chuyển sang Danh sách Di sản đại diện của nhân loại vào năm 2017.",
+    "practice": "Trình diễn Hát Xoan do trùm phường dẫn dắt cùng các cô đào trẻ, thực hiện qua ba chặng chính là Hát nghi lễ, Hát quả cách và Hát giao duyên.",
+    "meaning": "Hát Xoan mang ý nghĩa dâng thần linh cầu phúc, cầu mùa màng và sức khỏe, đồng thời tạo thắt chặt tình kết nghĩa giao hảo giữa các làng.",
+    "location": "Hát Xoan diễn ra tại tỉnh Phú Thọ và lan tỏa sang Vĩnh Phúc, tập trung ở 4 phường xoan cổ thuộc hai xã Kim Đức và Phượng Lâu, biểu diễn vào dịp đầu xuân và hội đền Hùng.",
+    "etiquette": "Người tham dự cần tôn trọng không gian nghi lễ trang nghiêm tại cửa đình, miếu thờ và quy ước kết nghĩa truyền thống của các làng xoan.",
+    "visitor_tip": "Người tham dự cần tôn trọng không gian nghi lễ trang nghiêm tại cửa đình, miếu thờ và quy ước kết nghĩa truyền thống của các làng xoan.",
+    "unesco_year": 2017,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Hát xoan",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2017)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/H%C3%A1t_xoan",
+      "https://ich.unesco.org/en/RL/xoan-singing-of-phu-th-province-viet-nam-01260"
+    ],
+    "follow_up_questions": [
+      "Hát Xoan Phú Thọ gồm những chặng biểu diễn nào và tên các bài hát trong từng chặng là gì?",
+      "Bốn phường Xoan cổ nằm ở những xã nào và có lịch sử lan tỏa ra các làng quê ra sao?",
+      "Hiện nay tỉnh Phú Thọ và các cơ quan chức năng đã thực hiện những biện pháp gì để bảo tồn và truyền dạy Hát Xoan?"
+    ]
+  },
+  {
+    "id": "thuc-hanh-then-tay-nung-thai",
+    "name": "Thực hành Then của người Tày, Nùng, Thái",
+    "aliases": [
+      "nghi lễ Then",
+      "hát Then",
+      "Then Tày",
+      "đàn tính"
+    ],
+    "overview": "Thực hành Then là hình thức văn hóa tín ngưỡng diễn xướng tổng hợp giữa hát, đàn tính, múa và nghi lễ tâm linh của người Tày, Nùng, Thái.",
+    "history": "Di sản có nguồn gốc gắn với quan niệm tế Trời, trải qua nhiều mốc công nhận cấp quốc gia và chính thức được UNESCO ghi danh vào năm 2019.",
+    "practice": "Thầy Then vừa hát, gảy đàn tính, xóc nhạc, múa quạt và thực hiện cuộc hành trình tâm linh qua nhiều chặng đường cõi trời cõi đất để dâng lễ vật.",
+    "meaning": "Nghi lễ thể hiện quan niệm vũ trụ nhân sinh, kết nối con người với thần linh để cầu bình an, chữa bệnh, giải hạn và mang lại mùa màng bội thu.",
+    "location": "Then được thực hành trọng tâm tại 13 tỉnh miền núi phía Bắc Việt Nam, các khu vực di cư và vùng Quảng Tây của Trung Quốc, gắn với các thời điểm đầu năm, Trung thu hay cúng đầy tháng.",
+    "etiquette": "Người tham dự nghi lễ tại nhà gia chủ cần tôn trọng không gian tâm linh và tuân thủ các luật lệ riêng của gia đình như việc ăn chay hay ăn mặn tại từng cửa lễ.",
+    "visitor_tip": "Người tham dự nghi lễ tại nhà gia chủ cần tôn trọng không gian tâm linh và tuân thủ các luật lệ riêng của gia đình như việc ăn chay hay ăn mặn tại từng cửa lễ.",
+    "unesco_year": 2019,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Nghi lễ Then",
+      "Wikipedia tiếng Việt – Hát then",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2019)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Nghi_l%E1%BB%85_Then",
+      "https://vi.wikipedia.org/wiki/H%C3%A1t_then",
+      "https://ich.unesco.org/en/RL/practices-of-then-by-tay-nung-and-thai-ethnic-groups-in-viet-nam-01379"
+    ],
+    "follow_up_questions": [
+      "Thầy Then sử dụng những loại nhạc cụ và vật dụng nghi lễ nào trong quá trình thực hành?",
+      "Sắc thái âm nhạc hát Then ở các tỉnh Cao Bằng, Lạng Sơn, Tuyên Quang, Hà Giang và Bắc Kạn có đặc điểm gì khác nhau?",
+      "UNESCO đã chính thức ghi danh Thực hành Then của người Tày, Nùng, Thái vào Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại vào thời gian nào và tại đâu?"
+    ]
+  },
+  {
+    "id": "nghe-thuat-xoe-thai",
+    "name": "Nghệ thuật Xòe Thái",
+    "aliases": [
+      "múa Xòe",
+      "xòe Thái",
+      "xòe vòng"
+    ],
+    "overview": "Nghệ thuật Xòe Thái là loại hình múa dân gian biểu trưng cho đời sống, nghi lễ và lao động của cộng đồng người Thái Tây Bắc, được UNESCO ghi danh là Di sản văn hóa phi vật thể đại diện của nhân loại năm 2021.",
+    "history": "Khởi nguồn từ quá trình di cư mô phỏng lao động sản xuất, Xòe Thái phát triển qua nhiều thế kỷ, gắn liền với sinh hoạt bản mường và liên tục được vinh danh ở cấp quốc gia cũng như quốc tế.",
+    "practice": "Xòe Thái gồm 6 điệu xòe cổ cơ bản cùng nhiều hình thức xòe đạo cụ phong phú, kết hợp các động tác tay chân nhịp nhàng trên nền nhạc cụ truyền thống như tính tẩu, trống, chiêng và trang phục áo cóm.",
+    "meaning": "Di sản gửi gắm lòng biết ơn thần linh, cầu mong mùa màng bội thu, cuộc sống ấm no, thể hiện tinh thần đoàn kết, lòng hiếu khách và bản sắc văn hóa đặc trưng của người Thái.",
+    "location": "Xòe Thái diễn ra tại các tỉnh Yên Bái, Lai Châu, Sơn La, Điện Biên với các trung tâm chính như Mường Lò, Mường So, Mường Lay, Mường Thanh trong các dịp lễ hội và sinh hoạt cộng đồng.",
+    "etiquette": "Khách tham gia cần tuân thủ sự dẫn dắt trong các cuộc Xòe nghi lễ của thầy cúng và thực hành đúng các bước nắm tay nhịp nhàng khi hòa vào vòng Xòe cộng đồng.",
+    "visitor_tip": "Khách tham gia cần tuân thủ sự dẫn dắt trong các cuộc Xòe nghi lễ của thầy cúng và thực hành đúng các bước nắm tay nhịp nhàng khi hòa vào vòng Xòe cộng đồng.",
+    "unesco_year": 2021,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Xòe Thái",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2021)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/X%C3%B2e_Th%C3%A1i",
+      "https://ich.unesco.org/en/RL/art-of-xoe-dance-of-the-tai-people-in-viet-nam-01575"
+    ],
+    "follow_up_questions": [
+      "Sáu điệu Xòe cổ cơ bản của người Thái gồm những điệu nào và có động tác thực hiện ra sao?",
+      "Dàn nhạc đệm và các loại đạo cụ được sử dụng trong trình diễn Xòe Thái gồm những gì?",
+      "Bốn trung tâm Xòe Thái lớn nhất tại vùng Tây Bắc Việt Nam nằm ở những địa danh cụ thể nào?"
+    ]
+  },
+  {
+    "id": "nghe-thuat-lam-gom-cua-nguoi-cham",
+    "name": "Nghệ thuật làm gốm của người Chăm",
+    "aliases": [
+      "gốm Chăm",
+      "gốm Bàu Trúc",
+      "làng gốm Bàu Trúc"
+    ],
+    "overview": "Nghệ thuật làm gốm của người Chăm Bàu Trúc được UNESCO ghi danh năm 2022, nổi bật với kỹ thuật thủ công không dùng bàn xoay, không phủ men và nung ngoài trời.",
+    "history": "Nghề gốm Bàu Trúc gắn liền với ông tổ Po K'long Chan từ thời vua Po K'long Garai (1150 - 1205) và được tiếp nối qua nhiều thế hệ phụ nữ Chăm.",
+    "practice": "Gốm được làm từ đất sét sông Quao trộn cát, thợ di chuyển quanh khối gốm để tạo hình, cạo đáy bằng vòng quơ và nung ngoài trời từ 7-8 giờ ở nhiệt độ 800 độ C.",
+    "meaning": "Di sản tôn vinh vai trò của phụ nữ Chăm, tạo thu nhập và gìn giữ bản sắc văn hóa, nhưng đang đối mặt khó khăn do đô thị hóa và biến động thị trường.",
+    "location": "Di sản được thực hành tại làng gốm Bàu Trúc, xã Ninh Phước, tỉnh Khánh Hòa, cách phường Phan Rang 10 km về hướng Nam.",
+    "etiquette": "",
+    "visitor_tip": "",
+    "unesco_year": 2022,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp",
+    "sources": [
+      "Wikipedia tiếng Việt – Làng gốm Bàu Trúc",
+      "Wikipedia tiếng Việt – Làng Chăm Mỹ Nghiệp",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2022)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/L%C3%A0ng_g%E1%BB%91m_B%C3%A0u_Tr%C3%BAc",
+      "https://vi.wikipedia.org/wiki/L%C3%A0ng_Ch%C4%83m_M%E1%BB%B9_Nghi%E1%BB%87p",
+      "https://ich.unesco.org/en/USL/art-of-pottery-making-of-chm-people-01574"
+    ],
+    "follow_up_questions": [
+      "Đất sét làm gốm Bàu Trúc được lấy từ đâu và có quy trình khai thác đặc biệt như thế nào?",
+      "Quá trình nung gốm Bàu Trúc diễn ra ngoài trời trong thời gian bao lâu và ở nhiệt độ bao nhiêu?",
+      "Ai là ông tổ truyền dạy nghề gốm Bàu Trúc và vai trò của phụ nữ Chăm trong nghề này ra sao?"
+    ]
+  },
+  {
+    "id": "le-hoi-via-ba-chua-xu-nui-sam",
+    "name": "Lễ hội Vía Bà Chúa Xứ núi Sam",
+    "aliases": [
+      "vía Bà Chúa Xứ",
+      "miếu Bà Chúa Xứ",
+      "núi Sam",
+      "Châu Đốc"
+    ],
+    "overview": "Lễ hội Vía Bà Chúa Xứ Núi Sam là Di sản văn hóa phi vật thể đại diện của nhân loại tôn vinh Nữ thần Mẹ Đất với chuỗi nghi lễ truyền thống và sinh hoạt cộng đồng độc đáo.",
+    "history": "Lễ hội gắn liền với truyền thuyết 9 cô gái đồng trinh rước tượng Bà từ đỉnh núi Sam xuống chân núi và lịch sử khai hoang, đào kênh Vĩnh Tế ở thế kỷ XIX.",
+    "practice": "Các nghi lễ chính gồm lễ thỉnh Bà, lễ tắm tượng vào đêm 23 tháng 4 âm lịch, lễ thỉnh sắc, lễ Túc Yết - Xây Chầu hát bội, lễ Chánh Tế và lễ Hồi Sắc.",
+    "meaning": "Di sản thể hiện lòng tri ân tiền nhân, tinh thần đoàn kết của bốn dân tộc Kinh, Khmer, Chăm, Hoa và là trụ cột phát triển du lịch tâm linh tại An Giang.",
+    "location": "Lễ hội diễn ra tại phường Vĩnh Tế, thành phố Châu Đốc, tỉnh An Giang từ ngày 22 đến 27 tháng 4 âm lịch hàng năm.",
+    "etiquette": "Du khách cần giữ thái độ tôn kính trước các nghi lễ tâm linh truyền thống và chấp hành hướng dẫn của Ban Quản trị miếu khi tham gia hành hương.",
+    "visitor_tip": "Du khách cần giữ thái độ tôn kính trước các nghi lễ tâm linh truyền thống và chấp hành hướng dẫn của Ban Quản trị miếu khi tham gia hành hương.",
+    "unesco_year": 2024,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+    "sources": [
+      "Wikipedia tiếng Việt – Lễ hội miếu Bà Chúa Xứ",
+      "Wikipedia tiếng Việt – Miếu Bà Chúa Xứ Núi Sam",
+      "Wikipedia tiếng Việt – Núi Sam",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2024)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/L%E1%BB%85_h%E1%BB%99i_mi%E1%BA%BFu_B%C3%A0_Ch%C3%BAa_X%E1%BB%A9",
+      "https://vi.wikipedia.org/wiki/Mi%E1%BA%BFu_B%C3%A0_Ch%C3%BAa_X%E1%BB%A9_N%C3%BAi_Sam",
+      "https://vi.wikipedia.org/wiki/N%C3%BAi_Sam",
+      "https://ich.unesco.org/en/RL/festival-of-ba-chua-x-goddess-at-sam-mountain-01999"
+    ],
+    "follow_up_questions": [
+      "Tượng Bà Chúa Xứ Núi Sam có nguồn gốc khảo cổ và chất liệu như thế nào?",
+      "Nghi lễ Tắm Bà trong lễ hội Vía Bà Chúa Xứ được tiến hành vào thời gian nào và có quy trình ra sao?",
+      "Bia Vĩnh Tế Sơn trên núi Sam do ai khởi dựng và mang nội dung lịch sử gì?"
+    ]
+  },
+  {
+    "id": "tranh-dan-gian-dong-ho",
+    "name": "Nghề làm tranh dân gian Đông Hồ",
+    "aliases": [
+      "tranh Đông Hồ",
+      "tranh dân gian Đông Hồ",
+      "làng Đông Hồ",
+      "giấy điệp"
+    ],
+    "overview": "Tranh dân gian Đông Hồ là dòng tranh khắc gỗ thủ công truyền thống độc đáo trên chất liệu giấy điệp lấp lánh của làng Đông Hồ, tỉnh Bắc Ninh.",
+    "history": "Di sản trải qua nhiều thế kỷ phát triển, từng quy tụ 17 dòng họ làm tranh và chính thức được UNESCO ghi danh vào Danh sách cần bảo vệ khẩn cấp năm 2025.",
+    "practice": "Tranh được chế tác thủ công hoàn toàn từ giấy dó quét điệp, màu tự nhiên, ván khắc gỗ thị và gỗ mỡ, với quy trình in các lớp màu trước và in nét đen cuối cùng.",
+    "meaning": "Tranh Đông Hồ gắn liền với Tết Nguyên Đán, Tết Trung Thu và thờ cúng, mang ước vọng cầu chúc vinh hoa, phú quý và thể hiện đời sống sinh hoạt của người Việt.",
+    "location": "Di sản được thực hành tại làng Đông Hồ, phường Song Hồ, thị xã Thuận Thành, Bắc Ninh, sôi động nhất vào dịp chợ tranh tháng Chạp và hội làng rằm tháng 3 âm lịch.",
+    "etiquette": "Du khách nên ứng xử lịch thiệp theo nề nếp làng Mái và thể hiện sự trân trọng đối với các ván khắc gỗ cùng di sản gia truyền của nghệ nhân.",
+    "visitor_tip": "Du khách nên ứng xử lịch thiệp theo nề nếp làng Mái và thể hiện sự trân trọng đối với các ván khắc gỗ cùng di sản gia truyền của nghệ nhân.",
+    "unesco_year": 2025,
+    "unesco_list": "Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp",
+    "sources": [
+      "Wikipedia tiếng Việt – Tranh Đông Hồ",
+      "UNESCO – Danh sách Di sản văn hóa phi vật thể cần bảo vệ khẩn cấp (2025)"
+    ],
+    "source_urls": [
+      "https://vi.wikipedia.org/wiki/Tranh_%C4%90%C3%B4ng_H%E1%BB%93",
+      "https://ich.unesco.org/en/USL/craft-of-making-ong-h-folk-woodblock-printings-01737"
+    ],
+    "follow_up_questions": [
+      "Giấy điệp dùng để in tranh Đông Hồ được làm từ những nguyên liệu gì và có đặc điểm gì nổi bật?",
+      "Các màu sắc cơ bản như màu đen, màu vàng, màu đỏ và màu xanh trong tranh Đông Hồ được chế tạo từ chất liệu tự nhiên nào?",
+      "Hai gia đình nghệ nhân nào hiện nay vẫn đang tiếp tục giữ nghề và bảo tồn di sản tranh dân gian Đông Hồ?"
+    ]
   }
 ]

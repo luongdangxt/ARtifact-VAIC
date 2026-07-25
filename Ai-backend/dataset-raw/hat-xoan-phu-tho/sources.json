@@ -1,0 +1,27 @@
+{
+  "id": "hat-xoan-phu-tho",
+  "name": "Hát Xoan Phú Thọ",
+  "aliases": [
+    "hát Xoan",
+    "Xoan Phú Thọ",
+    "hát cửa đình"
+  ],
+  "unesco_year": 2017,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Hát-xoan.txt",
+      "source": "Wikipedia tiếng Việt – Hát xoan",
+      "source_url": "https://vi.wikipedia.org/wiki/H%C3%A1t_xoan",
+      "fetched_at": "2026-07-25",
+      "chars": 5107
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2017)",
+      "source_url": "https://ich.unesco.org/en/RL/xoan-singing-of-phu-th-province-viet-nam-01260",
+      "fetched_at": "2026-07-25",
+      "chars": 2520
+    }
+  ]
+}

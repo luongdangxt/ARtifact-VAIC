@@ -1,0 +1,27 @@
+{
+  "id": "dan-ca-quan-ho-bac-ninh",
+  "name": "Dân ca Quan họ Bắc Ninh",
+  "aliases": [
+    "Quan họ",
+    "hát Quan họ",
+    "liền anh liền chị"
+  ],
+  "unesco_year": 2009,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Quan-họ.txt",
+      "source": "Wikipedia tiếng Việt – Quan họ",
+      "source_url": "https://vi.wikipedia.org/wiki/Quan_h%E1%BB%8D",
+      "fetched_at": "2026-07-25",
+      "chars": 21874
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2009)",
+      "source_url": "https://ich.unesco.org/en/RL/quan-h-bc-ninh-folk-songs-00183",
+      "fetched_at": "2026-07-25",
+      "chars": 2450
+    }
+  ]
+}

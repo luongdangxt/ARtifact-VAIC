@@ -1,17 +1,38 @@
-"""Semantic Router dùng Gemini và bước Reflection."""
+"""Semantic Router (local, có Gemini dự phòng) và bước Reflection."""
 
 from __future__ import annotations
 
+import logging
+import os
+
 from heritage_ai.gemini_client import GeminiClient
+from heritage_ai.local_router import LocalRouter
 from heritage_ai.models import QueryContext
 from heritage_ai.text_utils import normalize_text
 
+_log = logging.getLogger(__name__)
+
+# local  = chỉ router local (nhanh nhất, câu mơ hồ thì hỏi lại du khách)
+# auto   = local trước, mơ hồ mới nhờ Gemini phân giải  (mặc định)
+# gemini = luôn gọi Gemini như trước khi tối ưu (để đối chiếu khi gỡ lỗi)
+DEFAULT_MODE = "auto"
+
 
 class QueryProcessor:
-    def __init__(self, gemini: GeminiClient) -> None:
+    def __init__(
+        self,
+        gemini: GeminiClient,
+        router: LocalRouter | None = None,
+        mode: str | None = None,
+    ) -> None:
         self.gemini = gemini
+        self.router = router or LocalRouter()
+        self.mode = (mode or os.getenv("ROUTER_MODE", DEFAULT_MODE)).strip().lower()
 
-    def process(self, query: str, heritage_names: list[str]) -> QueryContext:
+    def process(
+        self, query: str, ranked: list[tuple[str, float]]
+    ) -> QueryContext:
+        """`ranked`: (tên di sản, score) từ vector search, xếp từ khớp nhất."""
         normalized = normalize_text(query)
         if not normalized:
             return QueryContext(
@@ -24,7 +45,22 @@ class QueryProcessor:
                 ),
             )
 
-        analysis = self.gemini.analyze_query(query, heritage_names)
+        analysis = None
+        if self.mode != "gemini":
+            analysis = self.router.route(query, ranked)
+            if analysis is None:
+                _log.info("Router local chưa chắc chắn về di sản: %r", query)
+
+        if analysis is None:
+            if self.mode == "local":
+                return QueryContext(
+                    original_query=query.strip(),
+                    normalized_query=normalized,
+                    intent="overview",
+                    needs_clarification=True,
+                    clarification_question="Bạn muốn tìm hiểu về di sản nào?",
+                )
+            analysis = self.gemini.analyze_query(query, [name for name, _ in ranked])
 
         return QueryContext(
             original_query=query.strip(),

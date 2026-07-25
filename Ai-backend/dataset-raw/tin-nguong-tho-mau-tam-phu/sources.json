@@ -1,0 +1,29 @@
+{
+  "id": "tin-nguong-tho-mau-tam-phu",
+  "name": "Thực hành Tín ngưỡng thờ Mẫu Tam phủ của người Việt",
+  "aliases": [
+    "thờ Mẫu",
+    "đạo Mẫu",
+    "hầu đồng",
+    "lên đồng",
+    "hát chầu văn"
+  ],
+  "unesco_year": 2016,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Tín-ngưỡng-thờ-Mẫu-Việt-Nam.txt",
+      "source": "Wikipedia tiếng Việt – Tín ngưỡng thờ Mẫu Việt Nam",
+      "source_url": "https://vi.wikipedia.org/wiki/T%C3%ADn_ng%C6%B0%E1%BB%A1ng_th%E1%BB%9D_M%E1%BA%ABu_Vi%E1%BB%87t_Nam",
+      "fetched_at": "2026-07-25",
+      "chars": 15952
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2016)",
+      "source_url": "https://ich.unesco.org/en/RL/practices-related-to-the-viet-beliefs-in-the-mother-goddesses-of-three-realms-01064",
+      "fetched_at": "2026-07-25",
+      "chars": 2716
+    }
+  ]
+}

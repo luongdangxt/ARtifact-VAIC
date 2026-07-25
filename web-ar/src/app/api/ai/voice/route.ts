@@ -5,6 +5,7 @@ import {
   backendAuthHeaders,
   backendBaseUrl,
   personaFields,
+  splitSuggestions,
   toProxiedAudioUrl,
 } from '@/lib/server/backend';
 
@@ -74,11 +75,15 @@ export async function POST(req: Request) {
     transcript?: string | null;
     audio_url?: string | null;
   };
+  const { content, suggestions } = splitSuggestions(
+    data.answer ?? 'Dạ, hiện mình chưa trả lời được câu này.',
+  );
   const reply: VoiceReply = {
     role: 'assistant',
-    content: data.answer ?? 'Dạ, hiện mình chưa trả lời được câu này.',
+    content,
     transcript: data.transcript ?? undefined,
     audioUrl: toProxiedAudioUrl(data.audio_url),
+    suggestions,
   };
   return NextResponse.json(reply);
 }

@@ -1,0 +1,27 @@
+{
+  "id": "nghe-thuat-xoe-thai",
+  "name": "Nghệ thuật Xòe Thái",
+  "aliases": [
+    "múa Xòe",
+    "xòe Thái",
+    "xòe vòng"
+  ],
+  "unesco_year": 2021,
+  "unesco_list": "RL",
+  "sources": [
+    {
+      "file": "wikipedia-vi__Xòe-Thái.txt",
+      "source": "Wikipedia tiếng Việt – Xòe Thái",
+      "source_url": "https://vi.wikipedia.org/wiki/X%C3%B2e_Th%C3%A1i",
+      "fetched_at": "2026-07-25",
+      "chars": 20749
+    },
+    {
+      "file": "unesco.txt",
+      "source": "UNESCO – Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại (2021)",
+      "source_url": "https://ich.unesco.org/en/RL/art-of-xoe-dance-of-the-tai-people-in-viet-nam-01575",
+      "fetched_at": "2026-07-25",
+      "chars": 2855
+    }
+  ]
+}
