@@ -84,6 +84,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const activeSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  // Số thứ tự lượt phát: mỗi lần phát/dừng tăng 1. playAudio có nhiều await (fetch +
+  // decode) ở giữa; sau mỗi await nó so token — nếu đã có lượt mới thì tự huỷ, nhờ vậy
+  // hai lần bấm 🔊 liên tiếp KHÔNG tạo ra hai nguồn cùng phát (lỗi âm thanh đè nhau).
+  const playTokenRef = useRef(0);
   const silentUrlRef = useRef<string | null>(null);
   const unlockedRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
@@ -194,10 +198,30 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       });
   }
 
+  // Dừng DỨT ĐIỂM mọi âm thanh đang phát (Web Audio + <audio>) và vô hiệu hoá mọi lượt
+  // playAudio còn đang chờ await. Gọi trước mỗi lượt phát mới và khi bắt đầu ghi âm.
+  function stopPlayback() {
+    playTokenRef.current += 1; // token đổi -> các playAudio đang await sẽ tự huỷ
+    const src = activeSourceRef.current;
+    if (src) {
+      src.onended = null; // tránh onended cũ set speaking=false trễ, đè lượt mới
+      try {
+        src.stop();
+      } catch {
+        /* đã dừng rồi */
+      }
+      activeSourceRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setSpeaking(false);
+  }
+
   async function playAudio(url: string, mode: 'auto' | 'manual' = 'auto') {
-    activeSourceRef.current?.stop();
-    activeSourceRef.current = null;
-    audioRef.current?.pause();
+    stopPlayback(); // dừng đoạn đang phát trước khi mở lượt mới -> không phát chồng
+    const token = playTokenRef.current;
     setSpeaking(true);
 
     try {
@@ -205,8 +229,10 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       if (ctx) {
         if (ctx.state === 'suspended') await ctx.resume();
         const res = await fetch(url, { cache: 'no-store' });
+        if (token !== playTokenRef.current) return; // đã có lượt phát/dừng mới
         if (!res.ok) throw new Error(`audio fetch failed: ${res.status}`);
         const buffer = await decodeAudioData(ctx, await res.arrayBuffer());
+        if (token !== playTokenRef.current) return; // bị thay thế khi đang decode
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.connect(ctx.destination);
@@ -225,7 +251,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
       const a = audioRef.current;
       a.src = url;
       await a.play();
+      if (token !== playTokenRef.current) a.pause(); // lượt mới đã bắt đầu khi đang chờ
     } catch (err) {
+      if (token !== playTokenRef.current) return; // lỗi của lượt đã bị thay thế -> bỏ qua
       console.warn('TTS playback failed', err);
       setSpeaking(false);
       setError(
@@ -238,11 +266,9 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
 
   function pushAssistant(reply: ChatMessage) {
     setMessages((m) => [...m, reply]);
-    if (reply.audioUrl) {
-      void playAudio(reply.audioUrl);
-    } else {
-      setError('AI đã trả lời bằng chữ nhưng backend chưa trả về file âm thanh.');
-    }
+    // Có audio thì tự phát; không có (vd TTS hết quota) thì vẫn giữ câu trả lời chữ,
+    // KHÔNG báo lỗi đỏ — người dùng vẫn đọc được và có thể bấm 🔊 nếu sau này có audio.
+    if (reply.audioUrl) void playAudio(reply.audioUrl);
   }
 
   async function ensureStream(): Promise<MediaStream> {
@@ -257,6 +283,7 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
   async function startRecording() {
     if (busy || recording) return;
     setError(null);
+    stopPlayback(); // đang nghe nghệ nhân nói mà bấm mic -> tắt tiếng đó để khỏi thu vào
     unlockAudio(); // dùng chính cú chạm này để mở khoá loa cho TTS sau đó
     try {
       const stream = await ensureStream();
@@ -468,13 +495,19 @@ export default function ChatPanel({ artisan, tracking, onClose }: Props) {
         <button
           onPointerDown={(e) => {
             e.preventDefault();
+            // Khoá pointer vào nút: ngón tay xê dịch khi đang giữ vẫn không rời nút, nên
+            // pointerup luôn bắn đúng chỗ và ghi âm không bị dừng non (bỏ onPointerLeave).
+            try {
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {
+              /* trình duyệt cũ không hỗ trợ -> vẫn dựa vào pointerup/cancel */
+            }
             void startRecording();
           }}
           onPointerUp={(e) => {
             e.preventDefault();
             stopRecording();
           }}
-          onPointerLeave={() => recording && stopRecording()}
           onPointerCancel={() => recording && stopRecording()}
           onContextMenu={(e) => e.preventDefault()}
           disabled={busy}

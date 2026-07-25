@@ -11,6 +11,7 @@ Chạy:  uvicorn heritage_ai.api:app --host 0.0.0.0 --port 8000
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections import OrderedDict
 
@@ -57,8 +58,10 @@ def _synthesize_url(answer: str) -> str | None:
     """TTS câu trả lời -> URL file MP3 (proxy sẽ stream). None nếu TTS lỗi."""
     try:
         mp3 = voice_mod.synthesize_mp3(voice_mod.spoken_text(answer))
-    except voice_mod.VoiceError:
-        return None  # hỏng TTS thì vẫn giữ câu trả lời chữ, không chặn.
+    except voice_mod.VoiceError as exc:
+        # Hỏng TTS (vd 429 hết quota) -> vẫn giữ câu trả lời chữ, chỉ log để biết.
+        logging.getLogger("heritage_ai.api").warning("TTS thất bại: %s", exc)
+        return None
     return f"/v1/audio/files/{_store_audio(mp3, 'mp3')}"
 
 
