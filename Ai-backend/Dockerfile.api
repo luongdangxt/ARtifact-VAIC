@@ -21,8 +21,10 @@ RUN pip install --upgrade pip \
 
 # python-multipart: FastAPI parse multipart/form-data (/v1/audio/ask).
 # lameenc: encode PCM (Gemini TTS) -> MP3 thuần Python, không cần ffmpeg.
+# av (PyAV): giải mã bản ghi webm/opus, mp4/aac -> WAV cho STT dự phòng của FPT
+# (wheel đã kèm sẵn thư viện ffmpeg nên vẫn không phải apt install ffmpeg).
 # Cài lớp riêng để giữ cache cho lớp cài nặng ở trên.
-RUN pip install "python-multipart>=0.0.9" "lameenc>=1.7.0"
+RUN pip install "python-multipart>=0.0.9" "lameenc>=1.7.0" "av>=12.0.0,<19.0.0"
 
 COPY heritage_ai/ ./heritage_ai/
 COPY run.py create_vectorDB.py ./

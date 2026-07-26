@@ -1,49 +1,53 @@
-"""Lớp giao tiếp duy nhất với Gemini API."""
+"""Lớp giao tiếp với Gemini API (LLM chính; dự phòng xem heritage_ai/fpt_client.py)."""
 
 from __future__ import annotations
 
 import json
 import os
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
+from heritage_ai.llm_contract import (
+    ALLOWED_INTENTS,
+    ALLOWED_LENGTHS,
+    ANALYSIS_SCHEMA,
+    LlmConfigurationError,
+    LlmError,
+    LlmResponseError,
+    NARRATOR_SYSTEM_INSTRUCTION,
+    ROUTER_SYSTEM_INSTRUCTION,
+    QueryAnalysis,
+    analysis_prompt,
+    report_prompt,
+    validate_analysis,
+)
 from heritage_ai.models import Evidence
 
+# Các module cũ (local_router, tests) vẫn import QueryAnalysis/ALLOWED_* từ đây.
+__all__ = [
+    "ALLOWED_INTENTS",
+    "ALLOWED_LENGTHS",
+    "GeminiClient",
+    "GeminiConfigurationError",
+    "GeminiError",
+    "GeminiResponseError",
+    "QueryAnalysis",
+]
 
-ALLOWED_INTENTS = {
-    "overview",
-    "history",
-    "practice",
-    "meaning",
-    "etiquette",
-    "location",
-}
-ALLOWED_LENGTHS = {"short", "normal"}
 
-
-class GeminiError(RuntimeError):
+class GeminiError(LlmError):
     """Lỗi cơ sở cho các vấn đề khi gọi Gemini."""
 
 
-class GeminiConfigurationError(GeminiError):
+class GeminiConfigurationError(GeminiError, LlmConfigurationError):
     """Cấu hình Gemini bị thiếu hoặc không hợp lệ."""
 
 
-class GeminiResponseError(GeminiError):
+class GeminiResponseError(GeminiError, LlmResponseError):
     """Gemini trả về dữ liệu không sử dụng được."""
-
-
-@dataclass(frozen=True)
-class QueryAnalysis:
-    intent: str
-    requested_length: str
-    heritage_name: str | None
-    needs_clarification: bool
-    clarification_question: str
 
 
 class GeminiClient:
@@ -124,58 +128,13 @@ class GeminiClient:
     def analyze_query(
         self, query: str, heritage_names: list[str]
     ) -> QueryAnalysis:
-        schema = {
-            "type": "object",
-            "properties": {
-                "intent": {
-                    "type": "string",
-                    "enum": sorted(ALLOWED_INTENTS),
-                },
-                "requested_length": {
-                    "type": "string",
-                    "enum": sorted(ALLOWED_LENGTHS),
-                },
-                "heritage_name": {
-                    "type": "string",
-                    "description": (
-                        "Tên chính xác trong danh sách di sản; để chuỗi rỗng nếu "
-                        "không xác định được."
-                    ),
-                },
-                "needs_clarification": {"type": "boolean"},
-                "clarification_question": {"type": "string"},
-            },
-            "required": [
-                "intent",
-                "requested_length",
-                "heritage_name",
-                "needs_clarification",
-                "clarification_question",
-            ],
-        }
-        prompt = (
-            "Phân tích câu hỏi của du khách về di sản văn hóa phi vật thể.\n"
-            f"Câu hỏi: {query}\n"
-            "Danh sách tên di sản được hỗ trợ:\n- "
-            + "\n- ".join(heritage_names)
-            + "\nChọn đúng một intent. Chỉ đặt needs_clarification=true khi "
-            "không xác định được di sản hoặc yêu cầu quá mơ hồ. "
-            "Danh sách trên chỉ là các ứng viên do vector search gợi ý, không "
-            "đồng nghĩa ứng viên chắc chắn khớp câu hỏi. "
-            "Nếu nhận diện được di sản, heritage_name phải đúng nguyên văn một "
-            "tên trong danh sách. Câu hỏi ngắn vẫn có thể hợp lệ nếu là tên di sản."
-        )
-
         try:
             response = self._generate_content(
-                contents=prompt,
+                contents=analysis_prompt(query, heritage_names),
                 config={
-                    "system_instruction": (
-                        "Bạn là Semantic Router tiếng Việt. Không trả lời câu hỏi; "
-                        "chỉ phân tích ý định theo schema được cung cấp."
-                    ),
+                    "system_instruction": ROUTER_SYSTEM_INSTRUCTION,
                     "response_mime_type": "application/json",
-                    "response_json_schema": schema,
+                    "response_json_schema": ANALYSIS_SCHEMA,
                     # Gemini 3 dùng chung giới hạn output cho reasoning và JSON.
                     # Router đơn giản chỉ cần mức suy luận tối thiểu.
                     "thinking_config": {"thinking_level": "minimal"},
@@ -189,7 +148,7 @@ class GeminiClient:
 
         self._raise_if_truncated(response, "phân tích câu hỏi")
         data = self._parse_json_response(response)
-        return self._validate_analysis(data, heritage_names)
+        return validate_analysis(data, heritage_names)
 
     def generate_report(
         self,
@@ -198,50 +157,13 @@ class GeminiClient:
         evidence: list[Evidence],
         requested_length: str,
     ) -> str:
-        source_material = []
-        for index, item in enumerate(evidence, start=1):
-            source_material.append(
-                {
-                    "citation": f"[{index}]",
-                    "section": item.title,
-                    "content": item.content,
-                    "source": item.source,
-                    "page": item.page,
-                }
-            )
-        # Rút ngắn so với bản cũ (120/120-250/250-450 từ): thực tế Gemini viết bám
-        # cận dưới nên ra ~195 từ, NPC không nói lê thê và sinh nhanh hơn ~0.7s.
-        if requested_length == "short":
-            length_instruction = "Tối đa 85 từ."
-        elif len(evidence) <= 2:
-            length_instruction = "Khoảng 85-175 từ, không lặp lại cùng một ý."
-        else:
-            length_instruction = "Khoảng 175-315 từ."
-        prompt = (
-            f"Câu hỏi của du khách: {query}\n"
-            f"Di sản: {heritage_name}\n"
-            f"Yêu cầu độ dài: {length_instruction}\n"
-            "Tư liệu đã được hệ thống truy xuất:\n"
-            f"{json.dumps(source_material, ensure_ascii=False, indent=2)}"
-        )
-
         try:
             response = self._generate_content(
-                contents=prompt,
+                contents=report_prompt(
+                    query, heritage_name, evidence, requested_length
+                ),
                 config={
-                    "system_instruction": (
-                        "Bạn là Nghệ nhân AI giới thiệu di sản cho du khách bằng "
-                        "tiếng Việt tự nhiên, gần gũi và tôn trọng cộng đồng chủ thể. "
-                        "Chỉ sử dụng sự kiện có trong tư liệu được cung cấp; không tự "
-                        "bổ sung niên đại, địa danh, danh hiệu UNESCO hoặc chi tiết "
-                        "nghi lễ. Trả lời trực tiếp câu hỏi, không tạo mục nguồn tham "
-                        "khảo, không thêm lời rào đón cuối câu. Không giả danh một nghệ "
-                        "nhân có thật hoặc tự nhận là thành viên cộng đồng sở hữu di "
-                        "sản; không dùng những cách nói như 'cha ông chúng tôi' hay "
-                        "'quê hương chúng tôi'. Gắn mã trích dẫn [1], [2]... ngay "
-                        "sau các nhận định dựa trên tư liệu tương ứng. Chỉ dùng mã "
-                        "trích dẫn đã có trong dữ liệu đầu vào."
-                    ),
+                    "system_instruction": NARRATOR_SYSTEM_INSTRUCTION,
                     "thinking_config": {"thinking_level": "low"},
                     "max_output_tokens": 4096,
                 },
@@ -288,37 +210,3 @@ class GeminiClient:
         if not isinstance(data, dict):
             raise GeminiResponseError("Kết quả phân tích phải là một JSON object.")
         return data
-
-    @staticmethod
-    def _validate_analysis(
-        data: dict[str, Any], heritage_names: list[str]
-    ) -> QueryAnalysis:
-        intent = data.get("intent")
-        requested_length = data.get("requested_length")
-        if intent not in ALLOWED_INTENTS:
-            raise GeminiResponseError(f"Intent không hợp lệ: {intent!r}")
-        if requested_length not in ALLOWED_LENGTHS:
-            raise GeminiResponseError(
-                f"Độ dài yêu cầu không hợp lệ: {requested_length!r}"
-            )
-
-        heritage_name = str(data.get("heritage_name", "")).strip() or None
-        if heritage_name not in heritage_names:
-            heritage_name = None
-
-        needs_clarification = bool(data.get("needs_clarification"))
-        clarification_question = str(
-            data.get("clarification_question", "")
-        ).strip()
-        if heritage_name is None:
-            needs_clarification = True
-        if needs_clarification and not clarification_question:
-            clarification_question = "Bạn muốn tìm hiểu về di sản nào?"
-
-        return QueryAnalysis(
-            intent=intent,
-            requested_length=requested_length,
-            heritage_name=heritage_name,
-            needs_clarification=needs_clarification,
-            clarification_question=clarification_question,
-        )

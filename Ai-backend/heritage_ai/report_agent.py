@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 import re
 
-from heritage_ai.gemini_client import GeminiClient
+from heritage_ai.llm_client import LlmClient
 from heritage_ai.models import QueryContext, ResearchResult
 
 _log = logging.getLogger(__name__)
 
-# Mã trích dẫn [1], [2]... trong lời kể. Vẫn yêu cầu Gemini gắn để bám sát tư liệu,
+# Mã trích dẫn [1], [2]... trong lời kể. Vẫn yêu cầu LLM gắn để bám sát tư liệu,
 # nhưng cắt trước khi trả về vì mục "Nguồn tham khảo" không còn hiển thị nữa.
 # Phải nuốt cả dấu phân cách GIỮA các mã liền nhau: một câu dẫn hai nguồn được viết
 # "... tinh tế [1], [2]." — xóa riêng từng mã sẽ để lại "... tinh tế,." và TTS đọc
@@ -19,7 +19,7 @@ _CITATION_RE = re.compile(r"\s*\[\d+\](?:\s*[,;]\s*\[\d+\])*")
 
 
 class TextReportAgent:
-    def __init__(self, gemini: GeminiClient) -> None:
+    def __init__(self, gemini: LlmClient) -> None:
         self.gemini = gemini
 
     def compose(
@@ -58,7 +58,7 @@ class TextReportAgent:
     def _follow_ups(heritage: dict, asked: list[str]) -> list[str]:
         """Gợi ý lấy từ danh sách CÓ SẴN của di sản, bỏ câu du khách đã hỏi.
 
-        Cố ý KHÔNG để Gemini tự nghĩ câu hỏi: câu sinh động hay chạm tới khía cạnh
+        Cố ý KHÔNG để LLM tự nghĩ câu hỏi: câu sinh động hay chạm tới khía cạnh
         không có trong tư liệu, du khách bấm vào lại nhận "tư liệu không đề cập".
         """
         seen = {question.strip().casefold() for question in asked}

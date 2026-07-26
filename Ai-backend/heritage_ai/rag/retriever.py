@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from heritage_ai.gemini_client import GeminiClient
+from heritage_ai.llm_client import LlmClient
 from heritage_ai.models import Evidence
 from heritage_ai.rag.embedding_client import LocalEmbedder, LocalEmbeddingError
 from heritage_ai.rag.vector_store import (
@@ -30,7 +30,7 @@ class RagRetriever:
 
     def __init__(
         self,
-        gemini: GeminiClient | None = None,
+        gemini: LlmClient | None = None,
         vector_store: ChromaVectorStore | None = None,
         embedder: LocalEmbedder | None = None,
         top_k: int | None = None,
