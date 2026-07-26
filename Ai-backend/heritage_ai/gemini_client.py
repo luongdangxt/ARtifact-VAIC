@@ -139,6 +139,8 @@ class GeminiClient:
                     # Router đơn giản chỉ cần mức suy luận tối thiểu.
                     "thinking_config": {"thinking_level": "minimal"},
                     "max_output_tokens": 1024,
+                    # Phân tích phải cho cùng kết quả với cùng câu hỏi.
+                    "temperature": 0.0,
                 },
             )
         except GeminiError:
@@ -156,16 +158,20 @@ class GeminiClient:
         heritage_name: str,
         evidence: list[Evidence],
         requested_length: str,
+        history: list[dict] | None = None,
     ) -> str:
         try:
             response = self._generate_content(
                 contents=report_prompt(
-                    query, heritage_name, evidence, requested_length
+                    query, heritage_name, evidence, requested_length, history
                 ),
                 config={
                     "system_instruction": NARRATOR_SYSTEM_INSTRUCTION,
                     "thinking_config": {"thinking_level": "low"},
                     "max_output_tokens": 4096,
+                    # Temperature thấp để cùng câu hỏi cho cùng nội dung: mặc định
+                    # sampling tự do làm lúc có thông tin, lúc lại bảo không có.
+                    "temperature": 0.2,
                 },
             )
         except GeminiError:

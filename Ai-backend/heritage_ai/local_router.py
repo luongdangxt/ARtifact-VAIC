@@ -68,6 +68,18 @@ SHORT_KEYWORDS = (
 # câu hỏi mẫu: câu rõ ràng cách nhau 0.046-0.075, câu mơ hồ/lạc đề chỉ 0.008-0.020.
 DEFAULT_MARGIN = 0.03
 
+# Câu hỏi thăm dò HỆ THỐNG (model gì, prompt, ai lập trình...) — chặn trước khi
+# đụng tới RAG/LLM. Khớp theo từ trọn vẹn trên chuỗi đã bỏ dấu. Cẩn thận với từ
+# ngắn: KHÔNG đưa "ai" (nghĩa tiếng Việt là "người nào") hay "bot" ("bột" bỏ dấu
+# thành "bot" — tranh Đông Hồ có "bột vỏ điệp") đứng một mình vào đây.
+SYSTEM_PROBE_KEYWORDS = (
+    "he thong", "mo hinh", "model", "prompt", "chatbot", "tri tue nhan tao",
+    "gemini", "gpt", "openai", "llm", "api", "may chu", "server", "database",
+    "du lieu huan luyen", "huan luyen", "training", "ma nguon", "source code",
+    "lap trinh", "thuat toan", "cong nghe", "phan mem", "ai tao ra",
+    "ai lap trinh", "ai phat trien", "ai xay dung", "ai viet ra",
+)
+
 
 class LocalRouter:
     def __init__(self, margin: float | None = None) -> None:
@@ -103,6 +115,11 @@ class LocalRouter:
 def _matches(normalized: str, keyword: str) -> bool:
     """Khớp theo từ trọn vẹn: "ca" không dính vào "cach", "o dau" không dính "dau nam"."""
     return f" {keyword} " in f" {normalized} "
+
+
+def is_system_probe(normalized: str) -> bool:
+    """True nếu câu hỏi (đã normalize_text) thăm dò về hệ thống/mô hình AI."""
+    return any(_matches(normalized, keyword) for keyword in SYSTEM_PROBE_KEYWORDS)
 
 
 def classify_intent(normalized: str) -> str:

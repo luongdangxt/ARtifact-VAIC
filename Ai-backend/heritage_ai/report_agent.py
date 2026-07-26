@@ -17,6 +17,22 @@ _log = logging.getLogger(__name__)
 # thành một quãng ngắt cụt lủn.
 _CITATION_RE = re.compile(r"\s*\[\d+\](?:\s*[,;]\s*\[\d+\])*")
 
+# LLM không đếm từ chính xác nên prompt "tối đa 150 từ" thi thoảng vẫn tràn;
+# cắt cứng tại ranh giới câu để không bao giờ vượt xa trần sản phẩm.
+_MAX_ANSWER_WORDS = 160
+_SENTENCE_END_RE = re.compile(r"[.!?…](?=\s|$)")
+
+
+def _trim_to_sentence(text: str, max_words: int = _MAX_ANSWER_WORDS) -> str:
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    clipped = " ".join(words[:max_words])
+    ends = list(_SENTENCE_END_RE.finditer(clipped))
+    if ends:
+        return clipped[: ends[-1].end()]
+    return clipped + "…"
+
 
 class TextReportAgent:
     def __init__(self, gemini: LlmClient) -> None:
@@ -27,6 +43,7 @@ class TextReportAgent:
         context: QueryContext,
         result: ResearchResult,
         asked: list[str] | None = None,
+        history: list[dict] | None = None,
     ) -> str:
         heritage = result.heritage
         body = self.gemini.generate_report(
@@ -34,6 +51,7 @@ class TextReportAgent:
             heritage_name=heritage["name"],
             evidence=result.evidence,
             requested_length=context.requested_length,
+            history=history,
         )
 
         if result.warnings:
@@ -44,7 +62,7 @@ class TextReportAgent:
                 " ".join(result.warnings),
             )
 
-        answer = _CITATION_RE.sub("", body).strip()
+        answer = _trim_to_sentence(_CITATION_RE.sub("", body).strip())
 
         history = list(asked or [])
         history.append(context.original_query)

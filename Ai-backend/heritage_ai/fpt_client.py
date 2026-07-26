@@ -135,6 +135,7 @@ class FptLlmClient:
             ],
             "reasoning_effort": "low",
             "max_tokens": 1024,
+            "temperature": 0.0,
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
@@ -166,6 +167,7 @@ class FptLlmClient:
         heritage_name: str,
         evidence: list[Evidence],
         requested_length: str,
+        history: list[dict] | None = None,
     ) -> str:
         data = self._chat(
             {
@@ -174,12 +176,14 @@ class FptLlmClient:
                     {
                         "role": "user",
                         "content": report_prompt(
-                            query, heritage_name, evidence, requested_length
+                            query, heritage_name, evidence, requested_length, history
                         ),
                     },
                 ],
                 "reasoning_effort": "low",
                 "max_tokens": 2048,
+                # Cùng lý do với GeminiClient: giữ câu trả lời nhất quán.
+                "temperature": 0.2,
             }
         )
         return self._message_text(data, "tạo lời kể")

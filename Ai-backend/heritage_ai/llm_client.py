@@ -64,6 +64,7 @@ class LlmClient:
         heritage_name: str,
         evidence: list[Evidence],
         requested_length: str,
+        history: list[dict] | None = None,
     ) -> str:
         return self._with_fallback(
             "tạo lời kể",
@@ -72,5 +73,6 @@ class LlmClient:
                 heritage_name=heritage_name,
                 evidence=evidence,
                 requested_length=requested_length,
+                history=history,
             ),
         )
