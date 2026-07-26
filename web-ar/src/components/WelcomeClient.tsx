@@ -29,7 +29,8 @@ export default function WelcomeClient() {
     return <ARSceneClient artisans={artisans} />;
   }
 
-  const sampleMarkerUrl = artisans[0]?.ar.markerUrl;
+  // Mỗi nghệ nhân 1 link ảnh mốc (mở tab mới để in/xem trước khi quét).
+  const markerLinks = artisans.filter((a) => a.ar.markerUrl);
 
   return (
     <main className="relative flex min-h-dvh flex-col items-center justify-center gap-8 overflow-hidden bg-[#1d0a11] px-6 py-16 text-center text-white">
@@ -52,7 +53,7 @@ export default function WelcomeClient() {
       <div className="relative flex flex-col items-center gap-4">
         <span className="text-6xl drop-shadow-[0_0_24px_rgba(251,191,36,0.45)]">🪷</span>
         <h1 className="text-3xl font-bold tracking-tight text-amber-50 sm:text-4xl">
-          ARtifact VAIC
+          ARtifact
         </h1>
         <p className="max-w-md text-base leading-relaxed text-amber-100/75">
           Gìn giữ và lan tỏa những nghệ nhân di sản Việt Nam bằng AR ngay trên trình
@@ -72,22 +73,26 @@ export default function WelcomeClient() {
         Quét AR ngay
       </button>
 
-      <p className="relative max-w-xs text-xs text-amber-100/50">
-        Cho phép quyền camera khi được hỏi, rồi chĩa vào ảnh mốc của di sản.
-        {sampleMarkerUrl && (
-          <>
-            {' '}
-            <a
-              href={sampleMarkerUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-amber-300 underline"
-            >
-              Xem ảnh mốc mẫu ↗
-            </a>
-          </>
+      <div className="relative flex max-w-sm flex-col items-center gap-3">
+        <p className="max-w-xs text-xs text-amber-100/50">
+          Cho phép quyền camera khi được hỏi, rồi chĩa vào ảnh mốc của di sản.
+        </p>
+        {markerLinks.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+            {markerLinks.map((a) => (
+              <a
+                key={a.slug}
+                href={a.ar.markerUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-amber-300 underline"
+              >
+                Ảnh mốc {a.craft} ↗
+              </a>
+            ))}
+          </div>
         )}
-      </p>
+      </div>
 
       {/* Cảnh báo in-app hiện đè lên màn chào ngay khi vào link (Zalo/FB WebView) */}
       {inApp && !forceProceed && (
