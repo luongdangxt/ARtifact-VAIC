@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ARtifact VAIC — Web AR nghệ nhân di sản",
+  title: "ARtifact — Web AR nghệ nhân di sản",
   description: "Quét ảnh mốc để hiện model 3D nghệ nhân di sản. Không cần cài app.",
 };
 
