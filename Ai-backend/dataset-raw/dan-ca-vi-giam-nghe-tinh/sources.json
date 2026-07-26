@@ -23,6 +23,41 @@
       "source_url": "https://ich.unesco.org/en/RL/vi-and-gim-folk-songs-of-ngh-tnh-01008",
       "fetched_at": "2026-07-25",
       "chars": 2421
+    },
+    {
+      "file": "cuc-di-san__vi-giam-xu-nghe.txt",
+      "source": "Cục Di sản văn hóa – Dân ca Ví, Giặm xứ Nghệ (hồ sơ di sản)",
+      "source_url": "https://dsvh.gov.vn/dan-ca-vi-giam-xu-nghe-3160",
+      "fetched_at": "2026-07-26",
+      "chars": 6087
+    },
+    {
+      "file": "cuc-di-san__vi-giam-nghe-tinh.txt",
+      "source": "Cục Di sản văn hóa – Dân ca Ví, Giặm Nghệ Tĩnh",
+      "source_url": "https://dsvh.gov.vn/dan-ca-vi,-giam-nghe-tinh-1075",
+      "fetched_at": "2026-07-26",
+      "chars": 5266
+    },
+    {
+      "file": "tapchi-vhnt__dac-diem-va-gia-tri-tieu-bieu-vi-giam.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Đặc điểm và những giá trị tiêu biểu của dân ca Ví, Giặm Nghệ - Tĩnh",
+      "source_url": "http://vanhoanghethuat.vn/dac-diem-va-nhung-gia-tri-tieu-bieu-cua-dan-ca-vi-giam-nghe-tinh.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 21416
+    },
+    {
+      "file": "bao-nhan-dan__no-luc-trao-truyen-di-san-vi-giam.txt",
+      "source": "Báo Nhân Dân – Nỗ lực trao truyền di sản Ví, Giặm Nghệ Tĩnh",
+      "source_url": "https://special.nhandan.vn/No-luc-trao-truyen-di-san-Vi-Giam-Nghe-Tinh/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 18835
+    },
+    {
+      "file": "vietnamplus__ve-xu-nghe-kham-pha-net-doc-dao-vi-giam.txt",
+      "source": "TTXVN/VietnamPlus – Về xứ Nghệ khám phá nét độc đáo của loại hình dân ca Ví, Giặm",
+      "source_url": "https://www.vietnamplus.vn/ve-xu-nghe-kham-pha-net-doc-dao-cua-loai-hinh-dan-ca-vi-giam-post305531.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 16627
     }
   ]
 }

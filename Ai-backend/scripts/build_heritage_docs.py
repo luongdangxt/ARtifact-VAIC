@@ -74,6 +74,16 @@ Quy tắc bắt buộc:
    số liệu và tên riêng.
 4. Nếu tư liệu không đủ cho một mục, hãy viết ngắn hoặc để chuỗi rỗng. Mục rỗng tốt
    hơn mục bịa. Không lặp lại nội dung của mục khác cho đủ độ dài.
+4b. Nhưng khi tư liệu CÓ chi tiết thì phải VÉT HẾT, đừng tóm tắt. Tư liệu đưa vào
+   đây là nhiều nguồn đã được chọn lọc kỹ; nhiệm vụ của bạn là chuyển tối đa lượng
+   chi tiết cụ thể sang tài liệu, không phải rút gọn chúng. Cụ thể phải giữ lại:
+   mọi con số, mọi tên riêng, mọi thuật ngữ bản địa kèm nghĩa, tên từng làn điệu /
+   từng bài bản / từng công đoạn / từng nhân vật, và các bước của quy trình theo
+   đúng trình tự. Nếu hai nguồn nói cùng một ý nhưng nguồn này có thêm chi tiết thì
+   lấy bản chi tiết hơn.
+   Độ dài mong muốn khi tư liệu cho phép: overview 200-350 từ; history, meaning,
+   location mỗi mục 300-600 từ; practice 600-1200 từ; all 400-800 từ. Đây là mục
+   tiêu, không phải hạn mức để nống chữ: thà ngắn hơn còn hơn thêm câu rỗng.
 5. Viết văn xuôi liền mạch, giọng kể tự nhiên cho hướng dẫn viên đọc cho du khách.
    Không dùng gạch đầu dòng, không markdown, không tiêu đề con trong nội dung.
 6. TUYỆT ĐỐI không nhắc tới bản thân tư liệu. Cấm các câu như "Theo tư liệu...",
@@ -86,9 +96,12 @@ Các mục cần viết (dùng đúng khóa intent):
 - overview: khái quát di sản là gì, đặc điểm nhận diện nổi bật nhất.
 - history: nguồn gốc, truyền thuyết, các mốc lịch sử, quá trình được công nhận.
 - practice: cách thực hành/trình diễn/chế tác cụ thể — quy trình, kỹ thuật, nhạc cụ,
-  vật liệu, vai trò từng người, trình tự nghi lễ. Đây là mục cần chi tiết nhất.
+  vật liệu, vai trò từng người, trình tự nghi lễ. Đây là mục cần chi tiết nhất: kể
+  đủ từng công đoạn theo thứ tự, gọi đúng tên bản địa của công đoạn và dụng cụ, nêu
+  con số (số người, số ngày, kích thước, nhiệt độ, số bài bản) nếu tư liệu có.
 - meaning: ý nghĩa, giá trị văn hóa - xã hội, vai trò trong đời sống cộng đồng.
 - location: địa bàn thực hành, làng/đền/tỉnh cụ thể, thời điểm diễn ra trong năm.
+  Liệt kê đủ tên các tỉnh/làng/di tích mà tư liệu nêu, kèm ngày âm lịch nếu có.
 - etiquette: điều du khách nên và không nên làm khi tới xem hoặc trải nghiệm. Chỉ
   viết những gì suy ra trực tiếp được từ tư liệu về tính chất nghi lễ, không khuyên
   chung chung.

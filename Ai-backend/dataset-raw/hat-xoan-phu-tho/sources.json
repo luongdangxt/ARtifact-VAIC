@@ -22,6 +22,48 @@
       "source_url": "https://ich.unesco.org/en/RL/xoan-singing-of-phu-th-province-viet-nam-01260",
       "fetched_at": "2026-07-25",
       "chars": 2520
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-hat-xoan.txt",
+      "source": "Cục Di sản văn hóa – Hát Xoan Phú Thọ được ghi danh tại Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://dsvh.gov.vn/hat-xoan-phu-tho-duoc-dua-ra-khoi-danh-sach-di-san-van-hoa-phi-vat-the-can-bao-ve-khan-cap-va-ghi-danh-tai-danh-sach-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-1534",
+      "fetched_at": "2026-07-26",
+      "chars": 9119
+    },
+    {
+      "file": "tapchi-vhnt__bao-ton-phat-huy-gia-tri-hat-xoan.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Bảo tồn, phát huy giá trị di sản văn hóa hát Xoan Phú Thọ hiện nay",
+      "source_url": "http://vanhoanghethuat.vn/bao-ton-phat-huy-gia-tri-di-san-van-hoa-hat-xoan-phu-tho-hien-nay.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 19184
+    },
+    {
+      "file": "bao-phu-tho__hat-xoan-tu-suc-song-cong-dong.txt",
+      "source": "Báo Phú Thọ – Hát Xoan Phú Thọ: từ sức sống cộng đồng đến bảo tồn bền vững",
+      "source_url": "https://baophutho.vn/hat-xoan-phu-tho-tu-suc-song-cong-dong-den-bao-ton-ben-vung-251755.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 8925
+    },
+    {
+      "file": "bao-nhan-dan__giu-gin-lan-toa-hat-xoan-tren-khong-gian-mang.txt",
+      "source": "Báo Nhân Dân – Giữ gìn và lan tỏa di sản hát Xoan Phú Thọ trên không gian mạng",
+      "source_url": "https://nhandan.vn/giu-gin-va-lan-toa-di-san-hat-xoan-phu-tho-tren-khong-gian-mang-post801384.html",
+      "fetched_at": "2026-07-26",
+      "chars": 5574
+    },
+    {
+      "file": "vietnamplus__hat-xoan-tham-tinh-dat-va-nguoi-phu-tho.txt",
+      "source": "TTXVN/VietnamPlus – Hát Xoan, thấm tình đất và người Phú Thọ",
+      "source_url": "https://special.vietnamplus.vn/2022/04/08/hat_xoan/",
+      "fetched_at": "2026-07-26",
+      "chars": 8186
+    },
+    {
+      "file": "vietnamplus__nhung-khuc-dan-ca-co-xua-nhat.txt",
+      "source": "TTXVN/VietnamPlus – Hát Xoan Phú Thọ: những khúc dân ca cổ xưa nhất của người Việt",
+      "source_url": "https://www.vietnamplus.vn/hat-xoan-phu-tho-nhung-khuc-dan-ca-co-xua-nhat-cua-nguoi-viet-post881002.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 13841
     }
   ]
 }

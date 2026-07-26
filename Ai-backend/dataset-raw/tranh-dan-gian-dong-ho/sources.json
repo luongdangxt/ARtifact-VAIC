@@ -23,6 +23,41 @@
       "source_url": "https://ich.unesco.org/en/USL/craft-of-making-ong-h-folk-woodblock-printings-01737",
       "fetched_at": "2026-07-25",
       "chars": 2606
+    },
+    {
+      "file": "cuc-di-san__tranh-dong-ho.txt",
+      "source": "Cục Di sản văn hóa – Tranh dân gian Đông Hồ (hồ sơ di sản)",
+      "source_url": "https://dsvh.gov.vn/tranh-dan-gian-dong-ho-3151",
+      "fetched_at": "2026-07-26",
+      "chars": 7442
+    },
+    {
+      "file": "tapchi-vhnt__gia-tri-doc-dao-dac-sac-tinh-te-tranh-dong-ho.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Giá trị độc đáo, đặc sắc và tinh tế của truyền thống tranh dân gian Đông Hồ",
+      "source_url": "http://www.vanhoanghethuat.vn/gia-tri-doc-dao-dac-sac-va-tinh-te-cua-truyen-thong-tranh-dan-gian-dong-ho.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 21891
+    },
+    {
+      "file": "bao-nhan-dan__giu-tranh-dong-ho-phai-giu-ca-giay-diep.txt",
+      "source": "Báo Nhân Dân – Giữ tranh Đông Hồ, phải giữ cả giấy điệp",
+      "source_url": "https://nhandan.vn/giu-tranh-dong-ho-phai-giu-ca-giay-diep-post579681.html",
+      "fetched_at": "2026-07-26",
+      "chars": 4399
+    },
+    {
+      "file": "vietnamplus__kham-pha-gia-tri-doc-dao-tranh-dong-ho.txt",
+      "source": "TTXVN/VietnamPlus – Khám phá giá trị độc đáo của tranh Đông Hồ, di sản cần bảo vệ",
+      "source_url": "https://www.vietnamplus.vn/tim-hieu-net-doc-dao-cua-tranh-dong-ho-di-san-van-hoa-can-bao-ve-khan-cap-post1082132.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 18505
+    },
+    {
+      "file": "vietnamplus__unesco-ghi-danh-nghe-lam-tranh-dong-ho.txt",
+      "source": "TTXVN/VietnamPlus – UNESCO ghi danh nghề làm tranh Đông Hồ vào Danh sách di sản cần bảo vệ khẩn cấp",
+      "source_url": "https://www.vietnamplus.vn/unesco-ghi-danh-nghe-lam-tranh-dong-ho-vao-danh-sach-di-san-can-bao-ve-khan-cap-post1082013.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 16688
     }
   ]
 }
