@@ -6,6 +6,8 @@ from heritage_ai.gemini_client import (
     GeminiResponseError,
     QueryAnalysis,
 )
+from heritage_ai.llm_client import LlmClient
+from heritage_ai.llm_contract import validate_analysis
 from heritage_ai.local_router import LocalRouter, classify_intent, classify_length
 from heritage_ai.models import Evidence, QueryContext, ResearchResult
 from heritage_ai.orchestrator import HeritageChatbot
@@ -262,8 +264,8 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertIn("Nhã nhạc cung đình Huế", answer)
         self.assertNotIn("Nguồn gốc và lịch sử:", answer)
 
-    def test_gemini_analysis_validation_rejects_unknown_heritage(self) -> None:
-        analysis = GeminiClient._validate_analysis(
+    def test_analysis_validation_rejects_unknown_heritage(self) -> None:
+        analysis = validate_analysis(
             {
                 "intent": "overview",
                 "requested_length": "normal",
@@ -327,6 +329,106 @@ class HeritageChatbotTests(unittest.TestCase):
         self.assertNotIn("Nguồn tham khảo", answer)
         self.assertNotIn("Nguồn được dùng", answer)
         self.assertNotIn("Lưu ý", answer)
+
+
+class BrokenLlmClient:
+    """Nhà cung cấp chính luôn hỏng (hết quota, 5xx...)."""
+
+    def analyze_query(self, query, heritage_names):
+        raise GeminiResponseError("hết quota")
+
+    def generate_report(self, query, heritage_name, evidence, requested_length):
+        raise GeminiResponseError("hết quota")
+
+
+class BackupLlmClient:
+    available = True
+
+    def __init__(self) -> None:
+        self.analyze_calls = 0
+        self.report_calls = 0
+
+    def analyze_query(self, query, heritage_names):
+        self.analyze_calls += 1
+        return QueryAnalysis("overview", "normal", heritage_names[0], False, "")
+
+    def generate_report(self, query, heritage_name, evidence, requested_length):
+        self.report_calls += 1
+        return f"Lời kể dự phòng về {heritage_name}."
+
+
+class LlmFailoverTests(unittest.TestCase):
+    def test_falls_back_to_backup_when_primary_fails(self) -> None:
+        backup = BackupLlmClient()
+        client = LlmClient(primary=BrokenLlmClient(), backup=backup, provider="auto")
+
+        analysis = client.analyze_query("Quan họ là gì?", ["Dân ca Quan họ Bắc Ninh"])
+        report = client.generate_report(
+            query="Quan họ là gì?",
+            heritage_name="Dân ca Quan họ Bắc Ninh",
+            evidence=[],
+            requested_length="normal",
+        )
+
+        self.assertEqual(analysis.heritage_name, "Dân ca Quan họ Bắc Ninh")
+        self.assertIn("dự phòng", report)
+        self.assertEqual((backup.analyze_calls, backup.report_calls), (1, 1))
+
+    def test_gemini_only_mode_never_touches_backup(self) -> None:
+        backup = BackupLlmClient()
+        client = LlmClient(
+            primary=BrokenLlmClient(), backup=backup, provider="gemini"
+        )
+
+        with self.assertRaises(GeminiResponseError):
+            client.analyze_query("Quan họ là gì?", ["Dân ca Quan họ Bắc Ninh"])
+        self.assertEqual(backup.analyze_calls, 0)
+
+    def test_fpt_only_mode_uses_backup_as_primary(self) -> None:
+        backup = BackupLlmClient()
+        client = LlmClient(primary=BrokenLlmClient(), backup=backup, provider="fpt")
+
+        client.analyze_query("Quan họ là gì?", ["Dân ca Quan họ Bắc Ninh"])
+        self.assertEqual(backup.analyze_calls, 1)
+
+    def test_backup_without_api_key_is_skipped(self) -> None:
+        backup = BackupLlmClient()
+        backup.available = False
+        client = LlmClient(primary=BrokenLlmClient(), backup=backup, provider="auto")
+
+        with self.assertRaises(GeminiResponseError):
+            client.analyze_query("Quan họ là gì?", ["Dân ca Quan họ Bắc Ninh"])
+        self.assertEqual(backup.analyze_calls, 0)
+
+    def test_backup_accepts_shortened_heritage_name(self) -> None:
+        # gpt-oss hay rút gọn tên ("Quan họ") thay vì chép nguyên văn ứng viên.
+        analysis = validate_analysis(
+            {
+                "intent": "history",
+                "requested_length": "normal",
+                "heritage_name": "Quan họ",
+                "needs_clarification": False,
+                "clarification_question": "",
+            },
+            ["Dân ca Quan họ Bắc Ninh", "Nhã nhạc cung đình Huế"],
+        )
+        self.assertEqual(analysis.heritage_name, "Dân ca Quan họ Bắc Ninh")
+        self.assertFalse(analysis.needs_clarification)
+
+    def test_ambiguous_shortened_name_still_asks_back(self) -> None:
+        # Hai ứng viên cùng chứa "quan họ" -> vẫn mơ hồ, phải hỏi lại du khách.
+        analysis = validate_analysis(
+            {
+                "intent": "history",
+                "requested_length": "normal",
+                "heritage_name": "Quan họ",
+                "needs_clarification": False,
+                "clarification_question": "",
+            },
+            ["Dân ca Quan họ Bắc Ninh", "Hát Quan họ Bắc Giang"],
+        )
+        self.assertIsNone(analysis.heritage_name)
+        self.assertTrue(analysis.needs_clarification)
 
 
 if __name__ == "__main__":

@@ -6,19 +6,25 @@
 - TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI), mặc định trả
   MP3 (FPT_TTS_FORMAT). Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt
   — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần.
-- STT: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline -> transcript.
-  Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client không cần convert.
+- STT chính: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline ->
+  transcript. Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client
+  không cần convert.
+- STT dự phòng: FPT.AI-whisper-large-v3-turbo (mkp-api.fptcloud.com, API kiểu
+  OpenAI). Endpoint này CHỈ nhận wav/mp3 — webm/opus và mp4/aac đều trả 503 —
+  nên bản ghi gốc từ trình duyệt được giải mã sang WAV 16kHz mono trước khi gửi.
 """
 
 from __future__ import annotations
 
 import base64
+import io
 import json
 import logging
 import os
 import re
 import struct
 import time
+import wave
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
@@ -60,6 +66,19 @@ FPT_TTS_VOICE = os.getenv("FPT_TTS_VOICE", "std_leminh")  # giọng NAM cho NPC 
 FPT_TTS_FORMAT = os.getenv("FPT_TTS_FORMAT", "mp3").strip().lower()
 # auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower()
+
+# --- STT dự phòng: FPT.AI-whisper (endpoint kiểu OpenAI /v1/audio/transcriptions) ---
+FPT_STT_URL = os.getenv(
+    "FPT_STT_URL", "https://mkp-api.fptcloud.com/v1/audio/transcriptions"
+)
+FPT_STT_MODEL = os.getenv("FPT_STT_MODEL", "FPT.AI-whisper-large-v3-turbo")
+FPT_STT_LANGUAGE = os.getenv("FPT_STT_LANGUAGE", "vi").strip()
+# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
+STT_PROVIDER = os.getenv("STT_PROVIDER", "auto").strip().lower()
+# Đã đo trực tiếp: whisper của FPT nhận wav/mp3, còn webm/opus và mp4/aac trả
+# 503 "Transcription service unavailable" -> mọi định dạng khác phải giải mã trước.
+_FPT_STT_FORMATS = {"wav", "mp3"}
+_STT_SAMPLE_RATE = 16000  # whisper resample về 16kHz, gửi sẵn cho nhẹ đường truyền
 
 
 class VoiceError(RuntimeError):
@@ -108,7 +127,22 @@ def _first_part(data: dict) -> dict:
 
 
 def transcribe(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
-    """Audio -> câu nói tiếng Việt (STT)."""
+    """Audio -> câu nói tiếng Việt (STT). Gemini là chính, FPT.AI-whisper dự phòng."""
+    if STT_PROVIDER == "fpt":
+        return transcribe_fpt(audio_bytes, mime_type)
+
+    try:
+        return transcribe_gemini(audio_bytes, mime_type)
+    except VoiceError as exc:
+        if STT_PROVIDER == "gemini" or not _fpt_api_key():
+            raise
+        # Gemini hỏng (hết quota 429, model lỗi...) -> vẫn nghe được nhờ FPT.
+        _log.warning("Gemini STT lỗi, chuyển sang FPT.AI-whisper: %s", exc)
+        return transcribe_fpt(audio_bytes, mime_type)
+
+
+def transcribe_gemini(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
+    """Audio -> câu nói tiếng Việt bằng Gemini (nhận thẳng bản ghi nén gốc)."""
     payload = {
         "contents": [
             {
@@ -130,6 +164,121 @@ def transcribe(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
         ]
     }
     text = (_first_part(_post(STT_MODEL, payload)).get("text") or "").strip()
+    if not text:
+        raise VoiceError("Không nhận diện được lời nói.")
+    return text
+
+
+# MIME của bản ghi -> đuôi file (whisper chọn bộ giải mã theo đuôi trong multipart).
+_MIME_EXTS = {
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/wave": "wav",
+    "audio/mp3": "mp3",
+    "audio/mpeg": "mp3",
+    "audio/webm": "webm",
+    "video/webm": "webm",
+    "audio/ogg": "ogg",
+    "audio/mp4": "m4a",
+    "video/mp4": "m4a",
+    "audio/aac": "aac",
+    "audio/flac": "flac",
+    "audio/aiff": "aiff",
+}
+
+
+def _ext_from_mime(mime_type: str) -> str:
+    base = (mime_type or "").lower().split(";")[0].strip()
+    return _MIME_EXTS.get(base, base.rsplit("/", 1)[-1] or "webm")
+
+
+def _frame_pcm(frame) -> bytes:
+    """PCM thô của một AudioFrame s16 mono.
+
+    Lấy thẳng plane thay vì to_ndarray() để không kéo theo numpy; buffer của plane
+    được ffmpeg căn lề nên phải cắt đúng samples * 2 byte, phần đệm dư là rác.
+    """
+    return bytes(frame.planes[0])[: frame.samples * 2]
+
+
+def _decode_to_wav(audio_bytes: bytes) -> bytes:
+    """Bản ghi nén (webm/opus, mp4/aac, ogg...) -> WAV 16kHz mono 16-bit.
+
+    Dùng PyAV (bundle sẵn thư viện ffmpeg trong wheel) nên image không cần cài
+    ffmpeg riêng. Chỉ chạy ở đường dự phòng, tức khi Gemini STT đã hỏng.
+    """
+    try:
+        import av
+    except ImportError as exc:  # pragma: no cover - phụ thuộc môi trường
+        raise VoiceError(
+            "Chưa cài av (PyAV) để chuyển bản ghi sang WAV cho FPT STT."
+        ) from exc
+
+    try:
+        with av.open(io.BytesIO(audio_bytes)) as container:
+            stream = next(
+                (s for s in container.streams if s.type == "audio"), None
+            )
+            if stream is None:
+                raise VoiceError("Bản ghi không có luồng âm thanh.")
+            resampler = av.AudioResampler(
+                format="s16", layout="mono", rate=_STT_SAMPLE_RATE
+            )
+            pcm = bytearray()
+            for frame in container.decode(stream):
+                for out in resampler.resample(frame):
+                    pcm += _frame_pcm(out)
+            for out in resampler.resample(None):  # xả nốt bộ đệm resample
+                pcm += _frame_pcm(out)
+    except VoiceError:
+        raise
+    except Exception as exc:  # av.AVError và họ hàng
+        raise VoiceError(f"Không giải mã được bản ghi để gửi FPT STT: {exc}") from exc
+
+    if not pcm:
+        raise VoiceError("Bản ghi không có dữ liệu âm thanh.")
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(_STT_SAMPLE_RATE)
+        wav.writeframes(bytes(pcm))
+    return buffer.getvalue()
+
+
+def transcribe_fpt(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
+    """Audio -> câu nói tiếng Việt bằng FPT.AI-whisper (1 request multipart)."""
+    key = _fpt_api_key()
+    if not key:
+        raise VoiceError("Chưa có FPT_API_KEY cho STT dự phòng.")
+
+    ext = _ext_from_mime(mime_type)
+    if ext not in _FPT_STT_FORMATS:
+        audio_bytes = _decode_to_wav(audio_bytes)
+        ext = "wav"
+
+    data = {"model": FPT_STT_MODEL}
+    if FPT_STT_LANGUAGE:
+        data["language"] = FPT_STT_LANGUAGE
+    try:
+        resp = requests.post(
+            FPT_STT_URL,
+            headers={"Authorization": f"Bearer {key}"},
+            data=data,
+            files={"file": (f"question.{ext}", audio_bytes, f"audio/{ext}")},
+            timeout=90,
+        )
+    except requests.RequestException as exc:
+        raise VoiceError(f"FPT STT không kết nối được: {exc}") from exc
+
+    if resp.status_code != 200:
+        raise VoiceError(f"FPT STT lỗi HTTP {resp.status_code}: {resp.text[:160]}")
+
+    try:
+        text = (resp.json().get("text") or "").strip()
+    except ValueError as exc:
+        raise VoiceError(f"FPT STT trả về dữ liệu lạ: {resp.text[:160]}") from exc
     if not text:
         raise VoiceError("Không nhận diện được lời nói.")
     return text

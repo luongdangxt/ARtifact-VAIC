@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from heritage_ai.gemini_client import GeminiClient, GeminiError
+from heritage_ai.llm_client import LlmClient
+from heritage_ai.llm_contract import LlmError
 from heritage_ai.query_processing import QueryProcessor
 from heritage_ai.rag.retriever import RagRetriever
 from heritage_ai.rag.vector_store import RagError
@@ -15,11 +16,13 @@ class HeritageChatbot:
     def __init__(
         self,
         repository: HeritageRepository | None = None,
-        gemini: GeminiClient | None = None,
+        gemini: LlmClient | None = None,
         retriever: RagRetriever | None = None,
     ) -> None:
         self.repository = repository or HeritageRepository()
-        self.gemini = gemini or GeminiClient()
+        # Tên `gemini` giữ nguyên cho code gọi cũ, nhưng bên trong là LlmClient:
+        # Gemini chính + gpt-oss-120b (FPT) dự phòng khi Gemini hỏng/hết quota.
+        self.gemini = gemini or LlmClient()
         self.query_processor = QueryProcessor(self.gemini)
         self.retriever = retriever or RagRetriever(self.gemini)
         self.supervisor = ResearchSupervisor(self.retriever)
@@ -33,7 +36,7 @@ class HeritageChatbot:
                 ranked = self.retriever.rank_heritage_names(query)
             except RagError as exc:
                 return f"Không thể nhận diện di sản từ kho RAG: {exc}"
-            except GeminiError as exc:
+            except LlmError as exc:
                 return f"Không thể tạo embedding để nhận diện di sản: {exc}"
         else:
             ranked = [(item["name"], 0.0) for item in self.repository.all()]
@@ -41,8 +44,8 @@ class HeritageChatbot:
             return "Tôi chưa tìm thấy di sản phù hợp trong kho dữ liệu."
         try:
             context = self.query_processor.process(query, ranked)
-        except GeminiError as exc:
-            return f"Không thể xử lý câu hỏi bằng Gemini: {exc}"
+        except LlmError as exc:
+            return f"Không thể xử lý câu hỏi: {exc}"
 
         reflection = self.query_processor.reflect(context)
         if reflection:
@@ -62,8 +65,8 @@ class HeritageChatbot:
             return self.report_agent.compose(context, research_result, asked or [])
         except RagError as exc:
             return f"Không thể truy xuất kho RAG: {exc}"
-        except GeminiError as exc:
-            return f"Không thể tạo lời kể bằng Gemini: {exc}"
+        except LlmError as exc:
+            return f"Không thể tạo lời kể: {exc}"
 
     def list_heritages(self) -> str:
         lines = ["Các di sản hiện có trong kho tri thức:"]

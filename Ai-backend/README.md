@@ -5,7 +5,8 @@ Việt Nam. Hệ thống dùng:
 
 - `intfloat/multilingual-e5-base` chạy local để tạo embedding tiếng Việt.
 - ChromaDB chạy local để lưu và tìm kiếm vector.
-- Gemini để nhận diện ý định câu hỏi và tạo lời kể từ tư liệu RAG.
+- Gemini để nhận diện ý định câu hỏi và tạo lời kể từ tư liệu RAG, có
+  gpt-oss-120b (FPT Cloud) dự phòng khi Gemini hỏng/hết quota.
 - PDF trong thư mục `dataset` làm nguồn dữ liệu chính.
 
 Ứng dụng không có phần voice. Hai file chạy chính được tách riêng:
@@ -61,7 +62,11 @@ Chatbot_DeepSearch/
 │       └── *.pdf                # Dataset PDF chính
 ├── heritage_ai/
 │   ├── orchestrator.py          # Điều phối pipeline hỏi đáp
+│   ├── llm_client.py            # Chọn LLM và tự chuyển sang dự phòng khi hỏng
+│   ├── llm_contract.py          # Prompt, schema JSON, kiểm tra kết quả (dùng chung)
 │   ├── gemini_client.py         # Gemini API, Structured Output và retry
+│   ├── fpt_client.py            # LLM dự phòng gpt-oss-120b (FPT Cloud)
+│   ├── voice.py                 # STT/TTS, Gemini chính và FPT dự phòng
 │   ├── query_processing.py      # Semantic Router và Reflection
 │   ├── research_agents.py       # Các agent nghiên cứu/kiểm chứng
 │   ├── report_agent.py          # Ghép câu trả lời và nguồn trích dẫn
@@ -163,6 +168,12 @@ GEMINI_API_KEY=thay_bang_api_key_cua_ban
 GEMINI_MODEL=gemini-3.1-flash-lite
 GEMINI_MAX_RETRIES=2
 
+# Dự phòng FPT Cloud cho LLM/STT/TTS; bỏ trống = tắt dự phòng.
+FPT_API_KEY=
+LLM_PROVIDER=auto
+STT_PROVIDER=auto
+TTS_PROVIDER=auto
+
 RAG_EMBEDDING_MODEL=intfloat/multilingual-e5-base
 RAG_EMBEDDING_DEVICE=auto
 RAG_TOP_K=5
@@ -182,8 +193,12 @@ RAG_MIN_RELEVANCE=0.15
 | `RAG_MIN_RELEVANCE` | `0.15` | Ngưỡng liên quan tối thiểu |
 | `ROUTER_MODE` | `auto` | `local` = router chạy hoàn toàn offline; `auto` = local rồi Gemini phân giải khi mơ hồ; `gemini` = luôn gọi Gemini |
 | `ROUTER_MARGIN` | `0.03` | Score hạng nhất phải hơn hạng nhì chừng này thì router local mới dám tự quyết |
+| `FPT_API_KEY` | *(trống)* | Key FPT Cloud Marketplace dùng chung cho LLM/STT/TTS dự phòng; bỏ trống = tắt hết dự phòng |
+| `LLM_PROVIDER` | `auto` | `auto` = Gemini trước, hỏng thì FPT; `gemini`/`fpt` = ép một nguồn |
+| `FPT_LLM_MODEL` | `gpt-oss-120b` | Model LLM dự phòng (router + lời kể) |
+| `STT_PROVIDER` | `auto` | `auto` = Gemini trước, hỏng thì FPT; `gemini`/`fpt` = ép một nguồn |
+| `FPT_STT_MODEL` | `FPT.AI-whisper-large-v3-turbo` | Model STT dự phòng |
 | `TTS_PROVIDER` | `auto` | `auto` = Gemini trước, hỏng thì FPT; `gemini`/`fpt` = ép một nguồn |
-| `FPT_API_KEY` | *(trống)* | Key FPT Cloud Marketplace; bỏ trống = tắt TTS dự phòng |
 | `FPT_TTS_MODEL` | `FPT.AI-VITs` | Model TTS dự phòng |
 | `FPT_TTS_VOICE` | `std_leminh` | Giọng đọc FPT (nam); giọng nữ: `std_kimngan` |
 | `FPT_TTS_FORMAT` | `mp3` | Định dạng FPT trả về; đổi sang `wav` chỉ khi cần gỡ lỗi vì file nặng hơn ~2 lần |
@@ -194,10 +209,17 @@ hạng di sản sẵn và intent tiếng Việt nhận ra được bằng từ k
 ràng không cần gọi Gemini để phân tích — tiết kiệm ~2.1s mỗi câu. Chỉ khi hai di
 sản đầu bảng bám sát nhau (câu mơ hồ kiểu "kể tôi nghe") mới nhờ tới Gemini.
 
-TTS dự phòng: khi Gemini TTS lỗi hoặc hết quota (429), `heritage_ai/voice.py` tự
-gọi FPT.AI-VITs để NPC vẫn có tiếng — câu trả lời chữ không bao giờ bị chặn vì
-TTS. Mặc định FPT cũng trả `.mp3`; đặt `FPT_TTS_FORMAT=wav` thì thành `.wav` —
-proxy `web-ar` hỗ trợ cả hai đuôi.
+Dự phòng FPT Cloud: chỉ cần một `FPT_API_KEY`, cả ba chặng đều tự chuyển nguồn
+khi Gemini lỗi hoặc hết quota (429) mà không phải sửa gì ở `web-ar`:
+
+| Chặng | Chính | Dự phòng | Ghi chú |
+|---|---|---|---|
+| LLM | Gemini | `gpt-oss-120b` | Cùng prompt/schema (`heritage_ai/llm_contract.py`) nên giọng NPC không đổi; đo được ~1.2s cho router, ~1.7s cho lời kể |
+| STT | Gemini | `FPT.AI-whisper-large-v3-turbo` | Endpoint FPT **chỉ nhận wav/mp3** (webm/opus và mp4/aac đều trả 503), nên `voice.py` giải mã bản ghi sang WAV 16kHz mono bằng PyAV trước khi gửi |
+| TTS | Gemini | `FPT.AI-VITs` | Mặc định FPT cũng trả `.mp3`; đặt `FPT_TTS_FORMAT=wav` thì thành `.wav` — proxy `web-ar` hỗ trợ cả hai đuôi |
+
+Câu trả lời chữ không bao giờ bị chặn vì TTS: TTS hỏng cả hai nguồn thì
+`audio_url=null` và NPC vẫn hiện phụ đề.
 
 File `.env` đã được khai báo trong `.gitignore`. Không đưa API key vào code,
 ảnh chụp màn hình hoặc GitHub.

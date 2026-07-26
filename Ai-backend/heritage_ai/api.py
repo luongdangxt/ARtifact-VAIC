@@ -4,7 +4,9 @@
 - /v1/audio/ask    : hỏi bằng GIỌNG (STT -> trả lời -> TTS)
 - /v1/audio/files/ : serve WAV do TTS sinh (lưu tạm trong RAM)
 
-STT/TTS chạy bằng Gemini (heritage_ai/voice.py), dùng chung GEMINI_API_KEY.
+STT/TTS chạy bằng Gemini (heritage_ai/voice.py), dùng chung GEMINI_API_KEY, và
+tự chuyển sang FPT Cloud (whisper-large-v3-turbo / FPT.AI-VITs) khi Gemini hỏng.
+Phần trả lời cũng vậy: Gemini chính, gpt-oss-120b của FPT dự phòng.
 
 Chạy:  uvicorn heritage_ai.api:app --host 0.0.0.0 --port 8000
 """
@@ -123,7 +125,8 @@ _CONTENT_TYPES = {
     "webm": "audio/webm",
 }
 
-# Đuôi -> MIME mà Gemini STT chấp nhận (đã kiểm chứng nhận cả webm/mp4).
+# Đuôi -> MIME mà Gemini STT chấp nhận (đã kiểm chứng nhận cả webm/mp4). Nếu phải
+# lùi về whisper của FPT thì voice.py tự giải mã sang WAV, client không đổi gì.
 _STT_MIMES = {
     "wav": "audio/wav",
     "mp3": "audio/mp3",

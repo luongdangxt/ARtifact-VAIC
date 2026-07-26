@@ -1,11 +1,11 @@
-"""Semantic Router (local, có Gemini dự phòng) và bước Reflection."""
+"""Semantic Router (local, có LLM dự phòng) và bước Reflection."""
 
 from __future__ import annotations
 
 import logging
 import os
 
-from heritage_ai.gemini_client import GeminiClient
+from heritage_ai.llm_client import LlmClient
 from heritage_ai.local_router import LocalRouter
 from heritage_ai.models import QueryContext
 from heritage_ai.text_utils import normalize_text
@@ -13,15 +13,15 @@ from heritage_ai.text_utils import normalize_text
 _log = logging.getLogger(__name__)
 
 # local  = chỉ router local (nhanh nhất, câu mơ hồ thì hỏi lại du khách)
-# auto   = local trước, mơ hồ mới nhờ Gemini phân giải  (mặc định)
-# gemini = luôn gọi Gemini như trước khi tối ưu (để đối chiếu khi gỡ lỗi)
+# auto   = local trước, mơ hồ mới nhờ LLM phân giải  (mặc định)
+# gemini = luôn gọi LLM như trước khi tối ưu (để đối chiếu khi gỡ lỗi)
 DEFAULT_MODE = "auto"
 
 
 class QueryProcessor:
     def __init__(
         self,
-        gemini: GeminiClient,
+        gemini: LlmClient,
         router: LocalRouter | None = None,
         mode: str | None = None,
     ) -> None:

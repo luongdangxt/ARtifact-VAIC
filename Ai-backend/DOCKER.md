@@ -65,6 +65,10 @@ cp .env.example .env
 Mở `.env`, dán Gemini API key thật vào `GEMINI_API_KEY`
 (lấy tại https://aistudio.google.com/apikey).
 
+Dán thêm `FPT_API_KEY` (FPT Cloud Marketplace) nếu muốn có dự phòng: khi Gemini
+hỏng hoặc hết quota, LLM/STT/TTS tự chuyển sang gpt-oss-120b,
+FPT.AI-whisper-large-v3-turbo và FPT.AI-VITs.
+
 ## 2. Build image
 
 ```bash
