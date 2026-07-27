@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import threading
 import time
 import os
@@ -102,13 +103,18 @@ def _store_audio(data: bytes, ext: str) -> str:
     return name
 
 
-def _synthesize_url(answer: str) -> str | None:
+def _voice_gender(persona_gender: str | None) -> str:
+    """Chuẩn hoá giới tính giọng đọc từ client ("female"/"nữ" -> nữ, còn lại nam)."""
+    return "female" if (persona_gender or "").strip().casefold() in {"female", "nữ", "nu", "f"} else "male"
+
+
+def _synthesize_url(answer: str, gender: str = "male") -> str | None:
     """TTS câu trả lời -> URL file audio (proxy sẽ stream). None nếu TTS lỗi.
 
     voice.synthesize tự chọn nguồn: Gemini (mp3) và dự phòng FPT.AI-VITs (wav).
     """
     try:
-        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer))
+        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer), gender)
     except voice_mod.VoiceError as exc:
         # Cả hai nguồn TTS đều hỏng -> vẫn giữ câu trả lời chữ, chỉ log để biết.
         _log.warning("TTS thất bại: %s", exc)
@@ -156,10 +162,10 @@ def _wants_tts(value: str) -> bool:
     return value.strip().casefold() in {"1", "true", "yes", "on"}
 
 
-def _asked_from_json(history_json: str) -> list[str]:
-    """Rút các câu du khách đã hỏi từ history dạng JSON của form multipart.
+def _turns_from_json(history_json: str) -> list[dict]:
+    """Chuẩn hoá history dạng JSON của form multipart về [{"role", "content"}].
 
-    History hỏng không được làm chết request — cùng lắm mất phần lọc gợi ý trùng.
+    History hỏng không được làm chết request — cùng lắm mất ngữ cảnh hội thoại.
     """
     try:
         turns = json.loads(history_json or "[]")
@@ -168,12 +174,34 @@ def _asked_from_json(history_json: str) -> list[str]:
     if not isinstance(turns, list):
         return []
     return [
-        turn["content"]
+        {"role": turn["role"], "content": turn["content"]}
         for turn in turns
         if isinstance(turn, dict)
-        and turn.get("role") == "user"
+        and turn.get("role") in {"user", "assistant"}
         and isinstance(turn.get("content"), str)
     ]
+
+
+def _asked(turns: list[dict]) -> list[str]:
+    return [turn["content"] for turn in turns if turn["role"] == "user"]
+
+
+# Ngữ cảnh gửi kèm cho LLM: 2 lượt hỏi-đáp gần nhất, mỗi lượt cắt gọn — chỉ đủ để
+# hiểu câu nối tiếp, không để nội dung cũ tràn vào câu trả lời mới.
+_HISTORY_CONTEXT_TURNS = 4
+_HISTORY_CONTENT_MAX = 300
+_FOLLOW_UP_BLOCK_RE = re.compile(r"\n+\s*Bạn có thể hỏi tiếp:.*", re.S)
+
+
+def _context_turns(turns: list[dict]) -> list[dict]:
+    recent = []
+    for turn in turns[-_HISTORY_CONTEXT_TURNS:]:
+        content = _FOLLOW_UP_BLOCK_RE.sub("", turn["content"]).strip()
+        if len(content) > _HISTORY_CONTENT_MAX:
+            content = content[:_HISTORY_CONTENT_MAX].rstrip() + "…"
+        if content:
+            recent.append({"role": turn["role"], "content": content})
+    return recent
 
 
 class HistoryTurn(BaseModel):
@@ -188,6 +216,8 @@ class AskRequest(BaseModel):
     persona_name: str | None = None
     persona_craft: str | None = None
     persona_bio: str | None = None
+    # "male" (mặc định) | "female" — chọn giọng TTS khớp giới tính model nghệ nhân.
+    persona_gender: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -212,9 +242,21 @@ def ask(req: AskRequest) -> AskResponse:
     if not question:
         raise HTTPException(status_code=400, detail="Thiếu câu hỏi.")
 
-    asked = [turn.content for turn in req.history if turn.role == "user"]
-    answer = _get_chatbot().ask(_build_query(question, req.persona_craft), asked=asked)
-    audio_url = _synthesize_url(answer) if req.synthesize else None
+    turns = [
+        {"role": turn.role, "content": turn.content}
+        for turn in req.history
+        if turn.role in {"user", "assistant"}
+    ]
+    answer = _get_chatbot().ask(
+        _build_query(question, req.persona_craft),
+        asked=_asked(turns),
+        history=_context_turns(turns),
+    )
+    audio_url = (
+        _synthesize_url(answer, _voice_gender(req.persona_gender))
+        if req.synthesize
+        else None
+    )
     return AskResponse(answer=answer, audio_url=audio_url)
 
 
@@ -226,6 +268,7 @@ async def audio_ask(
     persona_name: str | None = Form(None),
     persona_craft: str | None = Form(None),
     persona_bio: str | None = Form(None),
+    persona_gender: str | None = Form(None),
 ) -> AudioAskResponse:
     audio_bytes = await file.read()
     if not audio_bytes:
@@ -236,10 +279,17 @@ async def audio_ask(
     except voice_mod.VoiceError as exc:
         raise HTTPException(status_code=502, detail=f"STT lỗi: {exc}") from exc
 
+    turns = _turns_from_json(history_json)
     answer = _get_chatbot().ask(
-        _build_query(transcript, persona_craft), asked=_asked_from_json(history_json)
+        _build_query(transcript, persona_craft),
+        asked=_asked(turns),
+        history=_context_turns(turns),
     )
-    audio_url = _synthesize_url(answer) if _wants_tts(synthesize) else None
+    audio_url = (
+        _synthesize_url(answer, _voice_gender(persona_gender))
+        if _wants_tts(synthesize)
+        else None
+    )
     return AudioAskResponse(answer=answer, transcript=transcript, audio_url=audio_url)
 
 

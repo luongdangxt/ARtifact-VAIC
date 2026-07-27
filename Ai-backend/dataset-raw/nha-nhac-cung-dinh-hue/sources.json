@@ -22,6 +22,55 @@
       "source_url": "https://ich.unesco.org/en/RL/nha-nhac-vietnamese-court-music-00074",
       "fetched_at": "2026-07-25",
       "chars": 2844
+    },
+    {
+      "file": "cuc-di-san__nha-nhac.txt",
+      "source": "Cục Di sản văn hóa – Nhã nhạc, Âm nhạc cung đình Việt Nam",
+      "source_url": "https://dsvh.gov.vn/nha-nhac-am-nhac-cung-dinh-viet-nam-483",
+      "fetched_at": "2026-07-26",
+      "chars": 5061
+    },
+    {
+      "file": "trung-tam-bao-ton-di-tich-co-do-hue__nha-nhac.txt",
+      "source": "Trung tâm Bảo tồn Di tích Cố đô Huế – Nhã nhạc",
+      "source_url": "https://hueworldheritage.org.vn/Di-san/Chi-tiet/tid/Nha-nhac/cid/5",
+      "fetched_at": "2026-07-26",
+      "chars": 5354
+    },
+    {
+      "file": "tapchi-vhnt__cac-to-chuc-dan-nhac-trong-te-dan-xa-tac.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Các tổ chức dàn nhạc trong tế đàn Xã Tắc",
+      "source_url": "http://www.vanhoanghethuat.vn/cac-to-chuc-dan-nhac-trong-te-dan-xa-tac.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 9721
+    },
+    {
+      "file": "tapchi-vhnt__quy-dinh-su-dung-nhac-le-te-dan-xa-tac.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Quy định sử dụng nhạc lễ trong tế đàn Xã Tắc dưới thời Nguyễn",
+      "source_url": "http://vanhoanghethuat.vn/quy-dinh-su-dung-nhac-le-trong-te-dan-xa-tac-duoi-thoi-nguyen.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 11029
+    },
+    {
+      "file": "vietnamplus__nha-nhac-kiet-tac-am-nhac-bac-hoc.txt",
+      "source": "TTXVN/VietnamPlus – Nhã nhạc cung đình Huế, kiệt tác âm nhạc bác học và tao nhã",
+      "source_url": "https://mega.vietnamplus.vn/nha-nhac-cung-dinh-hue-kiet-tac-am-nhac-bac-hoc-va-tao-nha-5350.html",
+      "fetched_at": "2026-07-26",
+      "chars": 20840
+    },
+    {
+      "file": "vietnamplus__nha-nhac-hue-dinh-cao-am-nhac-cung-dinh.txt",
+      "source": "TTXVN/VietnamPlus – Nhã nhạc Huế, đỉnh cao của âm nhạc cung đình Việt Nam",
+      "source_url": "https://www.vietnamplus.vn/nha-nhac-hue-dinh-cao-cua-am-nhac-cung-dinh-viet-nam-post617847.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 17313
+    },
+    {
+      "file": "vietnamplus__hon-di-san-trong-tung-nhip-phach.txt",
+      "source": "TTXVN/VietnamPlus – Nhã nhạc cung đình Huế: hồn di sản trong từng nhịp phách",
+      "source_url": "https://www.vietnamplus.vn/nha-nhac-cung-dinh-hue-hon-di-san-trong-tung-nhip-phach-post1045841.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 772
     }
   ]
 }

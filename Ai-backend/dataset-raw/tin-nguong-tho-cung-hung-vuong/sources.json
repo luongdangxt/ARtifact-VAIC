@@ -36,6 +36,48 @@
       "source_url": "https://ich.unesco.org/en/RL/worship-of-hung-kings-in-phu-th-00735",
       "fetched_at": "2026-07-25",
       "chars": 2523
+    },
+    {
+      "file": "tapchi-disanvanhoa__mien-dat-to-ba-di-san.txt",
+      "source": "Tạp chí Di sản văn hóa số 2 (47)-2014, Phạm Bá Khiêm – Miền đất Tổ, ba di sản văn hóa thế giới",
+      "source_url": "https://dsvh.gov.vn/Upload/files/Tap%20chi%20DSVH/So%2047/4715_Mien%20dat%20to%20ba%20di%20san%20van%20hoa%20the%20gioi.pdf",
+      "fetched_at": "2026-07-26",
+      "chars": 13008
+    },
+    {
+      "file": "tapchi-vhnt__tho-cung-hung-vuong-tin-nguong-van-hoa-nhan-loai.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Thờ cúng Hùng Vương, tín ngưỡng văn hóa của nhân loại",
+      "source_url": "http://www.vanhoanghethuat.vn/tho-cung-hung-vuong-tin-nguong-van-hoa-cua-nhan-loai.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 9337
+    },
+    {
+      "file": "bao-nhan-dan__tin-nguong-tho-cung-hung-vuong-gan-ket-cong-dong.txt",
+      "source": "Báo Nhân Dân – Tín ngưỡng thờ cúng Hùng Vương và tinh thần gắn kết cộng đồng",
+      "source_url": "https://special.nhandan.vn/tinnguongthocunghungvuong_vatinhthanganketcongdong/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 18099
+    },
+    {
+      "file": "bao-phu-tho__tin-nguong-tho-cung-hung-vuong-qua-le-hoi.txt",
+      "source": "Báo Phú Thọ – Tín ngưỡng thờ cúng Hùng Vương qua các lễ hội truyền thống",
+      "source_url": "https://baophutho.vn/tin-nguong-tho-cung-hung-vuong-qua-cac-le-hoi-truyen-thong-230011.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 19205
+    },
+    {
+      "file": "vietnamplus__gio-to-hung-vuong-bieu-tuong-khoi-nguon.txt",
+      "source": "TTXVN/VietnamPlus – Giỗ Tổ Hùng Vương, biểu tượng khơi nguồn và tạo sức mạnh đại đoàn kết toàn dân tộc",
+      "source_url": "https://mega.vietnamplus.vn/gio-to-hung-vuong-bieu-tuong-khoi-nguon-va-tao-suc-manh-dai-doan-ket-toan-dan-toc-5407.html",
+      "fetched_at": "2026-07-26",
+      "chars": 16560
+    },
+    {
+      "file": "vietnamplus__trong-tam-thuc-con-nguoi-viet-nam.txt",
+      "source": "TTXVN/VietnamPlus – Tín ngưỡng Thờ cúng Hùng Vương trong tâm thức con người Việt Nam",
+      "source_url": "https://www.vietnamplus.vn/tin-nguong-tho-cung-hung-vuong-trong-tam-thuc-con-nguoi-viet-nam-post914571.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 16736
     }
   ]
 }

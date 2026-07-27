@@ -21,6 +21,41 @@
       "source_url": "https://ich.unesco.org/en/RL/art-of-n-ca-tai-t-music-and-song-in-southern-viet-nam-00733",
       "fetched_at": "2026-07-25",
       "chars": 2550
+    },
+    {
+      "file": "tapchi-disanvanhoa__don-ca-tai-tu-nhac-giai-tri-phuong-nam.txt",
+      "source": "Tạp chí Di sản văn hóa số 2 (47)-2014, Đặng Hoành Loan – Đờn ca tài tử: nhạc giải trí của người dân phương Nam",
+      "source_url": "https://dsvh.gov.vn/Upload/files/Tap%20chi%20DSVH/So%2047/4714_Don%20ca%20Tai%20tu%20nhac%20giai%20tri%20cua%20nguoi%20dan%20phuong%20Nam.pdf",
+      "fetched_at": "2026-07-26",
+      "chars": 22761
+    },
+    {
+      "file": "tapchi-vhnt__giai-phap-bao-ton-phat-huy-don-ca-tai-tu.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Một số giải pháp bảo tồn và phát huy loại hình Đờn ca tài tử Nam Bộ",
+      "source_url": "http://vanhoanghethuat.vn/mot-so-giai-phap-bao-ton-va-phat-huy-loai-hinh-don-ca-tai-tu-nam-bo.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 17770
+    },
+    {
+      "file": "vietnamplus__bao-ton-phat-huy-di-san-don-ca-tai-tu.txt",
+      "source": "TTXVN/VietnamPlus – Bảo tồn và phát huy di sản thế giới Đờn ca tài tử Nam Bộ",
+      "source_url": "https://special.vietnamplus.vn/2020/08/24/doncataitu/",
+      "fetched_at": "2026-07-26",
+      "chars": 18804
+    },
+    {
+      "file": "vietnamplus__the-loai-thinh-phong-dac-thu-nam-bo.txt",
+      "source": "TTXVN/VietnamPlus – Đờn ca tài tử: thể loại “thính phòng” đặc thù của Nam Bộ",
+      "source_url": "https://www.vietnamplus.vn/don-ca-tai-tu-the-loai-thinh-phong-dac-thu-cua-nam-bo-post233718.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 12492
+    },
+    {
+      "file": "bao-nhan-dan__tram-nam-vang-tieng-don-ca.txt",
+      "source": "Báo Nhân Dân – Trăm năm vang tiếng đờn ca",
+      "source_url": "https://nhandan.vn/tram-nam-vang-tieng-don-ca-post692569.html",
+      "fetched_at": "2026-07-26",
+      "chars": 10092
     }
   ]
 }

@@ -29,6 +29,48 @@
       "source_url": "https://ich.unesco.org/en/USL/art-of-pottery-making-of-chm-people-01574",
       "fetched_at": "2026-07-25",
       "chars": 3063
+    },
+    {
+      "file": "cuc-di-san__gom-cham-binh-thuan.txt",
+      "source": "Cục Di sản văn hóa – Nghề làm gốm của người Chăm ở tỉnh Bình Thuận (hồ sơ di sản)",
+      "source_url": "https://dsvh.gov.vn/nghe-lam-gom-cua-nguoi-cham-o-tinh-binh-thuan-3162",
+      "fetched_at": "2026-07-26",
+      "chars": 8176
+    },
+    {
+      "file": "tapchi-vhnt__nghe-thuat-lam-gom-cua-nguoi-cham.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Nghệ thuật làm gốm của người Chăm",
+      "source_url": "http://vanhoanghethuat.vn/nghe-thuat-lam-gom-cua-nguoi-cham.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 20676
+    },
+    {
+      "file": "bao-nhan-dan__gom-cham-vi-the-moi-va-co-hoi-moi.txt",
+      "source": "Báo Nhân Dân – Gốm Chăm: vị thế mới và cơ hội mới",
+      "source_url": "https://nhandan.vn/special/gomchamvithemoivacohoi/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 18760
+    },
+    {
+      "file": "vietnamplus__gom-cham-nghe-thu-cong-dau-tien-unesco-ghi-danh.txt",
+      "source": "TTXVN/VietnamPlus – Gốm Chăm, nghề thủ công đầu tiên của Việt Nam được UNESCO ghi danh",
+      "source_url": "https://mega.vietnamplus.vn/gom-cham-nghe-thu-cong-dau-tien-cua-viet-nam-duoc-unesco-ghi-danh-5436.html",
+      "fetched_at": "2026-07-26",
+      "chars": 14080
+    },
+    {
+      "file": "vietnamplus__bao-ton-di-san-nghe-thuat-lam-gom-cham.txt",
+      "source": "TTXVN/VietnamPlus – Bảo tồn di sản nghệ thuật làm gốm của người Chăm",
+      "source_url": "https://special.vietnamplus.vn/2020/06/09/gomcham/",
+      "fetched_at": "2026-07-26",
+      "chars": 12745
+    },
+    {
+      "file": "vietnamplus__tinh-hoa-nghe-gom-ninh-thuan.txt",
+      "source": "TTXVN/VietnamPlus – Bảo tồn nghề gốm của người Chăm ở Ninh Thuận: tinh hoa nghề gốm",
+      "source_url": "https://www.vietnamplus.vn/bao-ton-nghe-gom-cua-nguoi-cham-o-ninh-thuan-tinh-hoa-nghe-gom-post834269.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 18470
     }
   ]
 }

@@ -22,6 +22,62 @@
       "source_url": "https://ich.unesco.org/en/RL/quan-h-bc-ninh-folk-songs-00183",
       "fetched_at": "2026-07-25",
       "chars": 2450
+    },
+    {
+      "file": "cuc-di-san__quan-ho.txt",
+      "source": "Cục Di sản văn hóa – Dân ca Quan họ Bắc Ninh",
+      "source_url": "https://dsvh.gov.vn/dan-ca-quan-ho-bac-ninh-482",
+      "fetched_at": "2026-07-26",
+      "chars": 3362
+    },
+    {
+      "file": "tapchi-vhnt__ban-ve-khong-gian-van-hoa-quan-ho.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Bàn về không gian văn hóa Quan họ Bắc Ninh",
+      "source_url": "http://vanhoanghethuat.vn/ban-ve-khong-gian-van-hoa-quan-ho-bac-ninh.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 16891
+    },
+    {
+      "file": "tapchi-vhnt__nhung-yeu-to-thuc-day-su-phat-trien-quan-ho.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Những yếu tố thúc đẩy sự phát triển dân ca Quan họ Bắc Ninh",
+      "source_url": "http://vanhoanghethuat.vn/nhung-yeu-to-thuc-day-su-phat-trien-dan-ca-quan-ho-bac-ninh.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 13406
+    },
+    {
+      "file": "bao-nhan-dan__quan-ho-truong-ton-va-lan-toa.txt",
+      "source": "Báo Nhân Dân – Di sản văn hóa thế giới: Dân ca Quan họ Bắc Ninh trường tồn và lan tỏa",
+      "source_url": "https://nhandan.vn/di-san-van-hoa-the-gioi-dan-ca-quan-ho-bac-ninh-truong-ton-va-lan-toa-post433891.html",
+      "fetched_at": "2026-07-26",
+      "chars": 7371
+    },
+    {
+      "file": "bao-nhan-dan__nhung-lang-quan-ho-doi-bo-song-ngu-huyen-khe.txt",
+      "source": "Báo Nhân Dân – Những làng Quan họ ở đôi bờ sông Ngũ Huyện Khê",
+      "source_url": "https://nhandan.vn/nhung-lang-quan-ho-o-doi-bo-song-ngu-huyen-khe-post486962.html",
+      "fetched_at": "2026-07-26",
+      "chars": 5940
+    },
+    {
+      "file": "vietnamplus__ve-xu-kinh-bac-nghe-cau-quan-ho.txt",
+      "source": "TTXVN/VietnamPlus – Về xứ Kinh Bắc nghe câu dân ca Quan họ, nghe lời hát giao duyên",
+      "source_url": "https://mega.vietnamplus.vn/ve-xu-kinh-bac-nghe-cau-dan-ca-quan-ho-nghe-loi-hat-giao-duyen-5360.html",
+      "fetched_at": "2026-07-26",
+      "chars": 11026
+    },
+    {
+      "file": "vietnamplus__dau-xuan-thuong-thuc-canh-hat-quan-ho-co.txt",
+      "source": "TTXVN/VietnamPlus – Đầu Xuân về Bắc Ninh thưởng thức canh hát Quan họ cổ",
+      "source_url": "https://www.vietnamplus.vn/dau-xuan-ve-bac-ninh-thuong-thuc-nhung-canh-hat-quan-ho-co-post1013310.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 13406
+    },
+    {
+      "file": "vietnamplus__quan-ho-mach-nguon-chay-mai.txt",
+      "source": "TTXVN/VietnamPlus – Dân ca Quan họ, mạch nguồn chảy mãi qua các thế hệ người dân Bắc Ninh",
+      "source_url": "https://www.vietnamplus.vn/dan-ca-quan-ho-mach-nguon-chay-mai-qua-cac-the-he-nguoi-dan-bac-ninh-post985736.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 13914
     }
   ]
 }

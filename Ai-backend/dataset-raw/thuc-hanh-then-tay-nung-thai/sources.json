@@ -30,6 +30,55 @@
       "source_url": "https://ich.unesco.org/en/RL/practices-of-then-by-tay-nung-and-thai-ethnic-groups-in-viet-nam-01379",
       "fetched_at": "2026-07-25",
       "chars": 2349
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-then.txt",
+      "source": "Cục Di sản văn hóa – Thực hành Then của người Tày, Nùng, Thái ở Việt Nam được ghi danh vào Danh sách Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://dsvh.gov.vn/thuc-hanh-then-cua-nguoi-tay-nung-thai-o-viet-nam-duoc-ghi-danh-vao-danh-sach-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-3004",
+      "fetched_at": "2026-07-26",
+      "chars": 6486
+    },
+    {
+      "file": "cvdc-lang-son__hat-then-tay-nung-lang-son.txt",
+      "source": "Công viên địa chất Lạng Sơn – Hát Then dân tộc Tày, Nùng tỉnh Lạng Sơn",
+      "source_url": "https://langsongeopark.com.vn/di-san-van-hoa/hat-then-dan-toc-tay-nung-tinh-lang-son-n26.html",
+      "fetched_at": "2026-07-26",
+      "chars": 4031
+    },
+    {
+      "file": "cvdc-lang-son__nghi-le-then-giai-han-lau-then-cap-sac.txt",
+      "source": "Công viên địa chất Lạng Sơn – Nghi lễ Then: giải hạn, lẩu then, cấp sắc",
+      "source_url": "https://langsongeopark.com.vn/du-lieu-di-san-van-hoa-phi-vat-the-vung-cong-vien-dia-chat-lang-son/nghi-le-then-giai-han-lau-then-cap-sac%E2%80%A6-n140.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6182
+    },
+    {
+      "file": "tapchi-vhnt__nghe-thuat-hat-then-va-no-luc-bao-ton.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Nghệ thuật Hát Then và những nỗ lực bảo tồn",
+      "source_url": "https://vanhoanghethuat.vn/bao-ton-phat-huy-gia-tri-van-hoa-truyen-thong-tieu-bieu-cua-cac-dan-toc-thieu-so-nghe-thuat-hat-then-va-nhung-no-luc-bao-ton-77755333.html",
+      "fetched_at": "2026-07-26",
+      "chars": 11514
+    },
+    {
+      "file": "bao-nhan-dan__cay-dan-tinh-va-loi-hat-then.txt",
+      "source": "Báo Nhân Dân – Cây đàn Tính và lời hát Then",
+      "source_url": "https://nhandan.vn/cay-dan-tinh-va-loi-hat-then-post592969.html",
+      "fetched_at": "2026-07-26",
+      "chars": 5395
+    },
+    {
+      "file": "bao-nhan-dan__giu-lua-dieu-then-xu-lang.txt",
+      "source": "Báo Nhân Dân – Giữ “lửa” điệu Then xứ Lạng",
+      "source_url": "https://nhandan.vn/giu-lua-dieu-then-xu-lang-post825547.html",
+      "fetched_at": "2026-07-26",
+      "chars": 7194
+    },
+    {
+      "file": "vietnamplus__thuc-hanh-then-di-san-van-hoa-nhan-loai.txt",
+      "source": "TTXVN/VietnamPlus – Thực hành Then của người Tày, Nùng, Thái, di sản văn hóa phi vật thể của nhân loại",
+      "source_url": "https://www.vietnamplus.vn/thuc-hanh-then-cua-nguoi-tay-nung-thai-di-san-van-hoa-phi-vat-the-cua-nhan-loai-post613874.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 2449
     }
   ]
 }

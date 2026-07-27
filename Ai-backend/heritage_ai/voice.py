@@ -5,7 +5,8 @@
   độ trễ.
 - TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI), mặc định trả
   MP3 (FPT_TTS_FORMAT). Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt
-  — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần.
+  — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần. Hai chiều đều có đường
+  lùi: fpt hỏng hẳn (hết retry) thì quay về Gemini để NPC không bị câm.
 - STT chính: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline ->
   transcript. Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client
   không cần convert.
@@ -34,7 +35,10 @@ _log = logging.getLogger(__name__)
 _API = "https://generativelanguage.googleapis.com/v1beta/models"
 
 TTS_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
-TTS_VOICE = os.getenv("GEMINI_TTS_VOICE", "Charon")  # giọng dựng sẵn của Gemini
+TTS_VOICE = os.getenv("GEMINI_TTS_VOICE", "Charon")  # giọng dựng sẵn của Gemini (NAM)
+# Giọng NỮ cho nghệ nhân nữ (Đờn ca tài tử, Nhã nhạc, Xòe Thái). Kore = giọng nữ
+# dựng sẵn của Gemini; client chọn qua persona_gender="female".
+TTS_VOICE_FEMALE = os.getenv("GEMINI_TTS_VOICE_FEMALE", "Kore")
 STT_MODEL = os.getenv("GEMINI_STT_MODEL", "gemini-3.1-flash-lite")
 
 _TTS_SAMPLE_RATE = 24000  # Gemini TTS luôn trả 24kHz mono 16-bit PCM
@@ -60,12 +64,22 @@ _TTS_MAX_CHUNKS = int(os.getenv("GEMINI_TTS_MAX_CHUNKS", "10"))
 FPT_TTS_URL = os.getenv("FPT_TTS_URL", "https://mkp-api.fptcloud.com/v1/audio/speech")
 FPT_TTS_MODEL = os.getenv("FPT_TTS_MODEL", "FPT.AI-VITs")
 FPT_TTS_VOICE = os.getenv("FPT_TTS_VOICE", "std_leminh")  # giọng NAM cho NPC nghệ nhân
+# Giọng NỮ (miền Bắc) của FPT.AI-VITs cho các nghệ nhân nữ.
+FPT_TTS_VOICE_FEMALE = os.getenv("FPT_TTS_VOICE_FEMALE", "std_banmai")
 # mp3 mặc định: đo trên cùng bộ câu trả lời, mp3 ra 700-880KB còn WAV 1.3-2.1MB
 # (nhẹ hơn ~2.3 lần) nên du khách dùng 4G nghe được sớm hơn hẳn. WAV chỉ giữ lại để
 # gỡ lỗi hoặc phòng khi FPT đổi hành vi encode.
 FPT_TTS_FORMAT = os.getenv("FPT_TTS_FORMAT", "mp3").strip().lower()
-# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
+# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = FPT trước,
+# hỏng thì Gemini (mkp-api của FPT thi thoảng trả 404/502 hoặc treo — không có
+# đường lùi thì NPC câm và request bị giam tới hết timeout).
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower()
+# mkp-api lúc khoẻ trả lời dưới 1s; treo lâu gần như chắc chắn là replica hỏng,
+# chờ 90s chỉ giam request — bỏ sớm rồi thử lại/lùi nguồn khác nhanh hơn nhiều.
+FPT_TTS_TIMEOUT = float(os.getenv("FPT_TTS_TIMEOUT", "12"))
+# 404/502 của mkp-api là lỗi THOÁNG QUA theo replica (gọi liên tiếp cùng payload
+# lúc được lúc không) nên thử lại ngay một lần thường là đủ.
+FPT_TTS_ATTEMPTS = max(1, int(os.getenv("FPT_TTS_ATTEMPTS", "2")))
 
 # --- STT dự phòng: FPT.AI-whisper (endpoint kiểu OpenAI /v1/audio/transcriptions) ---
 FPT_STT_URL = os.getenv(
@@ -284,23 +298,31 @@ def transcribe_fpt(audio_bytes: bytes, mime_type: str = "audio/wav") -> str:
     return text
 
 
-def synthesize(text: str) -> tuple[bytes, str]:
+def synthesize(text: str, gender: str = "male") -> tuple[bytes, str]:
     """Chữ -> (audio bytes, đuôi file). Gemini là chính, FPT.AI-VITs là dự phòng.
 
     Trả kèm đuôi vì hai nguồn cho định dạng khác nhau (mp3 vs wav); phía API dùng
-    đuôi này để đặt tên file + Content-Type.
+    đuôi này để đặt tên file + Content-Type. gender="female" -> giọng nữ (cả hai
+    nguồn), còn lại giọng nam mặc định.
     """
     if TTS_PROVIDER == "fpt":
-        return synthesize_fpt(text)
+        try:
+            return synthesize_fpt(text, gender)
+        except VoiceError as exc:
+            if not os.getenv("GEMINI_API_KEY"):
+                raise
+            # FPT hỏng hẳn (hết retry) -> chậm hơn nhưng vẫn có tiếng nhờ Gemini.
+            _log.warning("FPT TTS lỗi, chuyển sang Gemini TTS: %s", exc)
+            return synthesize_mp3(text, gender), "mp3"
 
     try:
-        return synthesize_mp3(text), "mp3"
+        return synthesize_mp3(text, gender), "mp3"
     except VoiceError as exc:
         if TTS_PROVIDER == "gemini" or not _fpt_api_key():
             raise
         # Gemini hỏng (hết quota 429, model lỗi...) -> vẫn có tiếng nhờ FPT.
         _log.warning("Gemini TTS lỗi, chuyển sang FPT.AI-VITs: %s", exc)
-        return synthesize_fpt(text)
+        return synthesize_fpt(text, gender)
 
 
 def _fpt_api_key() -> str:
@@ -369,7 +391,7 @@ def _looks_like_audio(data: bytes, fmt: str) -> bool:
     )
 
 
-def synthesize_fpt(text: str) -> tuple[bytes, str]:
+def synthesize_fpt(text: str, gender: str = "male") -> tuple[bytes, str]:
     """Chữ -> (audio bytes, đuôi file) bằng FPT.AI-VITs (1 request cho cả câu trả lời)."""
     spoken = _fit_text(text)
     if not spoken:
@@ -383,47 +405,57 @@ def synthesize_fpt(text: str) -> tuple[bytes, str]:
         "model": FPT_TTS_MODEL,
         "input": spoken,
         "response_format": fmt,
-        "voice": FPT_TTS_VOICE,
+        "voice": FPT_TTS_VOICE_FEMALE if gender == "female" else FPT_TTS_VOICE,
     }
-    try:
-        resp = requests.post(
-            FPT_TTS_URL,
-            headers={
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-            },
-            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-            timeout=90,
-        )
-    except requests.RequestException as exc:
-        raise VoiceError(f"FPT TTS không kết nối được: {exc}") from exc
+    last = ""
+    for attempt in range(FPT_TTS_ATTEMPTS):
+        try:
+            resp = requests.post(
+                FPT_TTS_URL,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                timeout=FPT_TTS_TIMEOUT,
+            )
+        except requests.RequestException as exc:
+            last = f"FPT TTS không kết nối được: {exc}"
+            continue
 
-    if resp.status_code != 200:
-        raise VoiceError(f"FPT TTS lỗi HTTP {resp.status_code}: {resp.text[:160]}")
+        if resp.status_code != 200:
+            last = f"FPT TTS lỗi HTTP {resp.status_code}: {resp.text[:160]}"
+            continue
 
-    audio = resp.content
-    # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON, không phải audio.
-    if not _looks_like_audio(audio, fmt):
-        raise VoiceError(f"FPT TTS không trả về {fmt}: {audio[:160]!r}")
-    # MP3 không cắt được bằng cách xén byte như WAV; trần thời lượng đã được _fit_text
-    # bảo đảm từ phía chữ nên đây chỉ là lớp chặn thứ hai cho WAV.
-    return (_trim_wav(audio) if fmt == "wav" else audio), fmt
+        audio = resp.content
+        # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON,
+        # không phải audio.
+        if not _looks_like_audio(audio, fmt):
+            last = f"FPT TTS không trả về {fmt}: {audio[:160]!r}"
+            continue
+        if attempt:
+            _log.info("FPT TTS thành công ở lần thử %d", attempt + 1)
+        # MP3 không cắt được bằng cách xén byte như WAV; trần thời lượng đã được
+        # _fit_text bảo đảm từ phía chữ nên đây chỉ là lớp chặn thứ hai cho WAV.
+        return (_trim_wav(audio) if fmt == "wav" else audio), fmt
+    raise VoiceError(last or "FPT TTS thất bại.")
 
 
-def synthesize_mp3(text: str) -> bytes:
+def synthesize_mp3(text: str, gender: str = "male") -> bytes:
     """Chữ -> MP3 (TTS). Cắt đoạn ngắn, TTS song song, ghép PCM rồi encode 1 file MP3."""
     spoken = _fit_text(text)
     chunks = _split_for_tts(spoken, _TTS_MAX_WORDS)
     if not chunks:
         raise VoiceError("Không có nội dung để đọc.")
 
+    voice = TTS_VOICE_FEMALE if gender == "female" else TTS_VOICE
     if len(chunks) == 1:
-        pcm_parts = [_tts_pcm(chunks[0])]
+        pcm_parts = [_tts_pcm(chunks[0], voice)]
     else:
         # Giữ THỨ TỰ đoạn (pool.map trả theo thứ tự input) để ghép audio liền mạch.
         workers = min(_TTS_CONCURRENCY, len(chunks))
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            pcm_parts = list(pool.map(_tts_pcm, chunks))
+            pcm_parts = list(pool.map(lambda chunk: _tts_pcm(chunk, voice), chunks))
 
     pcm = b"".join(pcm_parts)
     max_bytes = int(_TTS_SAMPLE_RATE * 2 * _TTS_MAX_SECONDS)  # 16-bit mono
@@ -437,14 +469,14 @@ def synthesize_mp3(text: str) -> bytes:
     return _pcm_to_mp3(pcm, _TTS_SAMPLE_RATE)
 
 
-def _tts_pcm(text: str) -> bytes:
+def _tts_pcm(text: str, voice: str = TTS_VOICE) -> bytes:
     """TTS 1 đoạn -> PCM thô (24kHz mono 16-bit)."""
     payload = {
         "contents": [{"parts": [{"text": text}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
             "speechConfig": {
-                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": TTS_VOICE}}
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}
             },
         },
     }

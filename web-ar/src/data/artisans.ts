@@ -6,11 +6,11 @@ import type { Artisan } from '@/lib/types';
 // (= Artisan.targetIndex). Chĩa ảnh nào → tự động hiện nghệ nhân tương ứng,
 // KHÔNG có bước chọn thủ công.
 //
-// File .mind GỘP 2 target, compile từ ảnh mốc TẠM bằng scripts/compile-targets.mjs.
-// Thứ tự compile: [0] quan-ho-nam, [1] ong-do — KHỚP targetIndex bên dưới.
-// (ảnh mốc #1 GIỮ NGUYÊN quan-ho-nu.png — chỉ đổi MODEL neo lên thẻ, không compile lại .mind)
-// Khi có ảnh mốc THẬT: thay PNG trong public/markers rồi chạy lại
-//   node scripts/gen-temp-markers.mjs   (chỉ khi cần sinh lại ảnh tạm)
+// File .mind GỘP 5 target, compile bằng scripts/compile-targets.mjs.
+// Thứ tự compile: [0] quan-ho-nam, [1] ong-do, [2] đờn ca, [3] nhã nhạc, [4] xòe Thái
+// — KHỚP targetIndex bên dưới. Target 0-1 dùng ảnh mốc TẠM, 2-4 là ảnh mốc THẬT.
+// Khi đổi/thêm ảnh mốc: đặt PNG vào public/markers, sửa mảng MARKERS trong
+//   scripts/compile-targets.mjs (thứ tự = targetIndex) rồi chạy lại
 //   node scripts/compile-targets.mjs    (compile lại .mind)
 export const TARGETS_MIND = '/targets/artisans.mind';
 
@@ -59,6 +59,68 @@ export const artisans: Artisan[] = [
       animationIndex: 5,
       groundAlign: false,
       rotationDeg: [0, 0, 0], // ảnh mốc dựng đứng -> đứng thẳng, quay mặt vào camera
+    },
+    aiEnabled: true,
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // 3 di sản UNESCO dưới đây dùng ẢNH MỐC THẬT (hoạ tiết nhạc cụ/thổ cẩm).
+  // slug = ĐÚNG id trong dataset RAG của Ai-backend và craft = ĐÚNG trường "name"
+  // của di sản đó, để persona_craft gửi sang /v1/ask khớp nguồn tư liệu.
+  // Model từ artifact-3d-model/*-Android.glb, đã nén texture WebP 2K (~2.7-3.3MB).
+  {
+    slug: 'don-ca-tai-tu-nam-bo',
+    targetIndex: 2, // ảnh mốc #3 — KHỚP thứ tự compile file .mind
+    name: 'Tài tử Đờn ca Nam Bộ',
+    craft: 'Đờn ca tài tử Nam Bộ',
+    bio: 'Nghệ nhân đờn ca tài tử miền sông nước Nam Bộ, chơi đờn kìm và đờn bầu trong '
+      + 'các buổi tài tử tri âm. Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
+    ar: {
+      modelUrl: '/models/glb/don-ca.glb',
+      markerUrl: '/markers/don-ca-tai-tu-nam-bo.png',
+      scale: 2.0,
+      offset: [0, -0.5, 0],
+      animationIndex: 0, // 2 clip, cả hai đều là cử động nói chuyện TẠI CHỖ
+      groundAlign: false,
+      rotationDeg: [0, 0, 0],
+    },
+    aiEnabled: true,
+  },
+  {
+    slug: 'nha-nhac-cung-dinh-hue',
+    targetIndex: 3, // ảnh mốc #4
+    name: 'Nhạc công Nhã nhạc cung đình',
+    craft: 'Nhã nhạc cung đình Huế',
+    bio: 'Nhạc công trong dàn Nhã nhạc cung đình Huế thời Nguyễn, diễn tấu ở các đại lễ '
+      + 'nơi hoàng cung. Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
+    ar: {
+      modelUrl: '/models/glb/nha-nhac.glb',
+      markerUrl: '/markers/nha-nhac-cung-dinh-hue.png',
+      scale: 2.0,
+      offset: [0, -0.5, 0],
+      animationIndex: 0, // 3 clip, đều là cử động nói chuyện TẠI CHỖ
+      groundAlign: false,
+      rotationDeg: [0, 0, 0],
+    },
+    aiEnabled: true,
+  },
+  {
+    slug: 'nghe-thuat-xoe-thai',
+    targetIndex: 4, // ảnh mốc #5
+    name: 'Nghệ nhân Xòe Thái',
+    craft: 'Nghệ thuật Xòe Thái',
+    bio: 'Nghệ nhân người Thái vùng Tây Bắc, giữ điệu xòe vòng trong hội bản mường. '
+      + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
+    ar: {
+      modelUrl: '/models/glb/xoe-thai.glb',
+      markerUrl: '/markers/nghe-thuat-xoe-thai.png',
+      scale: 2.0,
+      offset: [0, -0.5, 0],
+      animationIndex: 0, // chỉ có 1 clip
+      groundAlign: false,
+      rotationDeg: [0, 0, 0],
     },
     aiEnabled: true,
   },

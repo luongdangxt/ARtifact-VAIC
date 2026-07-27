@@ -23,6 +23,62 @@
       "source_url": "https://ich.unesco.org/en/USL/ca-tru-singing-00309",
       "fetched_at": "2026-07-25",
       "chars": 3101
+    },
+    {
+      "file": "tapchi-vhnt__ca-tru-ha-noi-tu-dau-the-ky-xx.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Ca trù Hà Nội từ đầu thế kỷ XX đến nay",
+      "source_url": "http://vanhoanghethuat.vn/ca-tru-ha-noi-tu-dau-the-k-xx-den-nay.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 15167
+    },
+    {
+      "file": "tapchi-vhnt__nha-hat-co-dau-goc-nhin-lich-su-van-hoa.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Nhà hát cô đầu, góc nhìn lịch sử văn hóa",
+      "source_url": "https://vanhoanghethuat.vn/nha-hat-co-dau-goc-nhin-lich-su-van-hoa-77750592.html",
+      "fetched_at": "2026-07-26",
+      "chars": 18127
+    },
+    {
+      "file": "bao-nhan-dan__ca-tru-do-hot-phach-gion.txt",
+      "source": "Báo Nhân Dân – Ca trù đổ hột phách giòn",
+      "source_url": "https://nhandan.vn/ca-tru-do-hot-phach-gion-post340538.html",
+      "fetched_at": "2026-07-26",
+      "chars": 10511
+    },
+    {
+      "file": "bao-nhan-dan__ca-tru-ha-noi-hanh-trinh-hoi-sinh.txt",
+      "source": "Báo Nhân Dân – Ca trù Hà Nội trên hành trình hồi sinh",
+      "source_url": "https://nhandan.vn/ca-tru-ha-noi-tren-hanh-trinh-hoi-sinh-post734117.html",
+      "fetched_at": "2026-07-26",
+      "chars": 5225
+    },
+    {
+      "file": "bao-nhan-dan__hoi-sinh-canh-hat-cua-dinh.txt",
+      "source": "Báo Nhân Dân – Hồi sinh canh hát cửa đình",
+      "source_url": "https://nhandan.vn/hoi-sinh-canh-hat-cua-dinh-post925326.html",
+      "fetched_at": "2026-07-26",
+      "chars": 7712
+    },
+    {
+      "file": "bao-nhan-dan__tu-chieu-hat-xua-den-khong-gian-so.txt",
+      "source": "Báo Nhân Dân – Từ chiếu hát xưa đến không gian số: hành trình giữ lửa cho ca trù",
+      "source_url": "https://nhandan.vn/special/Tu-chieu-hat-xua-den-khong-gian-so--Hanh-trinh-giu-lua-cho-ca-tru/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6834
+    },
+    {
+      "file": "vietnamplus__ca-tru-nghe-thuat-dien-xuong-doc-dao.txt",
+      "source": "TTXVN/VietnamPlus – Ca trù, nghệ thuật diễn xướng độc đáo của Việt Nam",
+      "source_url": "https://www.vietnamplus.vn/ca-tru-nghe-thuat-dien-xuong-doc-dao-cua-viet-nam-post125430.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 11918
+    },
+    {
+      "file": "vietnamplus__mo-hinh-hoa-am-luat-ca-tru.txt",
+      "source": "TTXVN/VietnamPlus – Mô hình hóa thành công âm luật ca trù sau nhiều năm thất truyền",
+      "source_url": "https://www.vietnamplus.vn/mo-hinh-hoa-thanh-cong-am-luat-ca-tru-sau-nhieu-nam-that-truyen/686435.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 13005
     }
   ]
 }

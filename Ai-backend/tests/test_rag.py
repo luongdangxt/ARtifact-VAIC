@@ -122,8 +122,11 @@ class RagTests(unittest.TestCase):
                 [1.0, 0.0], "bai-choi", intent="history", top_k=3
             )
 
-        self.assertEqual(len(evidence), 1)
+        # Di sản khác bị loại hẳn; intent chỉ ưu tiên mềm: chunk đúng intent xếp
+        # trước nhưng chunk lệch intent tương đồng cao vẫn được giữ làm tư liệu.
+        self.assertEqual(len(evidence), 2)
         self.assertEqual(evidence[0].content, "Lịch sử Bài Chòi")
+        self.assertEqual(evidence[1].content, "Cách chơi Bài Chòi")
         self.assertGreater(evidence[0].score, 0.9)
 
     def test_vector_store_rejects_embeddings_from_another_model(self) -> None:

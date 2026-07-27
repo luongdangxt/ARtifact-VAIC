@@ -35,6 +35,41 @@
       "source_url": "https://ich.unesco.org/en/RL/space-of-gong-culture-00120",
       "fetched_at": "2026-07-25",
       "chars": 3180
+    },
+    {
+      "file": "cuc-di-san__cong-chieng.txt",
+      "source": "Cục Di sản văn hóa – Không gian văn hóa Cồng chiêng Tây Nguyên",
+      "source_url": "https://dsvh.gov.vn/khong-gian-van-hoa-cong-chieng-tay-nguyen-484",
+      "fetched_at": "2026-07-26",
+      "chars": 3833
+    },
+    {
+      "file": "tapchi-vhnt__bao-ton-phat-huy-van-hoa-cong-chieng.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Bảo tồn và phát huy giá trị văn hóa cồng chiêng Tây Nguyên vì sự phát triển bền vững",
+      "source_url": "http://vanhoanghethuat.vn/bao-ton-va-phat-huy-gia-tri-van-hoa-cong-chieng-tay-nguyen-vi-su-phat-trien-ben-vung.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 13646
+    },
+    {
+      "file": "bao-nhan-dan__su-da-dang-ma-thong-nhat.txt",
+      "source": "Báo Nhân Dân – Sự đa dạng mà thống nhất của không gian văn hóa cồng chiêng Tây Nguyên",
+      "source_url": "https://nhandan.vn/su-da-dang-ma-thong-nhat-cua-khong-gian-van-hoa-cong-chieng-tay-nguyen-post477561.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6376
+    },
+    {
+      "file": "bao-dak-lak__ky-cong-che-tac-cong-chieng.txt",
+      "source": "Báo Đắk Lắk – Kỳ công chế tác cồng chiêng Tây Nguyên",
+      "source_url": "https://baodaklak.vn/channel/3484/201904/ky-cong-che-tac-cong-chieng-tay-nguyen-5627854/",
+      "fetched_at": "2026-07-26",
+      "chars": 4234
+    },
+    {
+      "file": "vietnamplus__bao-ton-phat-huy-khong-gian-cong-chieng.txt",
+      "source": "TTXVN/VietnamPlus – Bảo tồn và phát huy giá trị không gian văn hóa cồng chiêng Tây Nguyên",
+      "source_url": "https://www.vietnamplus.vn/bao-ton-va-phat-huy-gia-tri-khong-gian-van-hoa-cong-chieng-tay-nguyen-post616507.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 22465
     }
   ]
 }

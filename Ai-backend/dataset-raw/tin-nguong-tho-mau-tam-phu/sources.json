@@ -24,6 +24,41 @@
       "source_url": "https://ich.unesco.org/en/RL/practices-related-to-the-viet-beliefs-in-the-mother-goddesses-of-three-realms-01064",
       "fetched_at": "2026-07-25",
       "chars": 2716
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-tho-mau.txt",
+      "source": "Cục Di sản văn hóa – Thực hành Tín ngưỡng thờ Mẫu Tam phủ của người Việt trở thành Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://dsvh.gov.vn/thuc-hanh-tin-nguong-tho-mau-tam-phu-cua-nguoi-viet-tro-thanh-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-1536",
+      "fetched_at": "2026-07-26",
+      "chars": 9382
+    },
+    {
+      "file": "cuc-di-san__nghi-le-chau-van.txt",
+      "source": "Cục Di sản văn hóa – Nghi lễ Chầu văn của người Việt (hồ sơ di sản)",
+      "source_url": "https://dsvh.gov.vn/nghi-le-chau-van-cua-nguoi-viet-3150",
+      "fetched_at": "2026-07-26",
+      "chars": 8473
+    },
+    {
+      "file": "bao-nhan-dan__tho-mau-o-nam-dinh.txt",
+      "source": "Báo Nhân Dân – Giữ gìn, phát huy di sản thực hành tín ngưỡng thờ Mẫu ở Nam Định",
+      "source_url": "https://nhandan.vn/giu-gin-phat-huy-di-san-thuc-hanh-tin-nguong-tho-mau-o-nam-dinh-post787877.html",
+      "fetched_at": "2026-07-26",
+      "chars": 7931
+    },
+    {
+      "file": "vietnamplus__tin-nguong-tho-mau-tam-phu-megastory.txt",
+      "source": "TTXVN/VietnamPlus – Tín ngưỡng thờ Mẫu Tam phủ (Mega Story)",
+      "source_url": "https://special.vietnamplus.vn/2016/12/06/thomautamphu/",
+      "fetched_at": "2026-07-26",
+      "chars": 14394
+    },
+    {
+      "file": "vietnamplus__thuc-hanh-nghi-le-hau-dong.txt",
+      "source": "TTXVN/VietnamPlus – Thực hành nghi lễ Hầu đồng trong tín ngưỡng thờ Mẫu Tam phủ của người Việt",
+      "source_url": "https://www.vietnamplus.vn/thuc-hanh-nghi-le-hau-dong-trong-tin-nguong-tho-mau-tam-phu-cua-nguoi-viet-post1083840.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 5215
     }
   ]
 }

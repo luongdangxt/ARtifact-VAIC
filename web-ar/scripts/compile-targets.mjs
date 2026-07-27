@@ -28,8 +28,11 @@ const OUT = resolve(__dirname, '../public/targets/artisans.mind');
 
 // Thứ tự = targetIndex. Giữ khớp với src/data/artisans.ts.
 const MARKERS = [
-  'quan-ho-nu.png',  // index 0 — nữ ca Quan họ
-  'dong-ho-nam.png', // index 1 — nam tranh Đông Hồ
+  'quan-ho-nu.png',            // index 0 — Quan họ Bắc Ninh
+  'dong-ho-nam.png',           // index 1 — tranh Đông Hồ
+  'don-ca-tai-tu-nam-bo.png',  // index 2 — Đờn ca tài tử Nam Bộ
+  'nha-nhac-cung-dinh-hue.png',// index 3 — Nhã nhạc cung đình Huế
+  'nghe-thuat-xoe-thai.png',   // index 4 — Nghệ thuật Xòe Thái
 ];
 
 class NodeCompiler extends CompilerBase {

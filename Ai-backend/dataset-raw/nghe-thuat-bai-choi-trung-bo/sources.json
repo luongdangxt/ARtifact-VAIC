@@ -22,6 +22,48 @@
       "source_url": "https://ich.unesco.org/en/RL/the-art-of-bai-choi-in-central-viet-nam-01222",
       "fetched_at": "2026-07-25",
       "chars": 2285
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-bai-choi.txt",
+      "source": "Cục Di sản văn hóa – Nghệ thuật Bài chòi Trung Bộ Việt Nam trở thành Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://dsvh.gov.vn/nghe-thuat-bai-choi-trung-bo-viet-nam-tro-thanh-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-1535",
+      "fetched_at": "2026-07-26",
+      "chars": 8943
+    },
+    {
+      "file": "cuc-di-san__bai-choi-binh-dinh.txt",
+      "source": "Cục Di sản văn hóa – Nghệ thuật Bài chòi Bình Định",
+      "source_url": "https://dsvh.gov.vn/nghe-thuat-bai-choi-binh-dinh-1194",
+      "fetched_at": "2026-07-26",
+      "chars": 4215
+    },
+    {
+      "file": "tapchi-vhnt__bai-choi-san-pham-van-hoa-du-lich.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Nghệ thuật cổ truyền bài chòi, sản phẩm văn hóa - du lịch đặc sắc",
+      "source_url": "http://www.vanhoanghethuat.vn/nghe-thuat-co-truyen-bai-choi-san-pham-van-hoa-du-lich-dac-sac.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 26083
+    },
+    {
+      "file": "bao-binh-dinh__di-tim-nguon-goc-bo-bai-choi.txt",
+      "source": "Báo Bình Định – Đi tìm nguồn gốc bộ bài chòi",
+      "source_url": "https://baobinhdinh.vn/viewer.aspx?macm=26&macmp=26&mabb=28310",
+      "fetched_at": "2026-07-26",
+      "chars": 2316
+    },
+    {
+      "file": "bao-nhan-dan__dau-xuan-choi-hoi-bai-choi.txt",
+      "source": "Báo Nhân Dân – Đầu xuân chơi hội bài chòi",
+      "source_url": "https://nhandan.vn/dau-xuan-choi-hoi-bai-choi-post792495.html",
+      "fetched_at": "2026-07-26",
+      "chars": 4994
+    },
+    {
+      "file": "vietnamplus__hoi-bai-choi-o-pho-co-hoi-an.txt",
+      "source": "TTXVN/VietnamPlus – Hội bài chòi, nét văn hóa độc đáo ở phố cổ Hội An",
+      "source_url": "https://www.vietnamplus.vn/hoi-bai-choi-net-van-hoa-doc-dao-khong-the-bo-lo-o-pho-co-hoi-an-post755357.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 14103
     }
   ]
 }

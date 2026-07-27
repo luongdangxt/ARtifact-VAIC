@@ -29,6 +29,34 @@
       "source_url": "https://ich.unesco.org/en/RL/giong-festival-of-phu-djong-and-soc-temples-00443",
       "fetched_at": "2026-07-25",
       "chars": 2611
+    },
+    {
+      "file": "cuc-di-san__hoi-giong.txt",
+      "source": "Cục Di sản văn hóa – Hội Gióng ở đền Phù Đổng và đền Sóc",
+      "source_url": "https://dsvh.gov.vn/hoi-giong-o-den-phu-dong-va-den-soc-486",
+      "fetched_at": "2026-07-26",
+      "chars": 4868
+    },
+    {
+      "file": "cuc-di-san__di-tich-den-phu-dong.txt",
+      "source": "Cục Di sản văn hóa – Di tích lịch sử và kiến trúc nghệ thuật đền Phù Đổng",
+      "source_url": "https://dsvh.gov.vn/di-tich-lich-su-va-kien-truc-nghe-thuat-den-phu-dong-huyen-gia-lam-thanh-pho-ha-noi-2977",
+      "fetched_at": "2026-07-26",
+      "chars": 8235
+    },
+    {
+      "file": "bao-nhan-dan__linh-hon-hoi-giong.txt",
+      "source": "Báo Nhân Dân – Linh hồn hội Gióng",
+      "source_url": "https://nhandan.vn/linh-hon-hoi-giong-post530752.html",
+      "fetched_at": "2026-07-26",
+      "chars": 10541
+    },
+    {
+      "file": "bao-nhan-dan__chuyen-ong-hieu-co.txt",
+      "source": "Báo Nhân Dân – Chuyện Ông Hiệu Cờ ở Hội Gióng Phù Đổng",
+      "source_url": "https://nhandan.vn/chuyen-ong-hieu-co-o-hoi-giong-phu-dong-post233363.html",
+      "fetched_at": "2026-07-26",
+      "chars": 3604
     }
   ]
 }

@@ -23,12 +23,14 @@ export function personaFields(artisan: Artisan | undefined): {
   persona_name?: string;
   persona_craft?: string;
   persona_bio?: string;
+  persona_gender?: string;
 } {
   if (!artisan) return {};
   return {
     persona_name: artisan.name,
     persona_craft: artisan.craft,
     persona_bio: artisan.bio,
+    persona_gender: artisan.voiceGender ?? 'male',
   };
 }
 

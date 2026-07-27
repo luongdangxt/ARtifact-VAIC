@@ -23,6 +23,62 @@
       "source_url": "https://ich.unesco.org/en/RL/tugging-rituals-and-games-01080",
       "fetched_at": "2026-07-25",
       "chars": 2260
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-keo-co.txt",
+      "source": "Cục Di sản văn hóa – Nghi lễ và trò chơi Kéo co ở Việt Nam, Campuchia, Hàn Quốc, Philippines trở thành Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://dsvh.gov.vn/nghi-le-va-tro-choi-keo-co-o-viet-nam,-campuchia,-han-quoc,-philippines-tro-thanh-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-1147",
+      "fetched_at": "2026-07-26",
+      "chars": 4607
+    },
+    {
+      "file": "cuc-di-san__keo-co-tay-giay-lao-cai.txt",
+      "source": "Cục Di sản văn hóa – Kéo co của người Tày, người Giáy ở Lào Cai",
+      "source_url": "https://dsvh.gov.vn/keo-co-cua-nguoi-tay,-nguoi-giay-o-lao-cai-1107",
+      "fetched_at": "2026-07-26",
+      "chars": 5186
+    },
+    {
+      "file": "tapchi-vhnt__keo-co-bao-ton-phat-huy-gan-voi-du-lich.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Nghi lễ và trò chơi Kéo co: bảo tồn, phát huy giá trị di sản gắn với phát triển du lịch bền vững",
+      "source_url": "https://vanhoanghethuat.vn/nghi-le-va-tro-choi-keo-co-bao-ton-phat-huy-gia-tri-di-san-gan-voi-phat-trien-du-lich-ben-vung-77760169.html",
+      "fetched_at": "2026-07-26",
+      "chars": 9177
+    },
+    {
+      "file": "tapchi-vhnt__giao-luu-trinh-dien-keo-co-viet-nam-han-quoc.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Giao lưu trình diễn nghi lễ và trò chơi kéo co Việt Nam - Hàn Quốc",
+      "source_url": "http://vanhoanghethuat.vn/giao-luu-trinh-dien-nghi-le-va-tro-choi-keo-co-viet-nam-han-quoc.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 4291
+    },
+    {
+      "file": "bao-nhan-dan__keo-co-ngoi-di-san-doc-dao-vung-ven-do.txt",
+      "source": "Báo Nhân Dân – Kéo co ngồi, di sản độc đáo vùng đất ven đô",
+      "source_url": "https://special.nhandan.vn/keo-co-ngoi-di-san-doc-dao-vung-dat-ven-do/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 17004
+    },
+    {
+      "file": "bao-nhan-dan__doc-dao-tro-choi-keo-co-ngoi.txt",
+      "source": "Báo Nhân Dân – Độc đáo trò chơi kéo co ngồi tại đền Trấn Vũ",
+      "source_url": "https://nhandan.vn/doc-dao-tro-choi-keo-co-ngoi-tai-den-tran-vu-post354867.html",
+      "fetched_at": "2026-07-26",
+      "chars": 1642
+    },
+    {
+      "file": "vietnamplus__di-san-da-quoc-gia-doc-dao.txt",
+      "source": "TTXVN/VietnamPlus – Nghi lễ và trò chơi Kéo co, di sản văn hóa phi vật thể đa quốc gia độc đáo",
+      "source_url": "https://www.vietnamplus.vn/nghi-le-va-tro-choi-keo-co-di-san-van-hoa-phi-vat-the-da-quoc-gia-doc-dao-post908971.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 3463
+    },
+    {
+      "file": "vietnamplus__le-hoi-den-tran-vu-va-nghi-le-keo-co-ngoi.txt",
+      "source": "TTXVN/VietnamPlus – Tưng bừng Lễ hội Đền Trấn Vũ và nghi lễ “Kéo co ngồi”",
+      "source_url": "https://www.vietnamplus.vn/tung-bung-le-hoi-den-tran-vu-va-nghi-le-keo-co-ngoi-post858615.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 12944
     }
   ]
 }

@@ -22,6 +22,41 @@
       "source_url": "https://ich.unesco.org/en/RL/art-of-xoe-dance-of-the-tai-people-in-viet-nam-01575",
       "fetched_at": "2026-07-25",
       "chars": 2855
+    },
+    {
+      "file": "bo-vhttdl__bao-ton-phat-huy-xoe-thai.txt",
+      "source": "Bộ Văn hóa, Thể thao và Du lịch – Bảo tồn, phát huy Xòe Thái, hồn cốt văn hóa của người Thái",
+      "source_url": "https://bvhttdl.gov.vn/bao-ton-phat-huy-xoe-thai-hon-cot-van-hoa-cua-nguoi-thai-20220201072022534.htm",
+      "fetched_at": "2026-07-26",
+      "chars": 9197
+    },
+    {
+      "file": "tapchi-vhnt__xoe-thai-tay-bac.txt",
+      "source": "Tạp chí Văn hóa Nghệ thuật – Xòe Thái Tây Bắc",
+      "source_url": "https://vanhoanghethuat.vn/xoe-thai-tay-bac-77749445.html",
+      "fetched_at": "2026-07-26",
+      "chars": 15623
+    },
+    {
+      "file": "bao-nhan-dan__nghe-thuat-xoe-thai-di-san-nhan-loai.txt",
+      "source": "Báo Nhân Dân – Nghệ thuật Xòe Thái, Di sản văn hóa phi vật thể đại diện của nhân loại",
+      "source_url": "https://special.nhandan.vn/NghethuatXoeThai/index.html",
+      "fetched_at": "2026-07-26",
+      "chars": 18865
+    },
+    {
+      "file": "vietnamplus__dac-sac-nghe-thuat-mua-xoe-truyen-thong.txt",
+      "source": "TTXVN/VietnamPlus – Đặc sắc nghệ thuật múa Xòe truyền thống của người dân tộc Thái",
+      "source_url": "https://www.vietnamplus.vn/dac-sac-nghe-thuat-mua-xoe-truyen-thong-cua-nguoi-dan-toc-thai-post761013.vnp",
+      "fetched_at": "2026-07-26",
+      "chars": 16729
+    },
+    {
+      "file": "vietnamplus__xoe-thai-dong-gop-da-dang-van-hoa.txt",
+      "source": "TTXVN/VietnamPlus – Để nghệ thuật Xòe Thái đóng góp vào sự đa dạng văn hóa của nhân loại",
+      "source_url": "https://mega.vietnamplus.vn/de-nghe-thuat-xoe-thai-dong-gop-vao-su-da-dang-van-hoa-cua-nhan-loai-5265.html",
+      "fetched_at": "2026-07-26",
+      "chars": 9898
     }
   ]
 }

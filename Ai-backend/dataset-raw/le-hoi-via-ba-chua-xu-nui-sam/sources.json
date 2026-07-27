@@ -37,6 +37,48 @@
       "source_url": "https://ich.unesco.org/en/RL/festival-of-ba-chua-x-goddess-at-sam-mountain-01999",
       "fetched_at": "2026-07-25",
       "chars": 2514
+    },
+    {
+      "file": "cuc-di-san__ghi-danh-via-ba-chua-xu.txt",
+      "source": "Cục Di sản văn hóa – Di sản Lễ hội Vía Bà Chúa Xứ núi Sam được UNESCO ghi danh",
+      "source_url": "https://dsvh.gov.vn/di-san-le-hoi-via-ba-chua-xu-nui-sam-duoc-unesco-ghi-danh-vao-danh-sach-di-san-van-hoa-phi-vat-the-dai-dien-cua-nhan-loai-22193",
+      "fetched_at": "2026-07-26",
+      "chars": 7535
+    },
+    {
+      "file": "bao-nhan-dan__le-hoi-via-ba-tin-nguong-doc-dao.txt",
+      "source": "Báo Nhân Dân – Lễ hội Vía Bà Chúa Xứ núi Sam: tín ngưỡng độc đáo vùng Tây Nam Bộ",
+      "source_url": "https://nhandan.vn/le-hoi-via-ba-chua-xu-nui-sam-tin-nguong-doc-dao-vung-tay-nam-bo-post854356.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6028
+    },
+    {
+      "file": "bao-nhan-dan__giu-gin-va-lan-toa-gia-tri-di-san.txt",
+      "source": "Báo Nhân Dân – Giữ gìn và lan tỏa giá trị Di sản lễ hội Vía Bà Chúa Xứ Núi Sam",
+      "source_url": "https://nhandan.vn/giu-gin-va-lan-toa-gia-tri-di-san-le-hoi-via-ba-chua-xu-nui-sam-post946444.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6054
+    },
+    {
+      "file": "bao-an-giang__dac-sac-le-hoi-via-ba.txt",
+      "source": "Báo An Giang – Đặc sắc Lễ hội Vía Bà Chúa Xứ Núi Sam",
+      "source_url": "https://baoangiang.com.vn/dac-sac-le-hoi-via-ba-chua-xu-nui-sam-a396493.html",
+      "fetched_at": "2026-07-26",
+      "chars": 6732
+    },
+    {
+      "file": "bao-an-giang__gin-giu-le-hoi-truyen-thong-via-ba.txt",
+      "source": "Báo An Giang – Gìn giữ Lễ hội truyền thống Vía Bà Chúa Xứ núi Sam",
+      "source_url": "https://baoangiang.com.vn/gin-giu-le-hoi-truyen-thong-via-ba-chua-xu-nui-sam-a420405.html",
+      "fetched_at": "2026-07-26",
+      "chars": 5302
+    },
+    {
+      "file": "bao-an-giang__ruoc-ba-chua-xu-ve-voi-cong-dong.txt",
+      "source": "Báo An Giang – Rước Bà Chúa Xứ về với cộng đồng",
+      "source_url": "https://baoangiang.com.vn/ruoc-ba-chua-xu-ve-voi-cong-dong-a421090.html",
+      "fetched_at": "2026-07-26",
+      "chars": 4556
     }
   ]
 }
