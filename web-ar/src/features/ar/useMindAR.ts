@@ -59,7 +59,7 @@ function teardownMindAR(m: MindARRuntime | null) {
   try { canvas?.remove(); } catch { /* noop */ }
 }
 
-// Khởi tạo MindAR + three, load model, gắn anchor, chạy render loop.
+// Khởi tạo MindAR + three, gắn anchor, chạy render loop. Model tải THEO TARGET.
 // ĐA TARGET: 1 file .mind gộp, mỗi nghệ nhân 1 anchor theo targetIndex. Chĩa vào
 // ảnh nào thì anchor đó onTargetFound -> đặt activeIndex = nghệ nhân tương ứng.
 // Dọn dẹp (stop camera + dispose) khi rời trang / active=false để tránh treo camera & memory leak.
@@ -69,6 +69,9 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   // targetIndex của nghệ nhân đang được camera thấy (null = chưa thấy ai)
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // slug của những nghệ nhân đã tải xong model. Model tải LƯỜI (lúc thấy ảnh mốc)
+  // nên phải biết ai đã sẵn sàng để HUD báo "đang tải" đúng người.
+  const [loadedSlugs, setLoadedSlugs] = useState<string[]>([]);
 
   // giữ instance để listener pagehide có thể teardown ngay
   const mindarRef = useRef<MindARRuntime | null>(null);
@@ -102,11 +105,12 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         setErrorMsg(null);
 
         // import động: mind-ar chỉ chạy client, tránh SSR đụng window/document.
-        // Preload model của TẤT CẢ nghệ nhân song song (theo thứ tự artisans[]).
-        const [{ MindARThree }, THREE, ...rawModels] = await Promise.all([
+        // KHÔNG preload model ở đây: mỗi nhân vật ~3MB, tải sẵn cả bộ là bắt du khách
+        // chờ ~15MB trước khi camera bật, trong khi một lượt quét thường chỉ gặp 1-2
+        // ảnh mốc. Model tải khi anchor tương ứng thấy ảnh mốc (xem ensureModel).
+        const [{ MindARThree }, THREE] = await Promise.all([
           import('mind-ar/dist/mindar-image-three.prod.js'),
           import('three'),
-          ...artisans.map((a) => loadModel(a.ar.modelUrl)),
         ]);
         if (cancelled) return;
 
@@ -143,39 +147,58 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
         const clock = new THREE.Clock();
 
         // Mỗi nghệ nhân 1 anchor tại targetIndex của mình; chĩa ảnh nào -> hiện người đó.
-        artisans.forEach((artisan, i) => {
-          // clone: rawModels[i] là instance cache dùng chung; normalizeModel MUTATE nó,
-          // nên phải normalize trên BẢN SAO, nếu không lần khởi tạo lại (retry/restart)
-          // sẽ normalize lần 2 lên object đã biến đổi -> model biến mất dù vẫn track.
-          const clone = cloneModel(rawModels[i]);
-
-          // Phát animation nếu model có clip. Mixer bind vào bản CLONE (chứa skeleton).
-          // PHẢI tạo mixer + pose frame 0 TRƯỚC normalizeModel: animation Mixamo có thể
-          // dời tâm nhân vật ra xa gốc (offset baked trong clip), nên normalize phải đo
-          // theo POSE THẬT của frame đầu — nếu đo bind-pose thì tâm lệch, sau khi phóng
-          // to nhân vật văng khỏi khung -> không thấy gì.
-          const clips = rawModels[i].userData.clips as THREE.AnimationClip[] | undefined;
-          let mixer: THREE.AnimationMixer | null = null;
-          if (clips && clips.length) {
-            const idx = artisan.ar.animationIndex ?? 0;
-            const clip = clips[idx] ?? clips[0];
-            mixer = new THREE.AnimationMixer(clone);
-            mixer.clipAction(clip).play(); // loop mặc định = vô hạn
-            mixer.update(0); // đặt skeleton về frame 0 để normalizeModel đo đúng pose
-          }
-
-          const model = normalizeModel(clone, artisan.ar.scale, artisan.ar.offset, {
-            rotationDeg: artisan.ar.rotationDeg,
-            groundAlign: artisan.ar.groundAlign,
-          });
-
+        // Anchor tạo NGAY (chỉ là Group rỗng, không tốn gì) để MindAR có chỗ ghi ma trận
+        // tư thế; model được nhét vào group này sau, lúc nào tải xong cũng được.
+        artisans.forEach((artisan) => {
           const anchor = mindar.addAnchor(artisan.targetIndex);
-          anchor.group.add(model);
           // MindAR bật/tắt group.visible theo kết quả nhận diện -> dùng luôn nó làm cờ
           // "nhân vật này có đang trên màn hình không" cho render loop.
-          rigs.push({ group: anchor.group, mixer });
+          const rig: (typeof rigs)[number] = { group: anchor.group, mixer: null };
+          rigs.push(rig);
+
+          // Tải model của RIÊNG nghệ nhân này, chỉ 1 lần dù thấy/mất mốc bao nhiêu lần.
+          // `requested` chặn tải chồng; loadModel còn cache theo URL nên lần khởi tạo
+          // lại (retry) lấy luôn từ bộ nhớ, không tải mạng nữa.
+          let requested = false;
+          const ensureModel = () => {
+            if (requested) return;
+            requested = true;
+            loadModel(artisan.ar.modelUrl).then((raw) => {
+              // huỷ giữa chừng (rời trang / tắt AR): bỏ, đừng gắn vào scene đã dispose
+              if (cancelled) return;
+
+              // clone: raw là instance cache dùng chung; normalizeModel MUTATE nó, nên
+              // phải normalize trên BẢN SAO, nếu không lần khởi tạo lại (retry/restart)
+              // sẽ normalize lần 2 lên object đã biến đổi -> model biến mất dù vẫn track.
+              const clone = cloneModel(raw);
+
+              // Phát animation nếu model có clip. Mixer bind vào bản CLONE (chứa skeleton).
+              // PHẢI tạo mixer + pose frame 0 TRƯỚC normalizeModel: animation Mixamo có thể
+              // dời tâm nhân vật ra xa gốc (offset baked trong clip), nên normalize phải đo
+              // theo POSE THẬT của frame đầu — nếu đo bind-pose thì tâm lệch, sau khi phóng
+              // to nhân vật văng khỏi khung -> không thấy gì.
+              const clips = raw.userData.clips as THREE.AnimationClip[] | undefined;
+              if (clips && clips.length) {
+                const idx = artisan.ar.animationIndex ?? 0;
+                const clip = clips[idx] ?? clips[0];
+                const mixer = new THREE.AnimationMixer(clone);
+                mixer.clipAction(clip).play(); // loop mặc định = vô hạn
+                mixer.update(0); // đặt skeleton về frame 0 để normalizeModel đo đúng pose
+                rig.mixer = mixer;
+              }
+
+              const model = normalizeModel(clone, artisan.ar.scale, artisan.ar.offset, {
+                rotationDeg: artisan.ar.rotationDeg,
+                groundAlign: artisan.ar.groundAlign,
+              });
+              anchor.group.add(model);
+              setLoadedSlugs((s) => (s.includes(artisan.slug) ? s : [...s, artisan.slug]));
+            });
+          };
+
           anchor.onTargetFound = () => {
             if (cancelled) return;
+            ensureModel(); // lần đầu thấy người này -> mới tải model của người này
             setActiveIndex(artisan.targetIndex);
             setStatus('tracking');
           };
@@ -281,8 +304,18 @@ export function useMindAR({ artisans, targetSrc, active }: Options) {
       teardownMindAR(mindarRef.current);
       mindarRef.current = null;
       setActiveIndex(null);
+      // scene cũ đã dispose -> mọi model phải gắn lại vào anchor mới ở lần khởi tạo sau
+      setLoadedSlugs([]);
     };
   }, [active, targetSrc, artisans]);
 
-  return { containerRef, status, errorMsg, activeArtisan };
+  return {
+    containerRef,
+    status,
+    errorMsg,
+    activeArtisan,
+    // Đã thấy ảnh mốc nhưng model của người đó còn đang tải -> HUD báo cho du khách
+    // biết là đang chờ chứ không phải quét hụt.
+    modelLoading: activeArtisan != null && !loadedSlugs.includes(activeArtisan.slug),
+  };
 }

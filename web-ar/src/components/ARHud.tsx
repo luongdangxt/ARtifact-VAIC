@@ -6,6 +6,8 @@ interface Props {
   status: ARStatus;
   /** Tên nghệ nhân đang được camera thấy; rỗng khi chưa track được ai */
   artisanName?: string;
+  /** Đã bắt được ảnh mốc nhưng model của người đó còn đang tải về */
+  modelLoading?: boolean;
   aiEnabled: boolean;
   onAskAI?: () => void;
 }
@@ -14,6 +16,7 @@ interface Props {
 export default function ARHud({
   status,
   artisanName,
+  modelLoading = false,
   aiEnabled,
   onAskAI,
 }: Props) {
@@ -29,6 +32,19 @@ export default function ARHud({
           {artisanName ?? 'Đang tìm ảnh mốc…'}
         </span>
       </div>
+
+      {/* Model tải theo target: lần ĐẦU chĩa vào một ảnh mốc phải chờ tải ~3MB. Không
+          báo gì thì màn hình trống trơn dù đã bắt đúng mốc -> du khách tưởng quét hụt
+          và lia camera đi chỗ khác. */}
+      {tracking && modelLoading && (
+        <div className="flex flex-col items-center gap-3">
+          <span className="flex items-center gap-2 rounded-full bg-black/50 px-4 py-2 text-sm text-white backdrop-blur">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Đang tải nhân vật…
+          </span>
+          <p className="text-xs text-white/60">Giữ camera hướng vào ảnh mốc</p>
+        </div>
+      )}
 
       {/* Hướng dẫn quét khi chưa track được. Chữ nằm TRÊN khung ngắm và cả cụm được đẩy
           lên: nửa dưới màn hình là chỗ của phụ đề + gợi ý câu hỏi, để nguyên giữa màn

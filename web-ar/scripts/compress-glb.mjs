@@ -2,10 +2,12 @@
 // Hình học GIỮ NGUYÊN (chỉ ~50k tam giác, không cần Draco). Trên điện thoại gần như
 // không thấy khác, nhưng dung lượng giảm ~10 lần -> tải nhanh trên 4G.
 //
-//   node scripts/compress-glb.mjs
+//   node scripts/compress-glb.mjs                 # nén các model CHƯA nén (mặc định)
+//   node scripts/compress-glb.mjs a.glb b.glb     # chỉ định file
 //
-// Nguồn = bản trong public/models/glb (copy từ Assets). Ghi ĐÈ chính nó. Bản gốc chất
-// lượng tối đa vẫn nằm trong Assets/ (Unity) nên luôn khôi phục lại được.
+// Nguồn = bản trong public/models/glb (copy từ Assets / artifact-3d-model). Ghi ĐÈ chính
+// nó. Bản gốc chất lượng tối đa vẫn nằm ngoài repo-public nên luôn khôi phục lại được.
+// CHÚ Ý: chạy lại trên file ĐÃ nén = nén lossy chồng lossy -> chỉ truyền tên file mới.
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { textureCompress } from '@gltf-transform/functions';
@@ -17,7 +19,9 @@ import { statSync } from 'node:fs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GLB_DIR = resolve(__dirname, '../public/models/glb');
 
-const FILES = ['quan-ho-nu.glb', 'quan-ho-nam.glb', 'ong-do.glb'];
+// Mặc định = 3 model di sản mới (PNG 4K thô). quan-ho-*/ong-do đã nén từ trước.
+const DEFAULT_FILES = ['don-ca.glb', 'nha-nhac.glb', 'xoe-thai.glb'];
+const FILES = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_FILES;
 const MAX_SIZE = 2048; // cạnh dài tối đa của texture
 const QUALITY = 90;    // WebP q90 — gần như không thấy mất mát
 

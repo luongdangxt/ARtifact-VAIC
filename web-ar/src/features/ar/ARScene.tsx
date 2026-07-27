@@ -35,7 +35,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   // slug vừa bị user đóng (✕) để KHÔNG tự mở lại ngay khi vẫn đang thấy nghệ nhân đó.
   const dismissedRef = useRef<string | null>(null);
 
-  const { containerRef, status, errorMsg, activeArtisan } = useMindAR({
+  const { containerRef, status, errorMsg, activeArtisan, modelLoading } = useMindAR({
     artisans,
     targetSrc: TARGETS_MIND,
     // active phụ thuộc started (user gesture) + retryKey để thử lại sau khi bị từ chối
@@ -45,10 +45,14 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
   // Voice-first: vừa THẤY nghệ nhân có bật AI là tự mở phiên trò chuyện (xin mic + sẵn sàng
   // bấm-giữ để nói). Không tự mở lại nghệ nhân user vừa đóng; khi mất tracking hẳn thì cho
   // phép mở lại lần sau. Phiên đã mở thì giữ nguyên (không phụ thuộc activeArtisan nữa).
+  // CHỜ model hiện ra rồi mới mở: model tải theo target nên lần đầu quét một ảnh mốc còn
+  // mất vài giây — bật hộp thoại xin mic khi màn hình vẫn trống thì du khách không hiểu
+  // mình đang nói chuyện với ai.
   useEffect(() => {
     if (activeArtisan?.slug) {
       if (
         activeArtisan.aiEnabled &&
+        !modelLoading &&
         !session &&
         dismissedRef.current !== activeArtisan.slug
       ) {
@@ -57,7 +61,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
     } else {
       dismissedRef.current = null;
     }
-  }, [activeArtisan, session]);
+  }, [activeArtisan, modelLoading, session]);
 
   if (supported === false) {
     return (
@@ -84,11 +88,12 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
         className="absolute inset-0 isolate [&>video]:!absolute [&>video]:!inset-0 [&>video]:!m-0 [&>video]:!h-full [&>video]:!w-full [&>video]:!max-w-none [&>video]:!object-cover"
       />
 
-      {/* Loading trong lúc khởi tạo */}
+      {/* Loading trong lúc khởi tạo. 'loading' giờ chỉ là nạp thư viện AR + file .mind
+          — model tải sau, theo từng ảnh mốc quét được (xem ensureModel/useMindAR). */}
       {started &&
         (status === 'loading' || status === 'starting') && (
           <Loading
-            label={status === 'loading' ? 'Đang tải model 3D…' : 'Đang mở camera…'}
+            label={status === 'loading' ? 'Đang khởi động AR…' : 'Đang mở camera…'}
           />
         )}
 
@@ -129,8 +134,9 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
           key={retryKey}
           status={status}
           artisanName={activeArtisan?.name}
+          modelLoading={modelLoading}
           // Nút "Hỏi nghệ nhân" chỉ để MỞ LẠI khi user đã đóng phiên (bình thường tự mở).
-          aiEnabled={(activeArtisan?.aiEnabled ?? false) && !session}
+          aiEnabled={(activeArtisan?.aiEnabled ?? false) && !modelLoading && !session}
           onAskAI={() => activeArtisan && setSession(activeArtisan)}
         />
       )}
