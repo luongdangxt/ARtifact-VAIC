@@ -5,7 +5,8 @@
   độ trễ.
 - TTS dự phòng: FPT.AI-VITs (mkp-api.fptcloud.com, API kiểu OpenAI), mặc định trả
   MP3 (FPT_TTS_FORMAT). Dùng khi Gemini lỗi/hết quota, hoặc khi ép TTS_PROVIDER=fpt
-  — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần.
+  — hiện đang ép fpt vì nhanh hơn Gemini TTS hơn 10 lần. Hai chiều đều có đường
+  lùi: fpt hỏng hẳn (hết retry) thì quay về Gemini để NPC không bị câm.
 - STT chính: model đa phương thức (gemini-3.1-flash-lite) nhận audio inline ->
   transcript. Gemini nhận thẳng bản ghi nén gốc (webm/mp4/ogg...) nên client
   không cần convert.
@@ -64,8 +65,16 @@ FPT_TTS_VOICE = os.getenv("FPT_TTS_VOICE", "std_leminh")  # giọng NAM cho NPC 
 # (nhẹ hơn ~2.3 lần) nên du khách dùng 4G nghe được sớm hơn hẳn. WAV chỉ giữ lại để
 # gỡ lỗi hoặc phòng khi FPT đổi hành vi encode.
 FPT_TTS_FORMAT = os.getenv("FPT_TTS_FORMAT", "mp3").strip().lower()
-# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = chỉ FPT.
+# auto = Gemini trước, hỏng thì FPT | gemini = chỉ Gemini | fpt = FPT trước,
+# hỏng thì Gemini (mkp-api của FPT thi thoảng trả 404/502 hoặc treo — không có
+# đường lùi thì NPC câm và request bị giam tới hết timeout).
 TTS_PROVIDER = os.getenv("TTS_PROVIDER", "auto").strip().lower()
+# mkp-api lúc khoẻ trả lời dưới 1s; treo lâu gần như chắc chắn là replica hỏng,
+# chờ 90s chỉ giam request — bỏ sớm rồi thử lại/lùi nguồn khác nhanh hơn nhiều.
+FPT_TTS_TIMEOUT = float(os.getenv("FPT_TTS_TIMEOUT", "12"))
+# 404/502 của mkp-api là lỗi THOÁNG QUA theo replica (gọi liên tiếp cùng payload
+# lúc được lúc không) nên thử lại ngay một lần thường là đủ.
+FPT_TTS_ATTEMPTS = max(1, int(os.getenv("FPT_TTS_ATTEMPTS", "2")))
 
 # --- STT dự phòng: FPT.AI-whisper (endpoint kiểu OpenAI /v1/audio/transcriptions) ---
 FPT_STT_URL = os.getenv(
@@ -291,7 +300,14 @@ def synthesize(text: str) -> tuple[bytes, str]:
     đuôi này để đặt tên file + Content-Type.
     """
     if TTS_PROVIDER == "fpt":
-        return synthesize_fpt(text)
+        try:
+            return synthesize_fpt(text)
+        except VoiceError as exc:
+            if not os.getenv("GEMINI_API_KEY"):
+                raise
+            # FPT hỏng hẳn (hết retry) -> chậm hơn nhưng vẫn có tiếng nhờ Gemini.
+            _log.warning("FPT TTS lỗi, chuyển sang Gemini TTS: %s", exc)
+            return synthesize_mp3(text), "mp3"
 
     try:
         return synthesize_mp3(text), "mp3"
@@ -385,29 +401,38 @@ def synthesize_fpt(text: str) -> tuple[bytes, str]:
         "response_format": fmt,
         "voice": FPT_TTS_VOICE,
     }
-    try:
-        resp = requests.post(
-            FPT_TTS_URL,
-            headers={
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-            },
-            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-            timeout=90,
-        )
-    except requests.RequestException as exc:
-        raise VoiceError(f"FPT TTS không kết nối được: {exc}") from exc
+    last = ""
+    for attempt in range(FPT_TTS_ATTEMPTS):
+        try:
+            resp = requests.post(
+                FPT_TTS_URL,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                timeout=FPT_TTS_TIMEOUT,
+            )
+        except requests.RequestException as exc:
+            last = f"FPT TTS không kết nối được: {exc}"
+            continue
 
-    if resp.status_code != 200:
-        raise VoiceError(f"FPT TTS lỗi HTTP {resp.status_code}: {resp.text[:160]}")
+        if resp.status_code != 200:
+            last = f"FPT TTS lỗi HTTP {resp.status_code}: {resp.text[:160]}"
+            continue
 
-    audio = resp.content
-    # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON, không phải audio.
-    if not _looks_like_audio(audio, fmt):
-        raise VoiceError(f"FPT TTS không trả về {fmt}: {audio[:160]!r}")
-    # MP3 không cắt được bằng cách xén byte như WAV; trần thời lượng đã được _fit_text
-    # bảo đảm từ phía chữ nên đây chỉ là lớp chặn thứ hai cho WAV.
-    return (_trim_wav(audio) if fmt == "wav" else audio), fmt
+        audio = resp.content
+        # Lỗi ứng dụng (hết quota, input bị từ chối...) vẫn trả 200 kèm JSON,
+        # không phải audio.
+        if not _looks_like_audio(audio, fmt):
+            last = f"FPT TTS không trả về {fmt}: {audio[:160]!r}"
+            continue
+        if attempt:
+            _log.info("FPT TTS thành công ở lần thử %d", attempt + 1)
+        # MP3 không cắt được bằng cách xén byte như WAV; trần thời lượng đã được
+        # _fit_text bảo đảm từ phía chữ nên đây chỉ là lớp chặn thứ hai cho WAV.
+        return (_trim_wav(audio) if fmt == "wav" else audio), fmt
+    raise VoiceError(last or "FPT TTS thất bại.")
 
 
 def synthesize_mp3(text: str) -> bytes:

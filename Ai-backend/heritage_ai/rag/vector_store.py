@@ -24,6 +24,15 @@ class RagNoEvidenceError(RagError):
 class ChromaVectorStore:
     COLLECTION_NAME = "heritage_knowledge"
 
+    # Ưu tiên MỀM theo intent thay vì lọc cứng: tư liệu trả lời một câu hỏi không
+    # phải lúc nào cũng nằm ở chunk gắn đúng intent — vd. từ nguyên của tên gọi
+    # "Quan họ" nằm trong chunk history, nhưng câu "ý nghĩa của từ quan họ" bị
+    # phân intent meaning; lọc cứng loại đúng đoạn cần thiết và chatbot trả lời
+    # "chưa có tư liệu". Mức cộng lấy theo khoảng cách score "chắc chắn" đo ở
+    # local_router (câu rõ ràng cách nhau 0.046-0.075): chunk lệch intent phải
+    # liên quan hơn hẳn mới vượt được chunk đúng intent.
+    INTENT_BONUS = 0.04
+
     def __init__(
         self,
         storage_path: str | Path,
@@ -149,19 +158,10 @@ class ChromaVectorStore:
                 "python3 create_vectorDB.py --reset"
             )
 
-        where = {"heritage_id": heritage_id}
-        if intent != "overview":
-            where = {
-                "$and": [
-                    {"heritage_id": heritage_id},
-                    {"intent": {"$in": [intent, "all"]}},
-                ]
-            }
-
         result = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=max(1, top_k),
-            where=where,
+            n_results=max(1, top_k) * 3,
+            where={"heritage_id": heritage_id},
             include=["documents", "metadatas", "distances"],
         )
         documents = (result.get("documents") or [[]])[0]
@@ -169,26 +169,34 @@ class ChromaVectorStore:
         distances = (result.get("distances") or [[]])[0]
         ids = (result.get("ids") or [[]])[0]
 
-        evidence = []
+        scored: list[tuple[float, Evidence]] = []
         for chunk_id, content, metadata, distance in zip(
             ids, documents, metadatas, distances, strict=False
         ):
             relevance = 1.0 - float(distance)
             if relevance < min_relevance:
                 continue
-            evidence.append(
-                Evidence(
-                    title=str(metadata.get("section", "Tư liệu truy xuất")),
-                    content=content,
-                    source=str(metadata.get("source", "Không rõ nguồn")),
-                    page=int(metadata["page"]) if metadata.get("page") else None,
-                    score=relevance,
-                    source_url=str(metadata.get("source_url", "")),
-                    document_name=str(metadata.get("document_name", "")),
-                    chunk_id=chunk_id,
+            chunk_intent = str(metadata.get("intent", "all"))
+            boosted = relevance
+            if intent != "overview" and chunk_intent in {intent, "all"}:
+                boosted += self.INTENT_BONUS
+            scored.append(
+                (
+                    boosted,
+                    Evidence(
+                        title=str(metadata.get("section", "Tư liệu truy xuất")),
+                        content=content,
+                        source=str(metadata.get("source", "Không rõ nguồn")),
+                        page=int(metadata["page"]) if metadata.get("page") else None,
+                        score=relevance,
+                        source_url=str(metadata.get("source_url", "")),
+                        document_name=str(metadata.get("document_name", "")),
+                        chunk_id=chunk_id,
+                    ),
                 )
             )
-        return evidence
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        return [evidence for _, evidence in scored[: max(1, top_k)]]
 
     def candidate_heritage_names(
         self,
