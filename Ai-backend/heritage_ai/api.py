@@ -103,13 +103,18 @@ def _store_audio(data: bytes, ext: str) -> str:
     return name
 
 
-def _synthesize_url(answer: str) -> str | None:
+def _voice_gender(persona_gender: str | None) -> str:
+    """Chuẩn hoá giới tính giọng đọc từ client ("female"/"nữ" -> nữ, còn lại nam)."""
+    return "female" if (persona_gender or "").strip().casefold() in {"female", "nữ", "nu", "f"} else "male"
+
+
+def _synthesize_url(answer: str, gender: str = "male") -> str | None:
     """TTS câu trả lời -> URL file audio (proxy sẽ stream). None nếu TTS lỗi.
 
     voice.synthesize tự chọn nguồn: Gemini (mp3) và dự phòng FPT.AI-VITs (wav).
     """
     try:
-        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer))
+        audio, ext = voice_mod.synthesize(voice_mod.spoken_text(answer), gender)
     except voice_mod.VoiceError as exc:
         # Cả hai nguồn TTS đều hỏng -> vẫn giữ câu trả lời chữ, chỉ log để biết.
         _log.warning("TTS thất bại: %s", exc)
@@ -211,6 +216,8 @@ class AskRequest(BaseModel):
     persona_name: str | None = None
     persona_craft: str | None = None
     persona_bio: str | None = None
+    # "male" (mặc định) | "female" — chọn giọng TTS khớp giới tính model nghệ nhân.
+    persona_gender: str | None = None
 
 
 class AskResponse(BaseModel):
@@ -245,7 +252,11 @@ def ask(req: AskRequest) -> AskResponse:
         asked=_asked(turns),
         history=_context_turns(turns),
     )
-    audio_url = _synthesize_url(answer) if req.synthesize else None
+    audio_url = (
+        _synthesize_url(answer, _voice_gender(req.persona_gender))
+        if req.synthesize
+        else None
+    )
     return AskResponse(answer=answer, audio_url=audio_url)
 
 
@@ -257,6 +268,7 @@ async def audio_ask(
     persona_name: str | None = Form(None),
     persona_craft: str | None = Form(None),
     persona_bio: str | None = Form(None),
+    persona_gender: str | None = Form(None),
 ) -> AudioAskResponse:
     audio_bytes = await file.read()
     if not audio_bytes:
@@ -273,7 +285,11 @@ async def audio_ask(
         asked=_asked(turns),
         history=_context_turns(turns),
     )
-    audio_url = _synthesize_url(answer) if _wants_tts(synthesize) else None
+    audio_url = (
+        _synthesize_url(answer, _voice_gender(persona_gender))
+        if _wants_tts(synthesize)
+        else None
+    )
     return AudioAskResponse(answer=answer, transcript=transcript, audio_url=audio_url)
 
 

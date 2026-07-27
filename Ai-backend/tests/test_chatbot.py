@@ -358,15 +358,29 @@ class AnswerGuardTests(unittest.TestCase):
         for query in probes:
             with self.subTest(query=query):
                 self.assertTrue(is_system_probe(normalize_text(query)))
-        # "bột" bỏ dấu thành "bot", "ai" nghĩa là "người nào" — không được dính guard.
+        # "bột" bỏ dấu thành "bot", "ai" nghĩa là "người nào", "hệ thống Tiểu nhạc"
+        # là thuật ngữ di sản, "mấy chú" bỏ dấu thành "may chu" — không được dính guard.
         safe = [
             "Tranh Đông Hồ làm từ bột vỏ điệp phải không?",
             "Ai thường hát Quan họ trong hội Lim?",
             "Nghệ nhân truyền dạy nghề cho ai?",
+            "Mười bản Ngự trong hệ thống Tiểu nhạc của Nhã nhạc cung đình Huế "
+            "bao gồm những bài bản cụ thể nào?",
+            "Hệ thống Tam tòa Thánh Mẫu và Ngũ vị Tôn Quan trong điện thần "
+            "Tam phủ gồm những vị nào?",
+            "Mấy chú nhạc công trong dàn Đại nhạc chơi những nhạc cụ gì?",
         ]
         for query in safe:
             with self.subTest(query=query):
                 self.assertFalse(is_system_probe(normalize_text(query)))
+
+    def test_follow_up_questions_never_probed(self) -> None:
+        # Câu do chính app gợi ý ("Bạn có thể hỏi tiếp:") mà guard chặn là lỗi
+        # nghiêm trọng: du khách bấm chip gợi ý rồi bị từ chối ngay.
+        for heritage in HeritageRepository().all():
+            for question in heritage.get("follow_up_questions", []):
+                with self.subTest(heritage=heritage["id"], question=question):
+                    self.assertFalse(is_system_probe(normalize_text(question)))
 
     def test_system_probe_is_refused_before_llm(self) -> None:
         repository = HeritageRepository()

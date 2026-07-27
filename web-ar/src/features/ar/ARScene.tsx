@@ -44,7 +44,9 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
 
   // Voice-first: vừa THẤY nghệ nhân có bật AI là tự mở phiên trò chuyện (xin mic + sẵn sàng
   // bấm-giữ để nói). Không tự mở lại nghệ nhân user vừa đóng; khi mất tracking hẳn thì cho
-  // phép mở lại lần sau. Phiên đã mở thì giữ nguyên (không phụ thuộc activeArtisan nữa).
+  // phép mở lại lần sau. Mất tracking TẠM (activeArtisan null) thì giữ nguyên phiên, nhưng
+  // quét sang NGHỆ NHÂN KHÁC thì chuyển phiên theo người mới — persona + giọng TTS (nam/nữ)
+  // phải khớp model đang hiện; ChatPanel key theo slug nên remount sạch (dừng audio cũ).
   // CHỜ model hiện ra rồi mới mở: model tải theo target nên lần đầu quét một ảnh mốc còn
   // mất vài giây — bật hộp thoại xin mic khi màn hình vẫn trống thì du khách không hiểu
   // mình đang nói chuyện với ai.
@@ -53,7 +55,7 @@ export default function ARScene({ artisans }: { artisans: Artisan[] }) {
       if (
         activeArtisan.aiEnabled &&
         !modelLoading &&
-        !session &&
+        session?.slug !== activeArtisan.slug &&
         dismissedRef.current !== activeArtisan.slug
       ) {
         setSession(activeArtisan);

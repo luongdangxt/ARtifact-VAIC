@@ -71,10 +71,16 @@ DEFAULT_MARGIN = 0.03
 # Câu hỏi thăm dò HỆ THỐNG (model gì, prompt, ai lập trình...) — chặn trước khi
 # đụng tới RAG/LLM. Khớp theo từ trọn vẹn trên chuỗi đã bỏ dấu. Cẩn thận với từ
 # ngắn: KHÔNG đưa "ai" (nghĩa tiếng Việt là "người nào") hay "bot" ("bột" bỏ dấu
-# thành "bot" — tranh Đông Hồ có "bột vỏ điệp") đứng một mình vào đây.
+# thành "bot" — tranh Đông Hồ có "bột vỏ điệp") đứng một mình vào đây. Từ có nghĩa
+# di sản hợp lệ cũng phải ghép thêm ngữ cảnh AI: "hệ thống" ("hệ thống Tiểu nhạc",
+# "Hệ thống Tam tòa Thánh Mẫu" là câu gợi ý chính thống), "mô hình", "máy chủ"
+# ("mấy chú" bỏ dấu thành "may chu").
 SYSTEM_PROBE_KEYWORDS = (
-    "he thong", "mo hinh", "model", "prompt", "chatbot", "tri tue nhan tao",
-    "gemini", "gpt", "openai", "llm", "api", "may chu", "server", "database",
+    "he thong cua ban", "he thong ai", "he thong nay", "he thong gi",
+    "mo hinh ngon ngu", "mo hinh ai", "mo hinh gi", "mo hinh nao",
+    "may chu cua ban", "may chu nao",
+    "model", "prompt", "chatbot", "tri tue nhan tao",
+    "gemini", "gpt", "openai", "llm", "api", "server", "database",
     "du lieu huan luyen", "huan luyen", "training", "ma nguon", "source code",
     "lap trinh", "thuat toan", "cong nghe", "phan mem", "ai tao ra",
     "ai lap trinh", "ai phat trien", "ai xay dung", "ai viet ra",

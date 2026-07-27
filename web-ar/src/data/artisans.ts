@@ -74,6 +74,7 @@ export const artisans: Artisan[] = [
     craft: 'Đờn ca tài tử Nam Bộ',
     bio: 'Nghệ nhân đờn ca tài tử miền sông nước Nam Bộ, chơi đờn kìm và đờn bầu trong '
       + 'các buổi tài tử tri âm. Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
     ar: {
       modelUrl: '/models/glb/don-ca.glb',
       markerUrl: '/markers/don-ca-tai-tu-nam-bo.png',
@@ -92,6 +93,7 @@ export const artisans: Artisan[] = [
     craft: 'Nhã nhạc cung đình Huế',
     bio: 'Nhạc công trong dàn Nhã nhạc cung đình Huế thời Nguyễn, diễn tấu ở các đại lễ '
       + 'nơi hoàng cung. Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
     ar: {
       modelUrl: '/models/glb/nha-nhac.glb',
       markerUrl: '/markers/nha-nhac-cung-dinh-hue.png',
@@ -110,6 +112,7 @@ export const artisans: Artisan[] = [
     craft: 'Nghệ thuật Xòe Thái',
     bio: 'Nghệ nhân người Thái vùng Tây Bắc, giữ điệu xòe vòng trong hội bản mường. '
       + 'Quét ảnh mốc để thấy model 3D neo lên thẻ và chuyển động.',
+    voiceGender: 'female', // model 3D là nữ -> giọng TTS nữ
     ar: {
       modelUrl: '/models/glb/xoe-thai.glb',
       markerUrl: '/markers/nghe-thuat-xoe-thai.png',

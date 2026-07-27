@@ -51,6 +51,7 @@ export async function POST(req: Request) {
   if (persona.persona_name) outForm.append('persona_name', persona.persona_name);
   if (persona.persona_craft) outForm.append('persona_craft', persona.persona_craft);
   if (persona.persona_bio) outForm.append('persona_bio', persona.persona_bio);
+  if (persona.persona_gender) outForm.append('persona_gender', persona.persona_gender);
 
   let res: Response;
   try {

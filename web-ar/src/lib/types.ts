@@ -45,6 +45,8 @@ export interface Artisan {
   /** nghề / di sản */
   craft: string;
   bio: string;
+  /** Giới tính model 3D -> backend chọn giọng TTS khớp. Bỏ trống = 'male'. */
+  voiceGender?: 'male' | 'female';
   ar: ARTarget;
   /** bật hỏi-đáp AI (Giai đoạn 2) */
   aiEnabled: boolean;
