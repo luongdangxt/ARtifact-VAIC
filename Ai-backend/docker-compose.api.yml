@@ -1,29 +1,40 @@
 # API HTTP local cho web-ar (proxy /api/ai* -> http://localhost:5567).
-# Dùng:
-#   docker compose -f docker-compose.api.yml build
-#   docker compose -f docker-compose.api.yml run --rm api \
-#       python create_vectorDB.py --dataset dataset-subset --no-json   # ingest 1 lần
-#   docker compose -f docker-compose.api.yml up                        # chạy server
+#
+# Dùng, cả trên server lẫn máy dev, đúng một lệnh:
+#   docker compose -f docker-compose.api.yml up -d --build
+#
+# Entrypoint tự ingest khi VectorDB rỗng nên không còn bước ingest thủ công.
+# Lần đầu chạy lâu (vài phút): tải model embedding intfloat/multilingual-e5-base
+# về ./.cache rồi mới embed. Theo dõi bằng:
+#   docker compose -f docker-compose.api.yml logs -f api
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile.api
     image: heritage-ai-api
-    user: "1000:1000"
+    # Mặc định chạy root cho khớp server (deploy dưới /www/wwwroot thuộc root):
+    # ép uid 1000 thì container không ghi nổi ./storage và ./.cache, ingest chết
+    # vì Permission denied. Máy dev đặt APP_UID/APP_GID=1000 trong .env để file
+    # sinh ra vẫn thuộc user thường, xóa dự án không cần sudo.
+    user: "${APP_UID:-0}:${APP_GID:-0}"
+    restart: unless-stopped
     environment:
       HOME: /app/.cache
       # Ép embedding chạy CPU (image không kèm CUDA).
       RAG_EMBEDDING_DEVICE: cpu
+      # AUTO_INGEST=0 để tắt ingest lúc khởi động; INGEST_ARGS để đổi tham số
+      # (vd. "--reset" sau khi dựng lại tư liệu bằng build_heritage_docs.py).
+      AUTO_INGEST: "${AUTO_INGEST:-1}"
+      INGEST_ARGS: "${INGEST_ARGS:---no-dataset}"
     env_file:
       - .env
     ports:
       - "5567:5567"
     volumes:
-      # Dataset đầy đủ (chỉ đọc) -> repository dựng catalog tên di sản khi trả lời.
+      # Dataset đầy đủ (chỉ đọc) -> repository dựng catalog tên di sản khi trả
+      # lời. Chỉ đọc TÊN FILE, không ingest nội dung.
       - ./dataset:/app/dataset:ro
-      # Subset 2 PDF để ingest nhanh (Quan họ, Đông Hồ).
-      - ./dataset-subset:/app/dataset-subset:ro
       # Vector DB + cache model nằm trong thư mục dự án.
       - ./storage:/app/storage
       - ./.cache:/app/.cache
