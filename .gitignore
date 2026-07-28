@@ -107,8 +107,11 @@ Ai-backend/.cache/
 
 # Runtime-generated vector store
 Ai-backend/storage/
-Ai-backend/heritage_ai/data/documents/*
-!Ai-backend/heritage_ai/data/documents/.gitkeep
+
+# heritage_ai/data/documents/ ĐƯỢC commit: build artifact của
+# scripts/build_heritage_docs.py, và là nguồn tư liệu thật duy nhất lọt vào
+# image (Dockerfile.api chỉ COPY heritage_ai/, không có dataset-raw/ lẫn
+# scripts/). Ignore nó thì clone sạch trên server build ra documents rỗng.
 
 # Subset PDF copy để ingest nhanh khi test API local (không commit)
 Ai-backend/dataset-subset/
